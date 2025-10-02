@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="nav&side.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <div class="logo-box">
+                <img src="img/logo.png" alt="ILovePrintshoppe Logo" class="admin-logo">
+            </div>
+            <nav class="admin-nav">
+                <ul class="nav-links">
+                    <li><a href="admin.html">Dashboard</a></li>
+                    <li><a href="admin-products.html">Products</a></li>
+                    <li><a href="admin-orders.html">Orders</a></li>
+                    <li><a href="admin-payments.html">Payments</a></li>
+                    <li><a href="admin-reports.html">Reports</a></li>
+                    <li><a href="settings.html">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="main-panel">
+            <header class="admin-header">
+                <div class="right-header">
+                    <div class="search-box">
+                        <input type="text" placeholder="Search" />
+                        <a href="#" class="auth-link"><i class="fas fa-search"></i></a>
+                    </div>
+                    <div class="notifications">
+                        <div class="icon-wrapper">
+                            <a href="#" class="auth-link"><i class="fas fa-bell"></i></a>
+                        </div>
+                    </div>
+                    <div class="user-profile">
+                        <a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
+                    </div>
+                </div>
+            </header>
+
+            <main class="dashboard-content">
+                <div class="dashboard-grid">
+                    <section class="status-boxes">
+                        <div class="status-box"><h3>Pending Orders</h3></div>
+                        <div class="status-box"><h3>Completed Orders</h3></div>
+                        <div class="status-box"><h3>Cancelled Orders</h3></div>
+                    </section>
+                    <section class="calendar">
+                        <div class="calendar-header">
+                            <button id="prev">❮</button>
+                            <h2 id="monthYear"></h2>
+                            <button id="next">❯</button>
+                        </div>
+                        <div class="calendar-body">
+                            <div class="weekdays">
+                                <div>Sun</div>
+                                <div>Mon</div>
+                                <div>Tue</div>
+                                <div>Wed</div>
+                                <div>Thu</div>
+                                <div>Fri</div>
+                                <div>Sat</div>
+                            </div>
+                            <div class="days" id="calendarDays"></div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>

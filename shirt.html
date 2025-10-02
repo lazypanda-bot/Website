@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Printing Website</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="navbar-footer.css" rel="stylesheet" />
+  <link rel="stylesheet" href="details.css">
+  <link href="login.css" rel="stylesheet" />
+  <link rel="stylesheet" href="message.css">
+  <link rel="stylesheet" href="sim.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+</head>
+<body>
+    <section id="header">
+        <div class="left-nav">
+            <a href="home.html"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
+            <ul class="desktop-nav">
+                <li><a href="home.html" class="nav-link">Home</a></li>
+                <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
+                <li><a href="products.html" class="nav-link">Products</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+        <div class="right-nav">
+            <form class="search-bar">
+                <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
+                <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+            <a href="cart.html" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
+            <li><a href="login.html" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
+            <div id="navbar">
+                <button id="close-menu" aria-label="Close Menu">x</button>
+                <div class="menu-user">
+                    <a href="login.html" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                </div>      
+                <ul class="mobile-nav">
+                    <li><a href="home.html" class="nav-link">Home</a></li>
+                    <li><a href="services.html" class="nav-link">Services</a></li>
+                    <li><a href="products.html" class="nav-link">Products</a></li>
+                    <li><a href="about.html" class="nav-link">About</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                </ul>
+            </div>
+            <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
+        </div>
+    </section>
+
+    <section class="product-listing">
+        <div class="product-main">
+            <div class="back-container">
+                <button onclick="history.back()" class="back-btn">← Back</button>
+            </div>
+            <div class="image-column">
+                <img src="img/snorlax.png" alt="Custom Mug" class="product-image" id="mainImage" />
+
+                <div class="thumbnail-row">
+                    <img src="img/snorlax.png" alt="Mug 1" class="thumbnail" onclick="changeImage(this)" />
+                    <img src="img/snorlax.png" alt="Mug 2" class="thumbnail" onclick="changeImage(this)" />
+                    <img src="img/snorlax.png" alt="Mug 3" class="thumbnail" onclick="changeImage(this)" />
+                    <img src="img/mugs2.jpg" alt="Mug 4" class="thumbnail" onclick="changeImage(this)" />
+                </div>
+            </div>
+        <div class="product-text">
+            <h2>Custom Mugs</h2>
+            <div class="tab-header">
+                <button class="tab-btn active" onclick="showTab('description', this)">Description</button>
+                <button class="tab-btn" onclick="showTab('order', this)">Start Your Order</button>
+            </div>
+        <div class="tab-content" id="description">
+            <p class="product-description">
+                Classic, sturdy, and endlessly sippable—this mug earns its spot at the top. Whether you're powering through a morning meeting or winding down with a cozy evening brew, its clean silhouette and thoughtful details make it a daily essential.
+            </p>
+            <ul class="product-features">
+                <li>Heat-retaining, cool-touch ceramic</li>
+                <li>Long-lasting, fade-proof print</li>
+            </ul>
+            <h4>Product Details</h4>
+            <ul class="product-details">
+                
+            </ul>
+        </div>
+
+        <section class="tab-content" id="order" style="display: none;">
+            <section class="product-detail-section">
+                <div class="order-step product-detail">
+                    <h3>1. Product Detail</h3>
+                    <p class="step-description">
+                        Start your order in just a few clicks — whether you're uploading your own artwork or consulting with our team, we'll make sure every sip feels personal. Let's get your perfect mug in motion.
+                    </p>
+                    <p class="step-note">Follow the steps below to place your order.</p>
+                    <div class="details-container">
+                        <form class="product-options-row">
+                            <div class="form-group">
+                                <label for="product-name">Product Name</label>
+                                <div class="custom-dropdown" id="productDropdown">
+                                    <button type="button" class="dropdown-toggle" onclick="toggleDropdown()">One Piece Mug</button>
+                                    <ul class="dropdown-menu">
+                                        <li onclick="selectOption(this)">One Piece Mug</li>
+                                        <li onclick="selectOption(this)">Snorlax Mug</li>
+                                        <li onclick="selectOption(this)">Custom Text Mug</li>
+                                    </ul>
+                                    <input type="hidden" name="product-name" id="product-name" value="One Piece Mug" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="size">Size</label>
+                                <div class="custom-dropdown" id="sizeDropdown">
+                                    <button type="button" class="dropdown-toggle" onclick="toggleSizeDropdown()">12oz</button>
+                                    <ul class="dropdown-menu">
+                                        <li onclick="selectSize(this)">12oz</li>
+                                        <li onclick="selectSize(this)">15oz</li>
+                                    </ul>
+                                    <input type="hidden" name="size" id="size" value="12oz" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="quantity">Quantity</label>
+                                <div class="quantity-control">
+                                    <button type="button" onclick="adjustQuantity(-1)">−</button>
+                                    <input type="number" id="quantity" name="quantity" value="0" min="0" />
+                                    <button type="button" onclick="adjustQuantity(1)">+</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            <section class="design-option-section">
+                <h3>2. Design Option</h3>
+                <p class="step-description">
+                    Choose how you'd like to personalize your mug. You can upload your own artwork or use our customization tools to create something unique.
+                </p>
+                <div class="design-buttons">
+                    <button type="button" class="design-btn" onclick="selectDesign('upload')">
+                        Upload Your Design
+                    </button>
+                    <button type="button" class="design-btn" id="customizeBtn" onclick="selectDesign('customize')">
+                        Customize Design
+                    </button>
+                    <button type="button" class="design-btn" onclick="selectDesign('request')">
+                        Request Design
+                    </button>
+                </div>
+                <p class="design-note">
+                    <strong>Note:</strong> A digital proof of your design will be sent to your registered account. Please review and approve it to proceed with printing.
+                </p>
+                <input type="hidden" name="design-option" id="design-option" value="" />
+            </section>
+        </section>
+    </section>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-column">
+                <h4>Customer Service</h4>
+                <p>Available 7am to 12pm</p>
+                <p>📞 +63 917 123 4567</p>
+                <p>📍 Zamoras St., Ozamis City, Misamis Occidental</p>
+            </div>
+            <div class="footer-column">
+                <h4>Information</h4>
+                <ul>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Services</h4>
+                <ul>
+                    <li>Tarpaulin Printing</li>
+                    <li>Apparel Printing</li>
+                    <li>Personalized Items</li>
+                    <li>Stickers</li>
+                    <li>Signages</li>
+                    <li>Tailoring</li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Follow Us</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div id="login-container"></div>
+
+    <!-- Request Modal -->
+    <div id="designModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Describe your design</h2>
+            <textarea placeholder="Enter your design idea" class="design-input"></textarea>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button class="request-btn" onclick="submitDesign()">Request</button>
+            </div>
+        </div>
+    </div>
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Upload Your Design</h2>
+            <div class="drop-zone" id="dropZone">
+                <p>Drag & Drop files here</p>
+                <span>or</span>
+                <label class="browse-btn">
+                    Browse Files
+                    <input type="file" id="designFile" accept="image/*,.pdf" hidden />
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeUploadModal()">Cancel</button>
+                <button class="request-btn" onclick="submitUpload()">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customize Modal -->
+    <div id="viewerModal" class="modal sim-modal">
+        <div class="sim-modal-content">
+            <span class="sim-close-btn" onclick="closeViewerModal()">&times;</span>
+            <div class="sim-viewer-container">
+                <div class="sim-viewer-layout">
+                    <div id="viewerCanvas" class="sim-viewer-left"></div>
+                    <div class="sim-viewer-right">
+                        <div class="sim-control-block">
+                            <label>Shirt Color:</label>
+                            <div id="colorPickerContainer"></div>
+                        </div>
+                        <div class="sim-control-block">
+                            <label>Upload Design:</label>
+                            <div id="uploadZone" class="sim-upload-zone">
+                                <p>Drag & Drop files here or</p>
+                                <button id="browseBtn">Browse Files</button>
+                                <input type="file" id="graphicUpload" accept="image/*" hidden />
+                            </div>
+                            <div class="sim-upload-actions">
+                                <button id="confirmUpload">Apply</button>
+                                <button id="cancelUpload">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="about.js"></script>
+    <script src="login.js"></script>
+    <script src="message.js"></script>
+    <script src="details.js"></script>
+    <script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+<script src="sim.js"></script>
+
+</body>
+</html>

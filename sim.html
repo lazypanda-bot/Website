@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Shirt Customizer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+  <link rel="stylesheet" href="sim.css" />
+</head>
+<body>
+
+  <div class="viewer-container">
+    <div class="viewer-layout">
+      <!-- Left: Shirt Viewer -->
+      <div id="viewerCanvas" class="viewer-left"></div>
+
+      <!-- Right: Controls -->
+      <div class="viewer-right">
+        <!-- Shirt Color Picker -->
+        <div class="control-block">
+          <label>Shirt Color:</label>
+          <div id="colorPickerContainer"></div>
+        </div>
+
+        <!-- Upload Design -->
+        <div class="control-block">
+          <label>Upload Design:</label>
+          <div id="uploadZone" class="upload-zone">
+            <p>Drag & Drop files here or</p>
+            <button id="browseBtn">Browse Files</button>
+            <input type="file" id="graphicUpload" accept="image/*" hidden />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="three.min.js"></script>
+  <script src="GLTFLoader.js"></script>
+  <script src="OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

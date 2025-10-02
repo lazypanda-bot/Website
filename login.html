@@ -1,0 +1,103 @@
+<!-- Popup Modal -->
+<div class="modal" id="auth-modal">
+  <div class="auth-box" id="auth-box">
+    <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>
+
+    <div class="forms-container">
+      <div class="signin-signup">
+
+        <!-- 🔐 Sign In Form -->
+        <form action="login.php" method="POST" class="sign-in-form">
+          <h2 class="title">Sign In</h2>
+
+          <!-- 📧 Dynamic Identifier Input -->
+          <div class="input-field" id="login-identifier-field">
+            <i class="fas fa-user" id="login-identifier-icon"></i>
+            <input type="text" name="identifier" id="login-identifier-input" placeholder="Email" required />
+          </div>
+
+          <!-- 🔒 Password -->
+          <div class="input-field">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" id="login-password" placeholder="Password" required />
+          </div>
+
+          <!-- 👁️ Show Password -->
+          <div class="checkbox-field">
+            <label>
+              <input type="checkbox" id="toggle-login-password" />Show Password
+            </label>
+          </div>
+
+          <!-- 🚪 Submit -->
+          <input type="submit" value="Login" class="auth-btn solid" />
+
+          <!-- 🌐 Social Sign In -->
+          <p class="social-text">Or sign in with:</p>
+          <div class="social-media" id="login-social">
+            <a href="#" class="social-icon" id="login-use-phone"><i class="fas fa-phone"></i></a>
+            <a href="#" class="social-icon" id="login-use-facebook"><i class="fab fa-facebook-f"></i></a>
+          </div>
+        </form>
+
+        <!-- 📝 Sign Up Form -->
+        <form action="register.php" method="POST" class="sign-up-form">
+          <h2 class="title">Sign Up</h2>
+
+          <!-- 👤 Full Name -->
+          <div class="input-field">
+            <i class="fas fa-user"></i>
+            <input type="text" name="username" placeholder="Full Name" />
+          </div>
+
+          <!-- 📧 Dynamic Identifier Input -->
+          <div class="input-field" id="reg-identifier-field">
+            <i class="fas fa-envelope" id="reg-identifier-icon"></i>
+            <input type="text" name="email" id="reg-identifier-input" placeholder="Email" required />
+          </div>
+
+          <!-- 🔒 Password -->
+          <div class="input-field">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" id="register-password" placeholder="Password" required />
+          </div>
+
+          <!-- 👁️ Show Password -->
+          <div class="checkbox-field">
+            <label>
+              <input type="checkbox" id="toggle-register-password" />Show Password
+            </label>
+          </div>
+
+          <!-- 🚪 Submit -->
+          <input type="submit" class="auth-btn" value="Register" />
+
+          <!-- 🌐 Social Sign Up -->
+          <p class="social-text">Or sign up with:</p>
+          <div class="social-media" id="reg-social">
+            <a href="#" class="social-icon" id="reg-use-phone"><i class="fas fa-phone"></i></a>
+            <a href="#" class="social-icon" id="reg-use-facebook"><i class="fab fa-facebook-f"></i></a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 🔄 Panels -->
+    <div class="panels-container">
+      <div class="panel left-panel">
+        <div class="content">
+          <h3>New here?</h3>
+          <p>Register with your personal details to use all of site features</p>
+          <button class="auth-btn transparent" id="sign-up-btn">Sign Up</button>
+        </div>
+      </div>
+      <div class="panel right-panel">
+        <div class="content">
+          <h3>One of us?</h3>
+          <p>Sign in to access your account and enjoy our services</p>
+          <button class="auth-btn transparent" id="sign-in-btn">Sign In</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

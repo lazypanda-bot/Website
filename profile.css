@@ -1,0 +1,118 @@
+body {
+    font-family: 'Poppins';
+    background-color: #f4f4f4;
+    color: #333;
+}
+.settings-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 4rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+section {
+    margin-bottom: 2rem;
+}
+.account-form h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    color: #752525;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+}
+.security-section {
+    padding-left: 230px;
+}
+.security-section h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    color: #752525;
+    border-top: 2px solid #eee;
+    padding-top: 0.5rem;
+}
+.account-flex {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.profile-image {
+    padding-top: 100px;
+}
+.profile-image img {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #9a4141;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.account-form {
+    flex: 1;
+}
+.form-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+.form-group label {
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: #752525;
+    line-height: 2.3;
+}
+.form-group input {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+    margin-left: 10px;
+    width: 500px;
+}
+.form-group input:focus {
+    border-color: #9a4141;
+    outline: none;
+}
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+}
+.btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.edit-btn {
+    background-color: #3a0d0d;
+    color: #fff;
+}
+.edit-btn:hover {
+    background-color: #9a4141;
+}
+.delete-btn {
+    background-color: #9a4141;
+    color: #fff;
+}
+.delete-btn:hover {
+    background-color: #3a0d0d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .account-flex {
+    flex-direction: column;
+    align-items: center;
+  }
+  .button-group {
+    justify-content: center;
+  }
+  .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}

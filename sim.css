@@ -1,0 +1,143 @@
+.sim-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+.sim-modal-content {
+  background-color: #fff;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1200px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  position: relative;
+}
+.sim-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #752525;
+  cursor: pointer;
+}
+.sim-viewer-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.sim-viewer-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.sim-viewer-left {
+  flex: none;
+  width: 50%;
+  height: 700px;
+  max-height: 90vh;
+  position: relative;
+}
+.sim-viewer-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+.sim-control-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sim-control-block label {
+  font-weight: 600;
+  color: #752525;
+}
+.sim-upload-zone {
+  border: 2px dashed #d33;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  background-color: #fff;
+  cursor: pointer;
+}
+.sim-upload-zone p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+#browseBtn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border: 1px solid #d33;
+  background: none;
+  color: #d33;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.sim-upload-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+.sim-upload-actions button {
+  background-color: #752525;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.sim-upload-actions button:hover {
+  background-color: #5a1c1c;
+}
+#viewerCanvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+#colorPickerContainer {
+  min-height: 220px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  position: relative;
+  z-index: 1;
+}
+.pickr .pcr-app {
+  display: block !important;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+/* #colorPickerContainer .pcr-button {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+} */
+.pickr .pcr-app .pcr-color-preview {
+  display: none !important;
+}
+.pickr .pcr-interaction input {
+  cursor: pointer;
+}
+.pickr .pcr-button {
+  display: none !important;
+}
