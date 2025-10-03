@@ -11,8 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const signUpBtn = document.getElementById('sign-up-btn');
       const signInBtn = document.getElementById('sign-in-btn');
 
+      // 🔄 Store current page for redirect
       openLogin.addEventListener('click', (e) => {
         e.preventDefault();
+        sessionStorage.setItem('redirect_after_auth', window.location.href);
         modal.classList.add('active');
         container.classList.remove('sign-up-mode');
       });
@@ -36,23 +38,28 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       requestAnimationFrame(() => {
-  // 🔐 Login password toggle
-  const toggleLoginPassword = document.getElementById('toggle-login-password');
-  const loginPasswordInput = document.getElementById('login-password');
-  if (toggleLoginPassword && loginPasswordInput) {
-    toggleLoginPassword.addEventListener('change', function () {
-      loginPasswordInput.type = this.checked ? 'text' : 'password';
-    });
-  }
+        // 🔐 Password toggles
+        const toggleLoginPassword = document.getElementById('toggle-login-password');
+        const loginPasswordInput = document.getElementById('login-password');
+        if (toggleLoginPassword && loginPasswordInput) {
+          toggleLoginPassword.addEventListener('change', function () {
+            loginPasswordInput.type = this.checked ? 'text' : 'password';
+          });
+        }
 
-  // 🔐 Register password toggle
-  const toggleRegisterPassword = document.getElementById('toggle-register-password');
-  const registerPasswordInput = document.getElementById('register-password');
-  if (toggleRegisterPassword && registerPasswordInput) {
-    toggleRegisterPassword.addEventListener('change', function () {
-      registerPasswordInput.type = this.checked ? 'text' : 'password';
-    });
-  }
+        const toggleRegisterPassword = document.getElementById('toggle-register-password');
+        const registerPasswordInput = document.getElementById('register-password');
+        if (toggleRegisterPassword && registerPasswordInput) {
+          toggleRegisterPassword.addEventListener('change', function () {
+            registerPasswordInput.type = this.checked ? 'text' : 'password';
+          });
+        }
+
+        // 🔁 Inject redirect path into both forms
+        const redirectInputs = document.querySelectorAll('#redirect-after-auth');
+        redirectInputs.forEach(input => {
+          input.value = sessionStorage.getItem('redirect_after_auth') || window.location.href;
+        });
 
         // 🔄 Sign In toggle
         const loginInput = document.getElementById('login-identifier-input');

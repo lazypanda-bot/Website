@@ -88,62 +88,7 @@ if (!isset($_SESSION['user_id'])) {
             <button class="btn edit-btn">Edit Account</button>
           </div>
         </div>
-      <!-- Security Section -->
-      <section class="security-section">
-        <h2>Security</h2>
-        <div class="form-group">
-          <label for="current-password">Current Password:</label>
-          <input type="password" id="current-password" placeholder="Enter current password" />
-        </div>
-        <div class="form-group">
-          <label for="new-password">New Password:</label>
-          <input type="password" id="new-password" placeholder="Enter new password" />
-        </div>
-        <div class="form-group">
-          <label for="confirm-password">Confirm Password:</label>
-          <input type="password" id="confirm-password" placeholder="Re-enter new password" />
-        </div>
-        <div class="button-group">
-          <button class="btn delete-btn">Delete Account</button>
-        </div>
-      </section>
-    </div>
-    
-  <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-column">
-                <h4>Customer Service</h4>
-                <p>Available 7am to 12pm</p>
-                <p>+63 917 123 4567</p>
-                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
-            </div>
-            <div class="footer-column">
-                <h4>Information</h4>
-                <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Services</h4>
-                <ul>
-                    <li>Tarpaulin Printing</li>
-                    <li>Apparel Printing</li>
-                    <li>Personalized Items</li>
-                    <li>Stickers</li>
-                    <li>Signage</li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Follow Us</h4>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
+      
     <script src="app.js"></script>
 </body>
 </html>
