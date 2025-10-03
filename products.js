@@ -16,7 +16,7 @@ navLinks.forEach(link => {
     });
   });
 
-  // Optional: Show first section by default
+  //Show first section by default
   navLinks[0].classList.add('active');
   contentBoxes[0].classList.add('active');
 

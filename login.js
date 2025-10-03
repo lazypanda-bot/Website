@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('login.html')
+  fetch('login.php')
     .then(res => res.text())
     .then(html => {
       document.getElementById('login-container').innerHTML = html;

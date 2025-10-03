@@ -18,9 +18,9 @@
 <body>
     <section id="header">
         <div class="left-nav">
-            <a href="home.html"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
+            <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
             <ul class="desktop-nav">
-                <li><a href="home.html" class="nav-link">Home</a></li>
+                <li><a href="home.php" class="nav-link">Home</a></li>
                 <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                 <li><a href="products.html" class="nav-link">Products</a></li>
                 <li><a href="about.html" class="nav-link">About</a></li>
@@ -33,14 +33,14 @@
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <a href="cart.html" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
-            <li><a href="login.html" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
+            <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="login.html" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                    <a href="login.php" class="auth-link"><i class="fa-solid fa-user"></i></a>
                 </div>      
                 <ul class="mobile-nav">
-                    <li><a href="home.html" class="nav-link">Home</a></li>
+                    <li><a href="home.php" class="nav-link">Home</a></li>
                     <li><a href="services.html" class="nav-link">Services</a></li>
                     <li><a href="products.html" class="nav-link">Products</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
@@ -54,30 +54,24 @@
     <div class="back-container">
         <button onclick="history.back()" class="back-btn">← Back</button>
     </div>
-  <!-- 🛒 Cart Container -->
-  <div class="cart-container">
-    <h2>Your Cart</h2>
-
-    <!-- 🧺 Cart Items -->
-    <div class="cart-items" id="cart-items">
-      <!-- Items will be injected here dynamically -->
-      <p class="empty-cart-msg">Your cart is currently empty.</p>
+    <div class="cart-container">
+        <h2>Your Cart</h2>
+        <div class="cart-items" id="cart-items">
+            <p class="empty-cart-msg">Your cart is currently empty.</p>
+        </div>
+        <div class="cart-summary" id="cart-summary">
+            <h3>Total: ₱0.00</h3>
+            <button class="checkout-btn" disabled>Proceed to Checkout</button>
+        </div>
     </div>
-
-    <!-- 💰 Cart Summary -->
-    <div class="cart-summary" id="cart-summary">
-      <h3>Total: ₱0.00</h3>
-      <button class="checkout-btn" disabled>Proceed to Checkout</button>
-    </div>
-  </div>
 
     <footer id="footer">
         <div class="footer-container">
             <div class="footer-column">
                 <h4>Customer Service</h4>
                 <p>Available 7am to 12pm</p>
-                <p>📞 +63 917 123 4567</p>
-                <p>📍 Zamoras St., Ozamis City, Misamis Occidental</p>
+                <p>+63 917 123 4567</p>
+                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
             </div>
             <div class="footer-column">
                 <h4>Information</h4>
@@ -113,7 +107,7 @@
             <div class="chat-logo">
                 <img src="img/logo.png" alt="Chat Logo" />
             </div>
-            <div class="chat-menu">•••</div>
+            <div class="chat-menu">put +</div>
         </div>
         <div class="chat-thread" id="chatThread">
         <!-- Real-time messages will be injected here -->

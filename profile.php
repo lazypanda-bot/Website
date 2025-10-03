@@ -1,19 +1,14 @@
 <?php
 session_start();
-if (!isset($_SESSION['email'])) {
-  header("Location: login.html");
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.php");
   exit();
 }
-
-require 'database.php';
-$email = $_SESSION['email'];
-
-$stmt = $conn->prepare("SELECT username, email, phone FROM users WHERE email = ?");
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
 ?>
+<h2>Welcome, <?= htmlspecialchars($_SESSION['username']) ?>!</h2>
+<p>Email: <?= htmlspecialchars($_SESSION['email']) ?></p>
+<a href="logout.php">Logout</a>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -29,10 +24,10 @@ $user = $result->fetch_assoc();
 <body>
   <section id="header">
         <div class="left-nav">
-            <a href="home.html"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
+            <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
             <ul class="desktop-nav">
-                <li><a href="home.html" class="nav-link">Home</a></li>
-                <li><a href="services.html" class="nav-link">Services</a></li>
+                <li><a href="home.php" class="nav-link">Home</a></li>
+                <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                 <li><a href="products.html" class="nav-link">Products</a></li>
                 <li><a href="about.html" class="nav-link">About</a></li>
                 <li><a href="contact.html" class="nav-link">Contact</a></li>
@@ -48,11 +43,11 @@ $user = $result->fetch_assoc();
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="login.html" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                    <a href="login.php" class="auth-link"><i class="fa-solid fa-user"></i></a>
                 </div>      
                 <ul class="mobile-nav">
-                    <li><a href="home.html" class="nav-link">Home</a></li>
-                    <li><a href="services.html" class="nav-link">Services</a></li>
+                    <li><a href="home.php" class="nav-link">Home</a></li>
+                    <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                     <li><a href="products.html" class="nav-link">Products</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
@@ -119,8 +114,8 @@ $user = $result->fetch_assoc();
             <div class="footer-column">
                 <h4>Customer Service</h4>
                 <p>Available 7am to 12pm</p>
-                <p>📞 +63 917 123 4567</p>
-                <p>📍 Zamoras St., Ozamis City, Misamis Occidental</p>
+                <p>+63 917 123 4567</p>
+                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
             </div>
             <div class="footer-column">
                 <h4>Information</h4>
