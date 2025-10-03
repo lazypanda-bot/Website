@@ -41,15 +41,15 @@
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <a href="cart.php" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
-            <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
+            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="login.php" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                    <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <li><a href="services.php" class="nav-link">Services</a></li>
+                    <!-- <li><a href="services.php" class="nav-link">Services</a></li> -->
                     <li><a href="products.php" class="nav-link">Products</a></li>
                     <li><a href="about.php" class="nav-link">About</a></li>
                     <li><a href="contact.php" class="nav-link">Contact</a></li>

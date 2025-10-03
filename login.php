@@ -3,26 +3,22 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Handle redirect origin
-if (isset($_POST['redirect_after_auth'])) {
-  $_SESSION['redirect_after_auth'] = $_POST['redirect_after_auth'];
-} elseif (!isset($_SESSION['redirect_after_auth'])) {
-  $_SESSION['redirect_after_auth'] = $_SERVER['REQUEST_URI'];
-}
+// 🔁 Handle redirect origin
+$_SESSION['redirect_after_auth'] = $_POST['redirect_after_auth'] ?? $_SESSION['redirect_after_auth'] ?? $_SERVER['REQUEST_URI'];
 
 $loginMessage = "";
 $registerMessage = "";
 
-// Connect to database
+// 🔌 Connect to database
 $conn = new mysqli("localhost", "root", "", "printshop");
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
 
-// Check form type
+// 🧠 Determine form type
 $formType = $_POST['form_type'] ?? null;
 
-// Handle Login
+// 🔐 Handle Login
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   $email = trim($_POST['identifier'] ?? '');
   $password = $_POST['password'] ?? '';
@@ -41,8 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
 
-        $redirect = $_SESSION['redirect_after_auth'] ?? 'home.php';
-        header("Location: $redirect");
+        header("Location: " . $_SESSION['redirect_after_auth']);
         exit();
       } else {
         $loginMessage = "Incorrect password.";
@@ -56,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   }
 }
 
-// Handle Registration
+// 📝 Handle Registration
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
   $username = trim($_POST['username'] ?? '');
   $email = trim($_POST['email'] ?? '');
@@ -75,13 +70,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
       $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
       $stmt->bind_param("sss", $username, $email, $password);
       if ($stmt->execute()) {
-        $newUserId = $stmt->insert_id;
-        $_SESSION['user_id'] = $newUserId;
+        $_SESSION['user_id'] = $stmt->insert_id;
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
 
-        $redirect = $_SESSION['redirect_after_auth'] ?? 'home.php';
-        header("Location: $redirect");
+        header("Location: " . $_SESSION['redirect_after_auth']);
         exit();
       } else {
         $registerMessage = "Error: " . $stmt->error;
@@ -96,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
 $conn->close();
 ?>
 
+<!-- 🔒 Auth Modal -->
 <div class="modal" id="auth-modal">
   <div class="auth-box" id="auth-box">
     <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>
@@ -103,11 +97,10 @@ $conn->close();
     <div class="forms-container">
       <div class="signin-signup">
 
-        <!-- Sign In Form -->
+        <!-- 🔐 Sign In Form -->
         <form action="login.php" method="POST" class="sign-in-form">
           <input type="hidden" name="form_type" value="login" />
-          <input type="hidden" name="redirect_to" value="<?= $_SESSION['redirect_after_auth'] ?? 'home.php' ?>" />
-          <input type="hidden" name="redirect_after_auth" id="redirect-after-auth" />
+          <input type="hidden" name="redirect_after_auth" id="login-redirect-after-auth" />
 
           <h2 class="title">Sign In</h2>
 
@@ -122,9 +115,7 @@ $conn->close();
           </div>
 
           <div class="checkbox-field">
-            <label>
-              <input type="checkbox" id="toggle-login-password" />Show Password
-            </label>
+            <label><input type="checkbox" id="toggle-login-password" />Show Password</label>
           </div>
 
           <input type="submit" value="Login" class="auth-btn solid" />
@@ -136,11 +127,10 @@ $conn->close();
           </div>
         </form>
 
-        <!-- Sign Up Form -->
+        <!-- 📝 Sign Up Form -->
         <form action="login.php" method="POST" class="sign-up-form">
           <input type="hidden" name="form_type" value="register" />
-          <input type="hidden" name="redirect_to" value="<?= $_SESSION['redirect_after_auth'] ?? 'home.php' ?>" />
-          <input type="hidden" name="redirect_after_auth" id="redirect-after-auth" />
+          <input type="hidden" name="redirect_after_auth" id="register-redirect-after-auth" />
 
           <h2 class="title">Sign Up</h2>
 
@@ -160,9 +150,7 @@ $conn->close();
           </div>
 
           <div class="checkbox-field">
-            <label>
-              <input type="checkbox" id="toggle-register-password" />Show Password
-            </label>
+            <label><input type="checkbox" id="toggle-register-password" />Show Password</label>
           </div>
 
           <input type="submit" class="auth-btn" value="Register" />
@@ -176,6 +164,7 @@ $conn->close();
       </div>
     </div>
 
+    <!-- 🔁 Panel Switch -->
     <div class="panels-container">
       <div class="panel left-panel">
         <div class="content">

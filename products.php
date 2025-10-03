@@ -12,6 +12,15 @@
   <link rel="stylesheet" href="message.css">
   <link rel="stylesheet" href="products.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+
+  <?php
+    session_start();
+    $isAuthenticated = isset($_SESSION['user_id']);
+    ?>
+<script>
+    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+</script>
+
 </head>
 <body>
     <section id="header">
@@ -35,7 +44,7 @@
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="login.php" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                    <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>

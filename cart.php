@@ -14,6 +14,15 @@
   <link rel="stylesheet" href="message.css">
   <link rel="stylesheet" href="cart.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+
+<?php
+    session_start();
+    $isAuthenticated = isset($_SESSION['user_id']);
+    ?>
+<script>
+    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+</script>
+
 </head>
 <body>
     <section id="header">

@@ -1,44 +1,70 @@
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('login.php')
+  const profileIcon = document.getElementById('profile-icon');
+  const mobileProfileIcon = document.getElementById('mobile-profile-icon');
+
+  function handleProfileClick(e) {
+    e.preventDefault();
+    if (window.isAuthenticated) {
+      window.location.href = 'profile.php';
+    } else {
+      sessionStorage.setItem('redirect_after_auth', window.location.href);
+      const modal = document.getElementById('auth-modal');
+      modal?.classList.add('active');
+    }
+  }
+
+  if (profileIcon) profileIcon.addEventListener('click', handleProfileClick);
+  if (mobileProfileIcon) mobileProfileIcon.addEventListener('click', handleProfileClick);
+  
+  fetch('login.php?nocache=' + Date.now()) // 🔁 Prevent caching
     .then(res => res.text())
     .then(html => {
+      console.log('Fetched login.php:', html);
       document.getElementById('login-container').innerHTML = html;
 
       const modal = document.getElementById('auth-modal');
       const container = document.getElementById('auth-box');
-      const openLogin = document.getElementById('open-login');
+      // const openLogin = document.getElementById('open-login');
       const closeBtn = document.getElementById('modal-close');
       const signUpBtn = document.getElementById('sign-up-btn');
       const signInBtn = document.getElementById('sign-in-btn');
+      
+      // if (openLogin && modal && container) {
+      //   openLogin.addEventListener('click', (e) => {
+      //     e.preventDefault();
+      //     sessionStorage.setItem('redirect_after_auth', window.location.href);
+      //     modal.classList.add('active');
+      //     container.classList.remove('sign-up-mode');
+      //   });
+      // }
 
-      // 🔄 Store current page for redirect
-      openLogin.addEventListener('click', (e) => {
-        e.preventDefault();
-        sessionStorage.setItem('redirect_after_auth', window.location.href);
-        modal.classList.add('active');
-        container.classList.remove('sign-up-mode');
-      });
-
-      closeBtn.addEventListener('click', () => {
-        modal.classList.remove('active');
-      });
-
-      signUpBtn.addEventListener('click', () => {
-        container.classList.add('sign-up-mode');
-      });
-
-      signInBtn.addEventListener('click', () => {
-        container.classList.remove('sign-up-mode');
-      });
-
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
+      if (closeBtn && modal) {
+        closeBtn.addEventListener('click', () => {
           modal.classList.remove('active');
-        }
-      });
+        });
+      }
+
+      if (signUpBtn && container) {
+        signUpBtn.addEventListener('click', () => {
+          container.classList.add('sign-up-mode');
+        });
+      }
+
+      if (signInBtn && container) {
+        signInBtn.addEventListener('click', () => {
+          container.classList.remove('sign-up-mode');
+        });
+      }
+
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.classList.remove('active');
+          }
+        });
+      }
 
       requestAnimationFrame(() => {
-        // 🔐 Password toggles
         const toggleLoginPassword = document.getElementById('toggle-login-password');
         const loginPasswordInput = document.getElementById('login-password');
         if (toggleLoginPassword && loginPasswordInput) {
@@ -55,13 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        // 🔁 Inject redirect path into both forms
-        const redirectInputs = document.querySelectorAll('#redirect-after-auth');
-        redirectInputs.forEach(input => {
-          input.value = sessionStorage.getItem('redirect_after_auth') || window.location.href;
-        });
+        const loginRedirectInput = document.getElementById('login-redirect-after-auth');
+        const registerRedirectInput = document.getElementById('register-redirect-after-auth');
+        const redirectPath = sessionStorage.getItem('redirect_after_auth') || window.location.href;
 
-        // 🔄 Sign In toggle
+        if (loginRedirectInput) loginRedirectInput.value = redirectPath;
+        if (registerRedirectInput) registerRedirectInput.value = redirectPath;
+
         const loginInput = document.getElementById('login-identifier-input');
         const loginIcon = document.getElementById('login-identifier-icon');
         const loginSocial = document.getElementById('login-social');
@@ -69,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginUseFacebook = document.getElementById('login-use-facebook');
 
         function addLoginEmailIcon() {
-          if (!document.getElementById('login-use-email')) {
+          if (!document.getElementById('login-use-email') && loginSocial && loginInput && loginIcon) {
             const emailIcon = document.createElement('a');
             emailIcon.href = '#';
             emailIcon.className = 'social-icon';
@@ -88,25 +114,28 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        loginUsePhone.addEventListener('click', (e) => {
-          e.preventDefault();
-          loginInput.placeholder = 'Phone Number';
-          loginIcon.className = 'fas fa-phone';
-          loginUsePhone.remove();
-          if (!document.getElementById('login-use-facebook')) loginSocial.prepend(loginUseFacebook);
-          addLoginEmailIcon();
-        });
+        if (loginUsePhone && loginInput && loginIcon && loginSocial) {
+          loginUsePhone.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginInput.placeholder = 'Phone Number';
+            loginIcon.className = 'fas fa-phone';
+            loginUsePhone.remove();
+            if (!document.getElementById('login-use-facebook')) loginSocial.prepend(loginUseFacebook);
+            addLoginEmailIcon();
+          });
+        }
 
-        loginUseFacebook.addEventListener('click', (e) => {
-          e.preventDefault();
-          loginInput.placeholder = 'Facebook Email';
-          loginIcon.className = 'fab fa-facebook-f';
-          loginUseFacebook.remove();
-          if (!document.getElementById('login-use-phone')) loginSocial.prepend(loginUsePhone);
-          addLoginEmailIcon();
-        });
+        if (loginUseFacebook && loginInput && loginIcon && loginSocial) {
+          loginUseFacebook.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginInput.placeholder = 'Facebook Email';
+            loginIcon.className = 'fab fa-facebook-f';
+            loginUseFacebook.remove();
+            if (!document.getElementById('login-use-phone')) loginSocial.prepend(loginUsePhone);
+            addLoginEmailIcon();
+          });
+        }
 
-        // 🔄 Sign Up toggle
         const regInput = document.getElementById('reg-identifier-input');
         const regIcon = document.getElementById('reg-identifier-icon');
         const regSocial = document.getElementById('reg-social');
@@ -114,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const regUseFacebook = document.getElementById('reg-use-facebook');
 
         function addRegEmailIcon() {
-          if (!document.getElementById('reg-use-email')) {
+          if (!document.getElementById('reg-use-email') && regSocial && regInput && regIcon) {
             const emailIcon = document.createElement('a');
             emailIcon.href = '#';
             emailIcon.className = 'social-icon';
@@ -133,49 +162,44 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        regUsePhone.addEventListener('click', (e) => {
-          e.preventDefault();
-          regInput.placeholder = 'Phone Number';
-          regIcon.className = 'fas fa-phone';
-          regUsePhone.remove();
-          if (!document.getElementById('reg-use-facebook')) regSocial.prepend(regUseFacebook);
-          addRegEmailIcon();
-        });
+        if (regUsePhone && regInput && regIcon && regSocial) {
+          regUsePhone.addEventListener('click', (e) => {
+            e.preventDefault();
+            regInput.placeholder = 'Phone Number';
+            regIcon.className = 'fas fa-phone';
+            regUsePhone.remove();
+            if (!document.getElementById('reg-use-facebook')) regSocial.prepend(regUseFacebook);
+            addRegEmailIcon();
+          });
+        }
 
-        regUseFacebook.addEventListener('click', (e) => {
-          e.preventDefault();
-          regInput.placeholder = 'Facebook Email';
-          regIcon.className = 'fab fa-facebook-f';
-          regUseFacebook.remove();
-          if (!document.getElementById('reg-use-phone')) regSocial.prepend(regUsePhone);
-          addRegEmailIcon();
-        });
+        if (regUseFacebook && regInput && regIcon && regSocial) {
+          regUseFacebook.addEventListener('click', (e) => {
+            e.preventDefault();
+            regInput.placeholder = 'Facebook Email';
+            regIcon.className = 'fab fa-facebook-f';
+            regUseFacebook.remove();
+            if (!document.getElementById('reg-use-phone')) regSocial.prepend(regUsePhone);
+            addRegEmailIcon();
+          });
+        }
       });
-    });
-});
-//profile
-document.addEventListener('DOMContentLoaded', () => {
-  const profileIcon = document.getElementById('profile-icon');
-  const modal = document.getElementById('auth-modal');
 
-  profileIcon.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (window.isAuthenticated) {
-      window.location.href = 'profile.php';
-    } else {
-      sessionStorage.setItem('redirect_after_auth', window.location.href);
-      modal.classList.add('active');
-    }
-  });
-});
-//mobile menu
-const mobileProfileIcon = document.getElementById('mobile-profile-icon');
-mobileProfileIcon.addEventListener('click', (e) => {
-  e.preventDefault();
-  if (window.isAuthenticated) {
-    window.location.href = 'profile.php';
-  } else {
-    sessionStorage.setItem('redirect_after_auth', window.location.href);
-    modal.classList.add('active');
-  }
+      // ✅ Profile icon logic (desktop + mobile)
+      const profileIcon = document.getElementById('profile-icon');
+      const mobileProfileIcon = document.getElementById('mobile-profile-icon');
+
+      function handleProfileClick(e) {
+        e.preventDefault();
+        if (window.isAuthenticated) {
+          window.location.href = 'profile.php';
+        } else if (modal) {
+          sessionStorage.setItem('redirect_after_auth', window.location.href);
+          modal.classList.add('active');
+        }
+      }
+
+      if (profileIcon) profileIcon.addEventListener('click', handleProfileClick);
+      if (mobileProfileIcon) mobileProfileIcon.addEventListener('click', handleProfileClick);
+    });
 });
