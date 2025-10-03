@@ -20,9 +20,9 @@
             <ul class="desktop-nav">
                 <li><a href="home.php" class="nav-link">Home</a></li>
                 <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
-                <li><a href="products.html" class="nav-link">Products</a></li>
-                <li><a href="about.html" class="nav-link">About</a></li>
-                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="products.php" class="nav-link">Products</a></li>
+                <li><a href="about.php" class="nav-link">About</a></li>
+                <li><a href="contact.php" class="nav-link">Contact</a></li>
             </ul>
         </div>
         <div class="right-nav">
@@ -30,7 +30,7 @@
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <a href="cart.html" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
+            <a href="cart.php" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
             <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
@@ -39,10 +39,10 @@
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <li><a href="services.html" class="nav-link">Services</a></li>
-                    <li><a href="products.html" class="nav-link">Products</a></li>
-                    <li><a href="about.html" class="nav-link">About</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="services.php" class="nav-link">Services</a></li>
+                    <li><a href="products.php" class="nav-link">Products</a></li>
+                    <li><a href="about.php" class="nav-link">About</a></li>
+                    <li><a href="contact.php" class="nav-link">Contact</a></li>
                 </ul>
             </div>
             <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
@@ -173,8 +173,8 @@
             <div class="footer-column">
                 <h4>Information</h4>
                 <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="about.php">About</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-column">

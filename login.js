@@ -153,3 +153,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 });
+//profile
+document.addEventListener('DOMContentLoaded', () => {
+  const profileIcon = document.getElementById('profile-icon');
+  const modal = document.getElementById('auth-modal');
+
+  profileIcon.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (window.isAuthenticated) {
+      window.location.href = 'profile.php';
+    } else {
+      sessionStorage.setItem('redirect_after_auth', window.location.href);
+      modal.classList.add('active');
+    }
+  });
+});
+//mobile menu
+const mobileProfileIcon = document.getElementById('mobile-profile-icon');
+mobileProfileIcon.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (window.isAuthenticated) {
+    window.location.href = 'profile.php';
+  } else {
+    sessionStorage.setItem('redirect_after_auth', window.location.href);
+    modal.classList.add('active');
+  }
+});

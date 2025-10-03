@@ -20,9 +20,9 @@
             <ul class="desktop-nav">
                 <li><a href="home.php" class="nav-link">Home</a></li>
                 <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
-                <li><a href="products.html" class="nav-link">Products</a></li>
-                <li><a href="about.html" class="nav-link">About</a></li>
-                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="products.php" class="nav-link">Products</a></li>
+                <li><a href="about.php" class="nav-link">About</a></li>
+                <li><a href="contact.php" class="nav-link">Contact</a></li>
             </ul>
         </div>
         <div class="right-nav">
@@ -40,9 +40,9 @@
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
                     <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
-                    <li><a href="products.html" class="nav-link">Products</a></li>
-                    <li><a href="about.html" class="nav-link">About</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="products.php" class="nav-link">Products</a></li>
+                    <li><a href="about.php" class="nav-link">About</a></li>
+                    <li><a href="contact.php" class="nav-link">Contact</a></li>
                 </ul>
             </div>
             <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
@@ -216,8 +216,8 @@
             <div class="footer-column">
                 <h4>Information</h4>
                 <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="about.php">About</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-column">

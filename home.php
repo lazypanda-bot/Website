@@ -1,8 +1,4 @@
-﻿<?php
-session_start();
-?>
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -18,6 +14,15 @@ session_start();
   <link rel="stylesheet" href="message.css">
   <link rel="stylesheet" href="services.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+
+<?php
+    session_start();
+    $isAuthenticated = isset($_SESSION['user_id']);
+    ?>
+<script>
+    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+</script>
+
 </head>
 <body>
     <section id="header">
@@ -37,15 +42,17 @@ session_start();
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <a href="cart.html" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
-            <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
+            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="login.php" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                    <div class="menu-user">
+                        <a href="#" class="auth-link" id="mobile-profile-icon"><i class="fa-solid fa-user"></i></a>
+                    </div>
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <li><a href="services.html" class="nav-link">Services</a></li>
+                    <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                     <li><a href="products.html" class="nav-link">Products</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
