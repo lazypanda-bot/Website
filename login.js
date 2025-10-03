@@ -36,22 +36,23 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       requestAnimationFrame(() => {
-        // 🔐 Password toggles
-        const toggleLoginPassword = document.getElementById('toggle-login-password');
-        const loginPasswordInput = document.getElementById('login-password');
-        if (toggleLoginPassword && loginPasswordInput) {
-          toggleLoginPassword.addEventListener('change', function () {
-            loginPasswordInput.type = this.checked ? 'text' : 'password';
-          });
-        }
+  // 🔐 Login password toggle
+  const toggleLoginPassword = document.getElementById('toggle-login-password');
+  const loginPasswordInput = document.getElementById('login-password');
+  if (toggleLoginPassword && loginPasswordInput) {
+    toggleLoginPassword.addEventListener('change', function () {
+      loginPasswordInput.type = this.checked ? 'text' : 'password';
+    });
+  }
 
-        const toggleRegisterPassword = document.getElementById('toggle-register-password');
-        const registerPasswordInput = document.getElementById('register-password');
-        if (toggleRegisterPassword && registerPasswordInput) {
-          toggleRegisterPassword.addEventListener('change', function () {
-            registerPasswordInput.type = this.checked ? 'text' : 'password';
-          });
-        }
+  // 🔐 Register password toggle
+  const toggleRegisterPassword = document.getElementById('toggle-register-password');
+  const registerPasswordInput = document.getElementById('register-password');
+  if (toggleRegisterPassword && registerPasswordInput) {
+    toggleRegisterPassword.addEventListener('change', function () {
+      registerPasswordInput.type = this.checked ? 'text' : 'password';
+    });
+  }
 
         // 🔄 Sign In toggle
         const loginInput = document.getElementById('login-identifier-input');
