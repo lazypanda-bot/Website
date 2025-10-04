@@ -105,7 +105,7 @@
                     <h1>Bring your ideas to life</h1>
                     <p><span class="redtxt">ILovePrintshoppe</span> turns your ideas into reality</p>
                     <p>We're your one-stop shop for your printing needs</p>
-                    <button>Order Now</button>
+                    <button id="order-now-btn">Order Now</button>
                 </div>
                 <!--Why Choose Us + Inner Carousel-->
                 <div class="swiper-slide choose">
@@ -268,10 +268,20 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-    <script src="app.js"></script>
-    <script src="login.js"></script>
-    <script src="message.js"></script>
-    <script src="services.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+        <script src="app.js"></script>
+        <script src="login.js"></script>
+        <script src="message.js"></script>
+        <script src="services.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var orderBtn = document.getElementById('order-now-btn');
+                if (orderBtn) {
+                    orderBtn.addEventListener('click', function() {
+                        window.location.href = 'products.php';
+                    });
+                }
+            });
+        </script>
 </body>
 </html>

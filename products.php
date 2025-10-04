@@ -85,25 +85,33 @@
                 <h3>Apparel Printing</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <a href="shirt.php">
-                            <img src="img/snorlax.png" alt="" class="service-img">
-                            <h4>T-Shirt Printing</h4>
+                        <a href="product-details.php?name=T-Shirt%20Printing&img=img/snorlax.png&price=150">
+                            <img src="img/snorlax.png" alt="T-Shirt Printing" class="service-img">
                         </a>
+                        <h4>T-Shirt Printing</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Polo%20Shirts&img=img/snorlax.png&price=180">
+                            <img src="img/snorlax.png" alt="Polo Shirts" class="service-img">
+                        </a>
                         <h4>Polo Shirts</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Jerseys&img=img/snorlax.png&price=200">
+                            <img src="img/snorlax.png" alt="Jerseys" class="service-img">
+                        </a>
                         <h4>Jerseys</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Hoodies&img=img/snorlax.png&price=250">
+                            <img src="img/snorlax.png" alt="Hoodies" class="service-img">
+                        </a>
                         <h4>Hoodies</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Caps&img=img/snorlax.png&price=100">
+                            <img src="img/snorlax.png" alt="Caps" class="service-img">
+                        </a>
                         <h4>Caps</h4>
                     </div>
                 </div>
@@ -112,37 +120,51 @@
                 <h3>Personalized Printing</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <a href="mugs.php">
-                            <img src="img/snorlax.png" alt="" class="service-img">
-                            <h4>Mugs</h4>
+                        <a href="product-details.php?name=Mug%20Printing&img=img/snorlax.png&price=120">
+                            <img src="img/snorlax.png" alt="Mugs" class="service-img">
                         </a>
+                        <h4>Mugs</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Plate%20Printing&img=img/snorlax.png&price=110">
+                            <img src="img/snorlax.png" alt="Plate" class="service-img">
+                        </a>
                         <h4>Plate</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Tumbler%20Printing&img=img/snorlax.png&price=130">
+                            <img src="img/snorlax.png" alt="Tumbler" class="service-img">
+                        </a>
                         <h4>Tumbler</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Keychain%20Printing&img=img/snorlax.png&price=50">
+                            <img src="img/snorlax.png" alt="Keychain" class="service-img">
+                        </a>
                         <h4>Keychain</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Ref%20Magnet%20Printing&img=img/snorlax.png&price=60">
+                            <img src="img/snorlax.png" alt="Ref Magnet" class="service-img">
+                        </a>
                         <h4>Ref Magnet</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Mouse%20Pad%20Printing&img=img/snorlax.png&price=70">
+                            <img src="img/snorlax.png" alt="Mouse Pad" class="service-img">
+                        </a>
                         <h4>Mouse Pad</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=Plaque%20Printing&img=img/snorlax.png&price=200">
+                            <img src="img/snorlax.png" alt="Plaque / Medal" class="service-img">
+                        </a>
                         <h4>Plaque / Medal</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="product-details.php?name=ID%20Lanyard%20Printing&img=img/snorlax.png&price=40">
+                            <img src="img/snorlax.png" alt="ID / Lanyard" class="service-img">
+                        </a>
                         <h4>ID / Lanyard</h4>
                     </div>
                 </div>
@@ -151,23 +173,33 @@
                 <h3>Stickers</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Vinyl White" class="service-img">
+                        </a>
                         <h4>Vinyl White</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Clear" class="service-img">
+                        </a>
                         <h4>Clear</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Perforated" class="service-img">
+                        </a>
                         <h4>Perforated</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Frosted" class="service-img">
+                        </a>
                         <h4>Frosted</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="3M Reflective" class="service-img">
+                        </a>
                         <h4>3M Reflective</h4>
                     </div>
                 </div>
@@ -176,19 +208,27 @@
                 <h3>Signages</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Printable Panaflex" class="service-img">
+                        </a>
                         <h4>Printable Panaflex</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Panaflex with Sticker" class="service-img">
+                        </a>
                         <h4>Panaflex with Sticker</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Acrylic Build-Up" class="service-img">
+                        </a>
                         <h4>Acrylic Build-Up</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Stainless" class="service-img">
+                        </a>
                         <h4>Stainless</h4>
                     </div>
                 </div>
@@ -197,19 +237,24 @@
                 <h3>Tailoring Services</h3>
                 <div class="service-grid">            
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Repair Services" class="service-img">
+                        </a>
                         <h4>Repair Services</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Fit Adjustment" class="service-img">
+                        </a>
                         <h4>Fit Adjustment</h4>
                     </div>
                     <div class="service-card">
-                        <img src="img/snorlax.png" alt="" class="service-img">
+                        <a href="#">
+                            <img src="img/snorlax.png" alt="Everyday & School Clothes" class="service-img">
+                        </a>
                         <h4>Everyday & School Clothes</h4>
                     </div>
                 </div>
-            </section>
         </div>
     </div>
 
@@ -244,7 +289,6 @@
                 <div class="social-icons">
                     <a href="#"><i class="fab fa-facebook"></i></a>
                     <a href="#"><i class="fab fa-instagram"></i></a>
-                </div>
             </div>
         </div>
     </footer>
@@ -261,7 +305,7 @@
         <!-- messages will be inserted -->
         </div>
         <div class="chat-input">
-            <button class="icon-btn">edit</button>
+                                        <a href="product-details.php?name=Tote%20Bag%20Printing&img=img/tote.png&price=100">
             <input type="text" placeholder="Type here..." />
             <button class="icon-btn">button</button>
         </div>

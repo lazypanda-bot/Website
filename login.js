@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setRedirectInput();
     }
   }
+  window.openLoginModal = openLoginModal;
 
   function setRedirectInput() {
     const loginRedirectInput = document.getElementById('login-redirect-after-auth');

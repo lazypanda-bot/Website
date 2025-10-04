@@ -1,3 +1,41 @@
+/* Style for the plus button in the thumbnail row */
+.thumbnail-row button#add-thumbnail-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border: 2px dashed #ccc;
+    background: #fafafa;
+    border-radius: 8px;
+    font-size: 2rem;
+    color: #888;
+    cursor: pointer;
+    margin: 0 8px;
+    transition: border-color 0.2s, background 0.2s;
+}
+.thumbnail-row button#add-thumbnail-btn:hover {
+    border-color: #752525;
+    background: #f5eaea;
+    color: #752525;
+}
+.product-static-box {
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #111;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #ccc;
+    width: 170px;
+    box-sizing: border-box;
+    line-height: 1.2;
+    white-space: nowrap;
+}
 .product-listing {
     max-width: 1200px;
     margin: 0 auto;
@@ -84,9 +122,13 @@
     padding-right: 140px;
 }
 .product-text h2 {
-    font-size: 2rem;
+    font-size: 1.2rem;
     color: #752525;
-    margin-bottom: 10px;
+    margin: 0;
+    padding-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    text-align: center;
 }
 .product-description {
     font-size: 1rem;
@@ -130,12 +172,16 @@
     box-sizing: border-box;
 }
 .product-options-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: nowrap;
-    margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px 32px;
+        margin-top: 20px;
+        align-items: end;
+}
+@media (max-width: 700px) {
+    .product-options-row {
+        grid-template-columns: 1fr;
+    }
 }
 .form-group {
     display: flex;

@@ -12,6 +12,7 @@
   <link href="login.css" rel="stylesheet" />
   <link rel="stylesheet" href="message.css">
   <link rel="stylesheet" href="sim.css">
+  <link rel="stylesheet" href="login.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
 
@@ -22,6 +23,7 @@ $isAuthenticated = isset($_SESSION['user_id']);
 <script>
   window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
+<script src="login.js"></script>
 
 <body>
     <section id="header">
@@ -54,7 +56,7 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     <li><a href="about.php" class="nav-link">About</a></li>
                     <li><a href="contact.php" class="nav-link">Contact</a></li>
                 </ul>
-            </div>
+                        </div>
             <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
         </div>
     </section>
@@ -71,7 +73,9 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     <img src="img/snorlax.png" alt="Mug 1" class="thumbnail" onclick="changeImage(this)" />
                     <img src="img/snorlax.png" alt="Mug 2" class="thumbnail" onclick="changeImage(this)" />
                     <img src="img/snorlax.png" alt="Mug 3" class="thumbnail" onclick="changeImage(this)" />
-                    <img src="img/mugs2.jpg" alt="Mug 4" class="thumbnail" onclick="changeImage(this)" />
+                    <button type="button" id="add-thumbnail-btn" onclick="addThumbnail()">
+                        <span>+</span>
+                    </button>
                 </div>
             </div>
         <div class="product-text">
@@ -104,7 +108,8 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     <p class="step-note">Follow the steps below to place your order.</p>
                     <div class="details-container">
                         <form class="product-options-row">
-                            <div class="form-group">
+                            <!-- Row 1: Product Name and Size -->
+                            <div class="form-group" style="grid-column: 1;">
                                 <label for="product-name">Product Name</label>
                                 <div class="custom-dropdown" id="productDropdown">
                                     <button type="button" class="dropdown-toggle" onclick="toggleDropdown()">One Piece Mug</button>
@@ -116,7 +121,7 @@ $isAuthenticated = isset($_SESSION['user_id']);
                                     <input type="hidden" name="product-name" id="product-name" value="One Piece Mug" />
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" style="grid-column: 2;">
                                 <label for="size">Size</label>
                                 <div class="custom-dropdown" id="sizeDropdown">
                                     <button type="button" class="dropdown-toggle" onclick="toggleSizeDropdown()">12oz</button>
@@ -127,12 +132,20 @@ $isAuthenticated = isset($_SESSION['user_id']);
                                     <input type="hidden" name="size" id="size" value="12oz" />
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <!-- Row 2: Quantity and Price -->
+                            <div class="form-group" style="grid-column: 1;">
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
                                     <button type="button" onclick="adjustQuantity(-1)">−</button>
                                     <input type="number" id="quantity" name="quantity" value="0" min="0" />
                                     <button type="button" onclick="adjustQuantity(1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group price-group" style="grid-column: 2;">
+                                <label for="product-price">Price</label>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span style="font-size:1.1em;color:#752525;font-weight:bold;">₱</span>
+                                    <input type="number" id="product-price" name="product-price" value="150" min="0" step="0.01" style="padding:10px;border:1px solid #ccc;border-radius:8px;font-size:1rem;width:100px;box-sizing:border-box;font-family:'Poppins',sans-serif;">
                                 </div>
                             </div>
                         </form>
@@ -202,7 +215,103 @@ $isAuthenticated = isset($_SESSION['user_id']);
             </div>
         </div>
     </footer>
-    <div id="login-container"></div>
+        <!-- Login Modal Inline Start -->
+        <div class="modal" id="auth-modal">
+            <div class="auth-box" id="auth-box">
+                <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>
+
+                <div class="forms-container">
+                    <div class="signin-signup">
+
+                        <form action="login.php" method="POST" class="sign-in-form">
+                            <input type="hidden" name="form_type" value="login" />
+                            <input type="hidden" name="redirect_after_auth" id="login-redirect-after-auth" />
+
+                            <h2 class="title">Sign In</h2>
+
+                            <div class="input-field" id="login-identifier-field">
+                                <i class="fas fa-user" id="login-identifier-icon"></i>
+                                <input type="text" name="identifier" id="login-identifier-input" placeholder="Email" required />
+                            </div>
+
+                            <div class="input-field">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="password" id="login-password" placeholder="Password" required />
+                            </div>
+
+                            <div class="checkbox-field">
+                                <label><input type="checkbox" id="toggle-login-password" />Show Password</label>
+                            </div>
+
+                            <input type="submit" value="Login" class="auth-btn solid" />
+
+                            <p class="social-text">Or sign in with:</p>
+                            <div class="social-media" id="login-social">
+                                <a href="#" class="social-icon" id="login-use-phone"><i class="fas fa-phone"></i></a>
+                                <a href="#" class="social-icon" id="login-use-facebook"><i class="fab fa-facebook-f"></i></a>
+                            </div>
+                        </form>
+
+                        <form action="login.php" method="POST" class="sign-up-form">
+                            <input type="hidden" name="form_type" value="register" />
+                            <input type="hidden" name="redirect_after_auth" id="register-redirect-after-auth" />
+
+                            <h2 class="title">Sign Up</h2>
+
+                            <div class="input-field">
+                                <i class="fas fa-user"></i>
+                                <input type="text" name="username" placeholder="Full Name" required />
+                            </div>
+
+                            <div class="input-field" id="reg-identifier-field">
+                                <i class="fas fa-envelope" id="reg-identifier-icon"></i>
+                                <input type="email" name="email" id="reg-identifier-input" placeholder="Email" required />
+                            </div>
+
+                            <div class="input-field">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="password" id="register-password" placeholder="Password" required />
+                            </div>
+
+                            <div class="checkbox-field">
+                                <label><input type="checkbox" id="toggle-register-password" />Show Password</label>
+                            </div>
+
+                            <input type="submit" class="auth-btn" value="Register" />
+
+                            <p class="social-text">Or sign up with:</p>
+                            <div class="social-media" id="reg-social">
+                                <a href="#" class="social-icon" id="reg-use-phone"><i class="fas fa-phone"></i></a>
+                                <a href="#" class="social-icon" id="reg-use-facebook"><i class="fab fa-facebook-f"></i></a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panels-container">
+                    <div class="panel left-panel">
+                        <div class="content">
+                            <h3>New here?</h3>
+                            <p>Register with your personal details to use all of site features</p>
+                            <button class="auth-btn transparent" id="sign-up-btn">Sign Up</button>
+                        </div>
+                    </div>
+                    <div class="panel right-panel">
+                        <div class="content">
+                            <h3>One of us?</h3>
+                            <p>Sign in to access your account and enjoy our services</p>
+                            <button class="auth-btn transparent" id="sign-in-btn">Sign In</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <!-- Login Modal Inline End -->
+
+            <!-- Custom Added to Cart Notification -->
+            <div id="cart-notification" style="display:none;position:fixed;top:30px;right:30px;z-index:10000;background:#3a0d0d;color:#fff;padding:18px 32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);font-size:1.1rem;transition:opacity 0.3s;opacity:0;">
+                <i class="fa-solid fa-cart-plus" style="margin-right:10px;"></i>Added to cart!
+            </div>
 
     <!-- Request Modal -->
     <div id="designModal" class="modal-overlay">
@@ -262,6 +371,7 @@ $isAuthenticated = isset($_SESSION['user_id']);
             </div>
         </div>
     </div>
+    <div id="login-container"></div>
 
     <script src="app.js"></script>
     <script src="about.js"></script>

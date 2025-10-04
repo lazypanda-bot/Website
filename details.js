@@ -1,3 +1,18 @@
+// Add a new thumbnail to the thumbnail row
+function addThumbnail() {
+  const thumbnailRow = document.querySelector('.thumbnail-row');
+  if (!thumbnailRow) return;
+  // Create a new image element
+  const newImg = document.createElement('img');
+  newImg.src = 'img/snorlax.png'; // Default image, can be changed
+  newImg.alt = 'New Mug';
+  newImg.className = 'thumbnail';
+  newImg.onclick = function() { changeImage(newImg); };
+  // Insert before the plus button
+  const addBtn = document.getElementById('add-thumbnail-btn');
+  thumbnailRow.insertBefore(newImg, addBtn);
+}
+window.addThumbnail = addThumbnail;
 function changeImage(thumbnail) {
   const mainImage = document.getElementById('mainImage');
   mainImage.src = thumbnail.src;

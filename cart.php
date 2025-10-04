@@ -71,8 +71,30 @@
         </div>
         <div class="cart-summary" id="cart-summary">
             <h3>Total: ₱0.00</h3>
-            <button class="checkout-btn" disabled>Proceed to Checkout</button>
+            <button class="checkout-btn" disabled onclick="document.getElementById('checkout-form').style.display='block'">Proceed to Checkout</button>
         </div>
+        <form id="checkout-form" style="display:none; margin-top:2em;" onsubmit="return false;">
+            <h3>Checkout</h3>
+            <div class="form-group">
+                <label>Delivery Method:</label><br>
+                <input type="radio" name="delivery_method" value="pickup" required> Pick up
+                <input type="radio" name="delivery_method" value="standard"> Standard Delivery
+            </div>
+            <div class="form-group">
+                <label>Payment Method:</label><br>
+                <input type="radio" name="payment_method" value="cash" required> Cash
+                <input type="radio" name="payment_method" value="gcash"> GCash
+            </div>
+            <div class="form-group">
+                <label for="delivery_address">Delivery Address:</label><br>
+                <input type="text" id="delivery_address" name="delivery_address" required style="width:100%;max-width:400px;">
+            </div>
+            <div class="form-group">
+                <h4>Order Summary</h4>
+                <div id="order-summary"></div>
+            </div>
+            <button type="submit" onclick="alert('Order placed! (Demo only)'); localStorage.removeItem('cart'); window.location.reload();">Place Order</button>
+        </form>
     </div>
 
     <footer id="footer">
@@ -138,10 +160,33 @@
     </div>
     <div id="login-container"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-    <script src="app.js"></script>
-    <script src="login.js"></script>
-    <script src="message.js"></script>
-    <script src="cart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+        <script src="app.js"></script>
+        <script src="login.js"></script>
+        <script src="message.js"></script>
+        <script src="cart.js"></script>
+        <script>
+        // Populate order summary in checkout form
+        document.addEventListener('DOMContentLoaded', function() {
+            const orderSummary = document.getElementById('order-summary');
+            if (orderSummary) {
+                const items = JSON.parse(localStorage.getItem('cart') || '[]');
+                if (items.length > 0) {
+                    let html = '<ul style="padding-left:1em;">';
+                    let total = 0;
+                    items.forEach(product => {
+                        const price = parseFloat(product.price || '0');
+                        const subtotal = price * product.quantity;
+                        total += subtotal;
+                        html += `<li>${product.name} (${product.size}) x ${product.quantity} - ₱${subtotal.toFixed(2)}</li>`;
+                    });
+                    html += `</ul><strong>Total: ₱${total.toFixed(2)}</strong>`;
+                    orderSummary.innerHTML = html;
+                } else {
+                    orderSummary.innerHTML = '<em>No items in cart.</em>';
+                }
+            }
+        });
+        </script>
 </body>
 </html>
