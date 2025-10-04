@@ -14,6 +14,15 @@
   <link rel="stylesheet" href="sim.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
+
+<?php
+session_start();
+$isAuthenticated = isset($_SESSION['user_id']);
+?>
+<script>
+  window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+</script>
+
 <body>
     <section id="header">
         <div class="left-nav">
@@ -21,9 +30,9 @@
             <ul class="desktop-nav">
                 <li><a href="home.php" class="nav-link">Home</a></li>
                 <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
-                <li><a href="products.html" class="nav-link">Products</a></li>
-                <li><a href="about.html" class="nav-link">About</a></li>
-                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="products.php" class="nav-link">Products</a></li>
+                <li><a href="about.php" class="nav-link">About</a></li>
+                <li><a href="contact.php" class="nav-link">Contact</a></li>
             </ul>
         </div>
         <div class="right-nav">
@@ -31,19 +40,19 @@
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <a href="cart.html" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
-            <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
+            <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
+            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="login.php" class="auth-link"><i class="fa-solid fa-user"></i></a>
+                    <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <li><a href="services.html" class="nav-link">Services</a></li>
-                    <li><a href="products.html" class="nav-link">Products</a></li>
-                    <li><a href="about.html" class="nav-link">About</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
+                    <li><a href="products.php" class="nav-link">Products</a></li>
+                    <li><a href="about.php" class="nav-link">About</a></li>
+                    <li><a href="contact.php" class="nav-link">Contact</a></li>
                 </ul>
             </div>
             <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
@@ -169,8 +178,8 @@
             <div class="footer-column">
                 <h4>Information</h4>
                 <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="about.php">About</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-column">
@@ -260,10 +269,11 @@
     <script src="message.js"></script>
     <script src="details.js"></script>
     <script src="three.min.js"></script>
-<script src="GLTFLoader.js"></script>
-<script src="OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
-<script src="sim.js"></script>
+    <script src="GLTFLoader.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+    <script src="sim.js"></script>
+    <script src="forproductbtns.js"></script>
 
 </body>
 </html>

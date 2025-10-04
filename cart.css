@@ -80,3 +80,14 @@
   transform: scale(1.1);
   transition: all 0.2s ease;
 }
+.cart-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+  color: #333;
+}
+.cart-item h4 {
+  font-size: 20px;
+  color: #d62828;
+  margin-bottom: 10px;
+}

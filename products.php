@@ -85,7 +85,7 @@
                 <h3>Apparel Printing</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <a href="shirt.html">
+                        <a href="shirt.php">
                             <img src="img/snorlax.png" alt="" class="service-img">
                             <h4>T-Shirt Printing</h4>
                         </a>
@@ -112,7 +112,7 @@
                 <h3>Personalized Printing</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <a href="mugs.html">
+                        <a href="mugs.php">
                             <img src="img/snorlax.png" alt="" class="service-img">
                             <h4>Mugs</h4>
                         </a>
