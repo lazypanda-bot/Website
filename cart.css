@@ -75,3 +75,8 @@
 .checkout-btn:hover:enabled {
     background-color: #b71c1c;
 }
+#cart-icon.active {
+  color: #d62828;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}

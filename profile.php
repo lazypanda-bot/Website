@@ -34,35 +34,31 @@ $conn->close();
   <link rel="stylesheet" href="profile.css">
 </head>
 <body>
-  <div class="logout-bar">
-    <a href="logout.php" class="logout-btn">Logout</a>
-  </div>
+    <div class="logout-bar">
+        <a href="logout.php" class="logout-btn">Logout</a>
+    </div>
 
-  <div class="settings-container">
-    <section class="account-flex">
-      <div class="profile-image">
-        <img src="assets/default-avatar.png" alt="Profile Image" />
-      </div>
-
-      <form class="account-form">
-        <h2>Account Details</h2>
-
-        <div class="form-group">
-          <label for="username">Full Name</label>
-          <input type="text" id="username" name="username" value="<?= htmlspecialchars($username) ?>" readonly />
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" readonly />
-        </div>
-
-        <div class="button-group">
-          <button type="button" class="btn edit-btn">Edit</button>
-          <button type="button" class="btn delete-btn">Delete</button>
-        </div>
-      </form>
-    </section>
-  </div>
+    <div class="settings-container">
+        <section class="account-flex">
+            <div class="profile-image">
+                <img src="assets/default-avatar.png" alt="Profile Image" />
+            </div>
+            <form class="account-form">
+                <h2>Account Details</h2>
+                <div class="form-group">
+                    <label for="username">Full Name</label>
+                    <input type="text" id="username" name="username" value="<?= htmlspecialchars($username) ?>" readonly />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" readonly />
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn edit-btn">Edit</button>
+                    <button type="button" class="btn delete-btn">Delete</button>
+                </div>
+            </form>
+        </section>
+    </div>
 </body>
 </html>
