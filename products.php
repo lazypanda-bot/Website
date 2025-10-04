@@ -20,6 +20,7 @@
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
+<script src="login.js?v=<?= time() ?>"></script>
 
 </head>
 <body>
@@ -39,8 +40,8 @@
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <a href="cart.php" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
-            <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
+            <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
+            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
@@ -273,6 +274,7 @@
             </svg>
         </div>
     </div>
+    <div id="login-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
     <script src="app.js"></script>

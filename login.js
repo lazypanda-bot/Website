@@ -1,70 +1,80 @@
 document.addEventListener('DOMContentLoaded', () => {
   const profileIcon = document.getElementById('profile-icon');
   const mobileProfileIcon = document.getElementById('mobile-profile-icon');
+  const cartIcon = document.getElementById('cart-icon');
+  let modal;
+
+  function openLoginModal(redirectPath) {
+    sessionStorage.setItem('redirect_after_auth', redirectPath);
+    //temporary
+    console.log('Redirect path:', sessionStorage.getItem('redirect_after_auth'));
+    if (modal) {
+      modal.classList.add('active');
+      setRedirectInput();
+    }
+  }
+
+  function setRedirectInput() {
+    const loginRedirectInput = document.getElementById('login-redirect-after-auth');
+    const registerRedirectInput = document.getElementById('register-redirect-after-auth');
+    const redirectPath = sessionStorage.getItem('redirect_after_auth') || window.location.href;
+    if (loginRedirectInput) loginRedirectInput.value = redirectPath;
+    if (registerRedirectInput) registerRedirectInput.value = redirectPath;
+  }
 
   function handleProfileClick(e) {
     e.preventDefault();
     if (window.isAuthenticated) {
       window.location.href = 'profile.php';
     } else {
-      sessionStorage.setItem('redirect_after_auth', window.location.href);
-      const modal = document.getElementById('auth-modal');
-      modal?.classList.add('active');
+      openLoginModal(window.location.href);
+    }
+  }
+
+  function handleCartClick(e) {
+    e.preventDefault();
+    if (window.isAuthenticated) {
+      window.location.href = 'cart.php';
+    } else {
+      openLoginModal('cart.php');
     }
   }
 
   if (profileIcon) profileIcon.addEventListener('click', handleProfileClick);
   if (mobileProfileIcon) mobileProfileIcon.addEventListener('click', handleProfileClick);
-  
-  fetch('login.php?nocache=' + Date.now()) // 🔁 Prevent caching
+  if (cartIcon) cartIcon.addEventListener('click', handleCartClick);
+
+  fetch('login.php?nocache=' + Date.now())
     .then(res => res.text())
     .then(html => {
-      console.log('Fetched login.php:', html);
       document.getElementById('login-container').innerHTML = html;
 
-      const modal = document.getElementById('auth-modal');
+      modal = document.getElementById('auth-modal');
       const container = document.getElementById('auth-box');
-      // const openLogin = document.getElementById('open-login');
       const closeBtn = document.getElementById('modal-close');
       const signUpBtn = document.getElementById('sign-up-btn');
       const signInBtn = document.getElementById('sign-in-btn');
-      
-      // if (openLogin && modal && container) {
-      //   openLogin.addEventListener('click', (e) => {
-      //     e.preventDefault();
-      //     sessionStorage.setItem('redirect_after_auth', window.location.href);
-      //     modal.classList.add('active');
-      //     container.classList.remove('sign-up-mode');
-      //   });
-      // }
 
       if (closeBtn && modal) {
-        closeBtn.addEventListener('click', () => {
-          modal.classList.remove('active');
-        });
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
       }
 
       if (signUpBtn && container) {
-        signUpBtn.addEventListener('click', () => {
-          container.classList.add('sign-up-mode');
-        });
+        signUpBtn.addEventListener('click', () => container.classList.add('sign-up-mode'));
       }
 
       if (signInBtn && container) {
-        signInBtn.addEventListener('click', () => {
-          container.classList.remove('sign-up-mode');
-        });
+        signInBtn.addEventListener('click', () => container.classList.remove('sign-up-mode'));
       }
 
       if (modal) {
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            modal.classList.remove('active');
-          }
+          if (e.target === modal) modal.classList.remove('active');
         });
       }
 
       requestAnimationFrame(() => {
+        // Password toggles
         const toggleLoginPassword = document.getElementById('toggle-login-password');
         const loginPasswordInput = document.getElementById('login-password');
         if (toggleLoginPassword && loginPasswordInput) {
@@ -81,13 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        const loginRedirectInput = document.getElementById('login-redirect-after-auth');
-        const registerRedirectInput = document.getElementById('register-redirect-after-auth');
-        const redirectPath = sessionStorage.getItem('redirect_after_auth') || window.location.href;
+        setRedirectInput(); // ✅ Set redirect after modal is injected
 
-        if (loginRedirectInput) loginRedirectInput.value = redirectPath;
-        if (registerRedirectInput) registerRedirectInput.value = redirectPath;
-
+        // Login social toggles
         const loginInput = document.getElementById('login-identifier-input');
         const loginIcon = document.getElementById('login-identifier-icon');
         const loginSocial = document.getElementById('login-social');
@@ -136,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
+        // Register social toggles
         const regInput = document.getElementById('reg-identifier-input');
         const regIcon = document.getElementById('reg-identifier-icon');
         const regSocial = document.getElementById('reg-social');
@@ -184,22 +191,5 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
       });
-
-      // ✅ Profile icon logic (desktop + mobile)
-      const profileIcon = document.getElementById('profile-icon');
-      const mobileProfileIcon = document.getElementById('mobile-profile-icon');
-
-      function handleProfileClick(e) {
-        e.preventDefault();
-        if (window.isAuthenticated) {
-          window.location.href = 'profile.php';
-        } else if (modal) {
-          sessionStorage.setItem('redirect_after_auth', window.location.href);
-          modal.classList.add('active');
-        }
-      }
-
-      if (profileIcon) profileIcon.addEventListener('click', handleProfileClick);
-      if (mobileProfileIcon) mobileProfileIcon.addEventListener('click', handleProfileClick);
     });
 });
