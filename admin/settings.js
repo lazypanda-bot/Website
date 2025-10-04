@@ -1,4 +1,4 @@
-// 🖼️ Avatar Preview
+// Avatar Preview
 const avatarInput = document.getElementById('avatarInput');
 const avatarPreview = document.getElementById('avatarPreview');
 
@@ -13,7 +13,7 @@ avatarInput.addEventListener('change', function () {
   }
 });
 
-// 🧭 Tab Switching Logic
+// Tab Switching Logic
 const tabLinks = document.querySelectorAll('.settings-nav a');
 const tabSections = document.querySelectorAll('.settings-tab');
 

@@ -45,7 +45,6 @@
 .settings-tab.active {
     display: block;
 }
-
 .avatar-upload {
     display: flex;
     align-items: center;
@@ -122,138 +121,136 @@
     box-shadow: 0 0 10px rgba(0,0,0,0.05);
 }
 .shop-info .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 .shop-info .section-header h3 {
-  font-size: 20px;
-  margin: 0;
+    font-size: 20px;
+    margin: 0;
 }
 .shop-info .form-group {
-  margin-bottom: 15px;
+    margin-bottom: 15px;
 }
 .shop-info .form-group label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 5px;
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
 }
 .shop-info .form-group input {
-  width: 800px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
+    width: 800px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
 }
 .shop-info .edit-btn {
     margin-left: auto;
     margin-right: 70px;
 }
-
 .manage-services {
-  background-color: #f7f4f4;
-  padding: 20px 30px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    background-color: #f7f4f4;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
 }
 .manage-services h3 {
-  font-size: 20px;
-  margin-bottom: 20px;
+    font-size: 20px;
+    margin-bottom: 20px;
 }
 .service-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
 }
 .service-info strong {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 4px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
 }
 .service-info p {
-  font-size: 14px;
-  color: #555;
-  margin: 0;
+    font-size: 14px;
+    color: #555;
+    margin: 0;
 }
 .service-actions {
-  display: flex;
-  gap: 10px;
-  margin-right: 60px;
+    display: flex;
+    gap: 10px;
+    margin-right: 60px;
 }
 .icon-btn {
-  background-color: #a53131;
-  color: #fff;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
+    background-color: #a53131;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
 }
 .icon-btn:hover {
-  background-color: #8f2a2a;
+    background-color: #8f2a2a;
 }
-
 .notification-row {
-  background-color: #f7f4f4;
-  padding: 20px 30px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    background-color: #f7f4f4;
+    padding: 20px 30px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 .notification-label {
-  font-weight: 600;
-  font-size: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 .notification-desc {
-  font-size: 14px;
-  color: #555;
-  margin: 0;
+    font-size: 14px;
+    color: #555;
+    margin: 0;
 }
 .switch {
-  position: relative;
-  display: inline-block;
-  width: 42px;
-  height: 22px;
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
 }
 .switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  border-radius: 22px;
-  transition: 0.3s;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 22px;
+    transition: 0.3s;
 }
 .slider::before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: 0.3s;
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
 }
 .switch input:checked + .slider {
-  background-color: #a53131;
+    background-color: #a53131;
 }
 .switch input:checked + .slider::before {
-  transform: translateX(20px);
+    transform: translateX(20px);
 }
