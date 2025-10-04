@@ -2,6 +2,7 @@
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 // handle redirect origin
 $_SESSION['redirect_after_auth'] = $_POST['redirect_after_auth'] ?? $_SESSION['redirect_after_auth'] ?? $_SERVER['REQUEST_URI'];
 
