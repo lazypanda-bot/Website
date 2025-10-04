@@ -22,7 +22,7 @@ const currentPath = window.location.pathname.toLowerCase();
 
     // Highlight Products link on subpages like shirt.html
     if (
-      href === 'products.html' &&
+      href === 'products.php' &&
       (currentPath.includes('shirt.html') || currentPath.includes('hoodie.html') || currentPath.includes('mugs.html'))
     ) {
       link.classList.add('active');

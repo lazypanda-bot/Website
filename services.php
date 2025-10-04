@@ -54,51 +54,30 @@
             <div class="service-item" style="background-image: url('img/5th.jpg');">
                 <h3>Tarpaulin Printing</h3>
             </div>
-            <div class="service-details">
-                <p>Choose</p>
-            </div>
-            <div class="service-details">
-                <p>Choose</p>
-            </div>
         </div>
         <div class="service-item-wrapper">
             <div class="service-item" style="background-image: url('img/snorlax.png');">
                 <h3>Apparel Printing</h3>
-            </div>
-            <div class="service-details">
-                <p>Choose</p>
             </div>
         </div>
         <div class="service-item-wrapper">
             <div class="service-item" style="background-image: url('img/snorlax.png');">
                 <h3>Personalized Items</h3>
             </div>
-            <div class="service-details">
-                <p>Choose</p>
-            </div>
         </div>
         <div class="service-item-wrapper">
             <div class="service-item" style="background-image: url('img/snorlax.png');">
                 <h3>Stickers</h3>
-            </div>
-            <div class="service-details">
-                <p>Choose</p>
             </div>
         </div>
         <div class="service-item-wrapper">
             <div class="service-item" style="background-image: url('img/snorlax.png');">
                 <h3>Signage</h3>
             </div>
-            <div class="service-details">
-                <p>Choose</p>
-            </div>
         </div>
         <div class="service-item-wrapper">
             <div class="service-item" style="background-image: url('img/snorlax.png');">
                 <h3>Tailoring</h3>
-            </div>
-            <div class="service-details">
-                <p>Choose</p>
             </div>
         </div>
     </section>
@@ -114,8 +93,8 @@
             <div class="footer-column">
                 <h4>Information</h4>
                 <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="about.php">About</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-column">

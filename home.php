@@ -156,7 +156,7 @@
         </div>
     </section>
     <section id="featured" class="section5">
-        <a href="products.html#tarpaulin" class="serv-link">
+        <a href="products.php#tarpaulin" class="serv-link">
             <div class="serv">
                 <img src="img/snorlax.png" alt="">
                 <div class="title-price">
@@ -164,7 +164,7 @@
                 </div>
             </div>
         </a>
-        <a href="products.html#apparel" class="serv-link">
+        <a href="products.php#apparel" class="serv-link">
             <div class="serv">
                 <img src="img/snorlax.png" alt="">
                 <div class="title-price">
@@ -172,7 +172,7 @@
                 </div>
             </div>
         </a>
-        <a href="products.html#personalized" class="serv-link">
+        <a href="products.php#personalized" class="serv-link">
             <div class="serv">
                 <img src="img/snorlax.png" alt="">
                 <div class="title-price">
@@ -180,7 +180,7 @@
                 </div>
             </div>
         </a>
-        <a href="products.html#stickers" class="serv-link">
+        <a href="products.php#stickers" class="serv-link">
             <div class="serv">
                 <img src="img/snorlax.png" alt="">
                 <div class="title-price">
@@ -188,7 +188,7 @@
                 </div>
             </div>
         </a>
-        <a href="products.html#signages" class="serv-link">
+        <a href="products.php#signages" class="serv-link">
             <div class="serv">
                 <img src="img/snorlax.png" alt="">
                 <div class="title-price">
@@ -196,7 +196,7 @@
                 </div>
             </div>
         </a>
-        <a href="products.html#tailoring" class="serv-link">
+        <a href="products.php#tailoring" class="serv-link">
             <div class="serv">
                 <img src="img/snorlax.png" alt="">
                 <div class="title-price">
@@ -217,8 +217,8 @@
             <div class="footer-column">
                 <h4>Information</h4>
                 <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="about.php">About</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-column">

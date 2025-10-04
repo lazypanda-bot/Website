@@ -254,15 +254,15 @@
             <div class="chat-logo">
                 <img src="img/logo.png" alt="Chat Logo" />
             </div>
-            <div class="chat-menu">•••</div>
+            <div class="chat-menu">dots</div>
         </div>
         <div class="chat-thread" id="chatThread">
         <!-- messages will be inserted -->
         </div>
         <div class="chat-input">
-            <button class="icon-btn">✏️</button>
+            <button class="icon-btn">edit</button>
             <input type="text" placeholder="Type here..." />
-            <button class="icon-btn">📤</button>
+            <button class="icon-btn">button</button>
         </div>
     </div>
     <div class="floating-chat">
