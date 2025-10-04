@@ -5,29 +5,18 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Printing Website</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link href="navbar-footer.css" rel="stylesheet" />
-  <link href="style.css" rel="stylesheet" />
+  <link href="services.css" rel="stylesheet" />
   <link href="login.css" rel="stylesheet" />
-  <link rel="stylesheet" href="about.css">
   <link rel="stylesheet" href="message.css">
-  <link rel="stylesheet" href="cart.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
-
-<?php
-    session_start();
-    $isAuthenticated = isset($_SESSION['user_id']);
-    ?>
-<script>
-    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
-</script>
-
 </head>
 <body>
     <section id="header">
         <div class="left-nav">
-            <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
+            <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
             <ul class="desktop-nav">
                 <li><a href="home.php" class="nav-link">Home</a></li>
                 <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
@@ -50,7 +39,7 @@
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <!-- <li><a href="services.php" class="nav-link">Services</a></li> -->
+                    <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                     <li><a href="products.php" class="nav-link">Products</a></li>
                     <li><a href="about.php" class="nav-link">About</a></li>
                     <li><a href="contact.php" class="nav-link">Contact</a></li>
@@ -60,19 +49,59 @@
         </div>
     </section>
 
-    <div class="back-container">
-        <button onclick="history.back()" class="back-btn">← Back</button>
-    </div>
-    <div class="cart-container">
-        <h2>Your Cart</h2>
-        <div class="cart-items" id="cart-items">
-            <p class="empty-cart-msg">Your cart is currently empty.</p>
+    <section id="services" class="service-grid">
+        <div class="service-item-wrapper">
+            <div class="service-item" style="background-image: url('img/5th.jpg');">
+                <h3>Tarpaulin Printing</h3>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
         </div>
-        <div class="cart-summary" id="cart-summary">
-            <h3>Total: ₱0.00</h3>
-            <button class="checkout-btn" disabled>Proceed to Checkout</button>
+        <div class="service-item-wrapper">
+            <div class="service-item" style="background-image: url('img/snorlax.png');">
+                <h3>Apparel Printing</h3>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
         </div>
-    </div>
+        <div class="service-item-wrapper">
+            <div class="service-item" style="background-image: url('img/snorlax.png');">
+                <h3>Personalized Items</h3>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
+        </div>
+        <div class="service-item-wrapper">
+            <div class="service-item" style="background-image: url('img/snorlax.png');">
+                <h3>Stickers</h3>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
+        </div>
+        <div class="service-item-wrapper">
+            <div class="service-item" style="background-image: url('img/snorlax.png');">
+                <h3>Signage</h3>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
+        </div>
+        <div class="service-item-wrapper">
+            <div class="service-item" style="background-image: url('img/snorlax.png');">
+                <h3>Tailoring</h3>
+            </div>
+            <div class="service-details">
+                <p>Choose</p>
+            </div>
+        </div>
+    </section>
 
     <footer id="footer">
         <div class="footer-container">
@@ -85,8 +114,8 @@
             <div class="footer-column">
                 <h4>Information</h4>
                 <ul>
-                    <li><a href="about.php">About</a></li>
-                    <li><a href="contact.php">Contact</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-column">
@@ -96,8 +125,7 @@
                     <li>Apparel Printing</li>
                     <li>Personalized Items</li>
                     <li>Stickers</li>
-                    <li>Signages</li>
-                    <li>Tailoring</li>
+                    <li>Signage</li>
                 </ul>
             </div>
             <div class="footer-column">
@@ -116,14 +144,14 @@
             <div class="chat-logo">
                 <img src="img/logo.png" alt="Chat Logo" />
             </div>
-            <div class="chat-menu">put +</div>
+            <div class="chat-menu">•••</div>
         </div>
         <div class="chat-thread" id="chatThread">
         <!-- Real-time messages will be injected here -->
         </div>
         <div class="chat-input">
             <button class="icon-btn">✏️</button>
-            <input type="text" placeholder="Type here" />
+            <input type="text" placeholder="Type here..." />
             <button class="icon-btn">📤</button>
         </div>
     </div>
@@ -139,7 +167,7 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
     <script src="app.js"></script>
     <script src="login.js"></script>
+    <script src="services.js"></script>
     <script src="message.js"></script>
-    <script src="cart.js"></script>
 </body>
 </html>

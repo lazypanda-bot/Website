@@ -39,7 +39,7 @@
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <a href="cart.html" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
+            <a href="cart.php" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
             <li><a href="login.php" class="auth-link" id="open-login"><i class="fa-solid fa-user"></i></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
