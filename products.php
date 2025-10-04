@@ -59,7 +59,6 @@
     </section>
 
     <div class="admin-wrapper">
-        <!-- Sidebar -->
         <nav class="sidebar">
             <div class="back-container">
                 <button onclick="history.back()" class="back-btn">← Back</button>
@@ -73,7 +72,6 @@
                 <li><a href="#" data-target="tailoring">Tailoring Services</a></li>
             </ul>
         </nav>
-        <!-- Main Content -->
         <div class="main-panel">
             <section class="content-box" id="tarpaulin">
                 <h3>Tarpaulin</h3>
@@ -259,7 +257,7 @@
             <div class="chat-menu">•••</div>
         </div>
         <div class="chat-thread" id="chatThread">
-        <!-- Real-time messages will be injected here -->
+        <!-- messages will be inserted -->
         </div>
         <div class="chat-input">
             <button class="icon-btn">✏️</button>

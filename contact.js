@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
       switch(methodType) {
         case 'chat with us':
           // Add chat functionality here
-          console.log('Opening chat...');
+          console.log('Opening chat');
           break;
           
         case 'call us':
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
         case 'find our store':
           const address = encodeURIComponent(content);
-          window.open(`https://maps.google.com/?q=${address}`, '_blank');
+          // window.open(`https://maps.google.com/?q=${address}`, '_blank');
           break;
           
         case 'facebook':
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
-    // Add hover effect with JavaScript for better control
+    // Add hover effect
     method.addEventListener('mouseenter', function() {
       this.style.transform = 'translateY(-2px)';
     });
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Add smooth scrolling for better UX
+  // Add smooth scrolling 
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
       e.preventDefault();

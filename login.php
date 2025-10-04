@@ -2,23 +2,22 @@
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-// 🔁 Handle redirect origin
+// handle redirect origin
 $_SESSION['redirect_after_auth'] = $_POST['redirect_after_auth'] ?? $_SESSION['redirect_after_auth'] ?? $_SERVER['REQUEST_URI'];
 
 $loginMessage = "";
 $registerMessage = "";
 
-// 🔌 Connect to database
+// connect to database
 $conn = new mysqli("localhost", "root", "", "printshop");
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
 
-// 🧠 Determine form type
+// determine form type
 $formType = $_POST['form_type'] ?? null;
 
-// 🔐 Handle Login
+// handle Login
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   $email = trim($_POST['identifier'] ?? '');
   $password = $_POST['password'] ?? '';
@@ -51,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   }
 }
 
-// 📝 Handle Registration
+// handle Registration
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
   $username = trim($_POST['username'] ?? '');
   $email = trim($_POST['email'] ?? '');
@@ -89,7 +88,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
 $conn->close();
 ?>
 
-<!-- 🔒 Auth Modal -->
 <div class="modal" id="auth-modal">
   <div class="auth-box" id="auth-box">
     <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>
@@ -97,7 +95,6 @@ $conn->close();
     <div class="forms-container">
       <div class="signin-signup">
 
-        <!-- 🔐 Sign In Form -->
         <form action="login.php" method="POST" class="sign-in-form">
           <input type="hidden" name="form_type" value="login" />
           <input type="hidden" name="redirect_after_auth" id="login-redirect-after-auth" />
@@ -127,7 +124,6 @@ $conn->close();
           </div>
         </form>
 
-        <!-- 📝 Sign Up Form -->
         <form action="login.php" method="POST" class="sign-up-form">
           <input type="hidden" name="form_type" value="register" />
           <input type="hidden" name="redirect_after_auth" id="register-redirect-after-auth" />
@@ -164,7 +160,6 @@ $conn->close();
       </div>
     </div>
 
-    <!-- 🔁 Panel Switch -->
     <div class="panels-container">
       <div class="panel left-panel">
         <div class="content">

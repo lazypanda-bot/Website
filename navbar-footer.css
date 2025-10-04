@@ -7,7 +7,6 @@
 body {
     width: 100%;
 }
-/* NAVIGATION */
 #header {
     display: flex;
     justify-content: space-between;
@@ -177,7 +176,6 @@ body {
     color: #fff;
     transform: scale(1.2);
 }
-/* HOVER EFFECTS */
 #navbar a:hover,
 .search-btn:hover,
 .cart-icon:hover,
@@ -195,7 +193,6 @@ body {
     color: #000;
     font-weight: 600;
 }
-/* FOOTER */
 #footer {
     background-color: #ecebeb;
     padding: 0 20px;

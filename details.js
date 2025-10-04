@@ -20,12 +20,12 @@ function showTab(tabId, button) {
   button.classList.add('active');
 }
 
-// Product Detail — Dropdown Logic
+// product deatail dropdown
 function toggleDropdown() {
   const productMenu = document.querySelector("#productDropdown .dropdown-menu");
   const sizeMenu = document.querySelector("#sizeDropdown .dropdown-menu");
 
-  sizeMenu.style.display = "none"; // close size
+  sizeMenu.style.display = "none"; 
   productMenu.style.display = productMenu.style.display === "block" ? "none" : "block";
 }
 
@@ -33,7 +33,7 @@ function toggleSizeDropdown() {
   const productMenu = document.querySelector("#productDropdown .dropdown-menu");
   const sizeMenu = document.querySelector("#sizeDropdown .dropdown-menu");
 
-  productMenu.style.display = "none"; // close product
+  productMenu.style.display = "none"; 
   sizeMenu.style.display = sizeMenu.style.display === "block" ? "none" : "block";
 }
 
@@ -58,7 +58,7 @@ function adjustQuantity(change) {
   input.value = value;
 }
 
-// Design Option Selection
+// design selection
 function selectDesign(option) {
   document.getElementById('design-option').value = option;
 
@@ -130,7 +130,7 @@ function submitUpload() {
   closeUploadModal();
 }
 
-// Drag & Drop support
+// drag & drop
 const dropZone = document.getElementById('dropZone');
 dropZone.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -154,7 +154,6 @@ document.getElementById('customizeBtn').setAttribute('data-product', selectedPro
 function openViewerModal() {
   document.getElementById('viewerModal').style.display = 'flex';
 
-  // Optional: initialize viewer only once
   if (!window.viewerInitialized) {
     initViewer(); // defined in sim.js
     window.viewerInitialized = true;
