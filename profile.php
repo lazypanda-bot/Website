@@ -31,7 +31,7 @@ $conn->close();
 <head>
   <meta charset="UTF-8">
   <title>My Profile</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="profile.css">
 </head>
 <body>
   <div class="logout-bar">
