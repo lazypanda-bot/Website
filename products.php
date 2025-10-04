@@ -77,7 +77,9 @@
             <section class="content-box" id="tarpaulin">
                 <h3>Tarpaulin</h3>
                 <div class="service-card">
-                    <img src="img/snorlax.png" alt="" class="service-img">
+                    <a href="product-details.php?name=Tarpaulin%20Printing&img=img/snorlax.png&price=100">
+                        <img src="img/snorlax.png" alt="Tarpaulin Printing" class="service-img">
+                    </a>
                     <h4>Tarpaulin</h4>
                 </div>
             </section>
@@ -173,31 +175,31 @@
                 <h3>Stickers</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Vinyl%20White%20Sticker&img=img/snorlax.png&price=20">
                             <img src="img/snorlax.png" alt="Vinyl White" class="service-img">
                         </a>
                         <h4>Vinyl White</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Clear%20Sticker&img=img/snorlax.png&price=20">
                             <img src="img/snorlax.png" alt="Clear" class="service-img">
                         </a>
                         <h4>Clear</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Perforated%20Sticker&img=img/snorlax.png&price=25">
                             <img src="img/snorlax.png" alt="Perforated" class="service-img">
                         </a>
                         <h4>Perforated</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Frosted%20Sticker&img=img/snorlax.png&price=25">
                             <img src="img/snorlax.png" alt="Frosted" class="service-img">
                         </a>
                         <h4>Frosted</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=3M%20Reflective%20Sticker&img=img/snorlax.png&price=30">
                             <img src="img/snorlax.png" alt="3M Reflective" class="service-img">
                         </a>
                         <h4>3M Reflective</h4>
@@ -208,25 +210,25 @@
                 <h3>Signages</h3>
                 <div class="service-grid">
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Printable%20Panaflex&img=img/snorlax.png&price=200">
                             <img src="img/snorlax.png" alt="Printable Panaflex" class="service-img">
                         </a>
                         <h4>Printable Panaflex</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Panaflex%20with%20Sticker&img=img/snorlax.png&price=220">
                             <img src="img/snorlax.png" alt="Panaflex with Sticker" class="service-img">
                         </a>
                         <h4>Panaflex with Sticker</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Acrylic%20Build-Up&img=img/snorlax.png&price=300">
                             <img src="img/snorlax.png" alt="Acrylic Build-Up" class="service-img">
                         </a>
                         <h4>Acrylic Build-Up</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Stainless%20Signage&img=img/snorlax.png&price=350">
                             <img src="img/snorlax.png" alt="Stainless" class="service-img">
                         </a>
                         <h4>Stainless</h4>
@@ -237,19 +239,19 @@
                 <h3>Tailoring Services</h3>
                 <div class="service-grid">            
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Repair%20Services&img=img/snorlax.png&price=80">
                             <img src="img/snorlax.png" alt="Repair Services" class="service-img">
                         </a>
                         <h4>Repair Services</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Fit%20Adjustment&img=img/snorlax.png&price=60">
                             <img src="img/snorlax.png" alt="Fit Adjustment" class="service-img">
                         </a>
                         <h4>Fit Adjustment</h4>
                     </div>
                     <div class="service-card">
-                        <a href="#">
+                        <a href="product-details.php?name=Everyday%20and%20School%20Clothes&img=img/snorlax.png&price=100">
                             <img src="img/snorlax.png" alt="Everyday & School Clothes" class="service-img">
                         </a>
                         <h4>Everyday & School Clothes</h4>

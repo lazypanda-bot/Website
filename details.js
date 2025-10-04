@@ -1,22 +1,42 @@
-// Add a new thumbnail to the thumbnail row
+// --- Product Details Thumbnail Row Logic ---
+
 function addThumbnail() {
-  const thumbnailRow = document.querySelector('.thumbnail-row');
+  var thumbnailRow = document.querySelector('.thumbnail-row');
   if (!thumbnailRow) return;
-  // Create a new image element
-  const newImg = document.createElement('img');
-  newImg.src = 'img/snorlax.png'; // Default image, can be changed
+  var wrapper = document.createElement('div');
+  wrapper.className = 'thumbnail-wrapper';
+  var newImg = document.createElement('img');
+  // Use the main image as the default for new thumbnails
+  var mainImage = document.getElementById('mainImage');
+  newImg.src = mainImage ? mainImage.src : 'img/snorlax.png';
   newImg.alt = 'New Mug';
   newImg.className = 'thumbnail';
   newImg.onclick = function() { changeImage(newImg); };
-  // Insert before the plus button
-  const addBtn = document.getElementById('add-thumbnail-btn');
-  thumbnailRow.insertBefore(newImg, addBtn);
+  var delBtn = document.createElement('button');
+  delBtn.className = 'delete-thumbnail-btn';
+  delBtn.type = 'button';
+  delBtn.title = 'Delete thumbnail';
+  delBtn.textContent = '-';
+  delBtn.onclick = function() { deleteThumbnail(delBtn); };
+  wrapper.appendChild(newImg);
+  wrapper.appendChild(delBtn);
+  var addBtn = document.getElementById('add-thumbnail-btn');
+  thumbnailRow.insertBefore(wrapper, addBtn);
 }
+
 window.addThumbnail = addThumbnail;
+
 function changeImage(thumbnail) {
-  const mainImage = document.getElementById('mainImage');
+  var mainImage = document.getElementById('mainImage');
   mainImage.src = thumbnail.src;
 }
+window.changeImage = changeImage;
+
+function deleteThumbnail(btn) {
+  var wrapper = btn.closest('.thumbnail-wrapper');
+  if (wrapper) wrapper.remove();
+}
+window.deleteThumbnail = deleteThumbnail;
 
 function showTab(tabId, button) {
   const tabs = document.querySelectorAll('.tab-content');
@@ -36,20 +56,36 @@ function showTab(tabId, button) {
 }
 
 // product deatail dropdown
+
 function toggleDropdown() {
   const productMenu = document.querySelector("#productDropdown .dropdown-menu");
   const sizeMenu = document.querySelector("#sizeDropdown .dropdown-menu");
-
-  sizeMenu.style.display = "none"; 
+  sizeMenu.style.display = "none";
   productMenu.style.display = productMenu.style.display === "block" ? "none" : "block";
 }
 
 function toggleSizeDropdown() {
   const productMenu = document.querySelector("#productDropdown .dropdown-menu");
   const sizeMenu = document.querySelector("#sizeDropdown .dropdown-menu");
+  productMenu && (productMenu.style.display = "none");
+  if (sizeMenu) {
+    const isOpen = sizeMenu.style.display === "block";
+    sizeMenu.style.display = isOpen ? "none" : "block";
+    if (!isOpen) {
+      document.addEventListener('mousedown', handleClickOutsideSizeDropdown);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutsideSizeDropdown);
+    }
+  }
+}
 
-  productMenu.style.display = "none"; 
-  sizeMenu.style.display = sizeMenu.style.display === "block" ? "none" : "block";
+function handleClickOutsideSizeDropdown(event) {
+  const dropdown = document.getElementById('sizeDropdown');
+  if (dropdown && !dropdown.contains(event.target)) {
+    const menu = dropdown.querySelector('.dropdown-menu');
+    if (menu) menu.style.display = 'none';
+    document.removeEventListener('mousedown', handleClickOutsideSizeDropdown);
+  }
 }
 
 function selectOption(el) {
@@ -64,6 +100,7 @@ function selectSize(el) {
   document.querySelector("#sizeDropdown .dropdown-toggle").textContent = selectedText;
   document.querySelector("#size").value = selectedText;
   document.querySelector("#sizeDropdown .dropdown-menu").style.display = "none";
+  document.removeEventListener('mousedown', handleClickOutsideSizeDropdown);
 }
 
 function adjustQuantity(change) {
@@ -174,6 +211,7 @@ function openViewerModal() {
     window.viewerInitialized = true;
   }
 }
+
 
 function closeViewerModal() {
   document.getElementById('viewerModal').style.display = 'none';

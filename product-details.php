@@ -69,7 +69,21 @@ $productPrice = $_GET['price'] ?? '150';
             <div class="image-column">
                 <img src="<?php echo htmlspecialchars($productImg); ?>" alt="<?php echo htmlspecialchars($productName); ?>" class="product-image" id="mainImage" />
                 <div class="thumbnail-row">
-                    <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Thumb 1" class="thumbnail" onclick="changeImage(this)" />
+                    <div class="thumbnail-wrapper">
+                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 1" class="thumbnail" onclick="changeImage(this)" />
+                        <button class="delete-thumbnail-btn" type="button" onclick="deleteThumbnail(this)" title="Delete thumbnail">-</button>
+                    </div>
+                    <div class="thumbnail-wrapper">
+                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 2" class="thumbnail" onclick="changeImage(this)" />
+                        <button class="delete-thumbnail-btn" type="button" onclick="deleteThumbnail(this)" title="Delete thumbnail">-</button>
+                    </div>
+                    <div class="thumbnail-wrapper">
+                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 3" class="thumbnail" onclick="changeImage(this)" />
+                        <button class="delete-thumbnail-btn" type="button" onclick="deleteThumbnail(this)" title="Delete thumbnail">-</button>
+                    </div>
+                    <button type="button" id="add-thumbnail-btn" onclick="addThumbnail()">
+                        <span>+</span>
+                    </button>
                 </div>
             </div>
         <div class="product-text">
@@ -102,7 +116,7 @@ $productPrice = $_GET['price'] ?? '150';
                         <form class="product-options-row">
                             <div class="form-group" style="grid-column: 1;">
                                 <label for="product-name">Product Name</label>
-                                <div class="product-static-box" style="background:#fff;padding:10px 14px;border-radius:8px;font-size:1.2rem;color:#111;font-family:'Poppins',sans-serif;font-weight:400;display:flex;align-items:center;gap:6px;border:1px solid #ccc;width:170px;box-sizing:border-box;">
+                                <div class="product-static-box auto-width-box">
                                     <?php echo htmlspecialchars($productName); ?>
                                 </div>
                             </div>
@@ -127,8 +141,8 @@ $productPrice = $_GET['price'] ?? '150';
                             </div>
                             <div class="form-group price-group" style="grid-column: 2;">
                                 <label for="product-price">Price</label>
-                                <div class="product-static-box" style="background:#fff;padding:10px 16px;border-radius:8px;font-size:1.2rem;color:#111;font-family:'Poppins',sans-serif;font-weight:400;display:flex;align-items:center;gap:6px;border:1px solid #ccc;">
-                                    <span style="font-size:1.1em;color:#111;font-weight:bold;">₱</span>
+                                <div class="product-static-box price-box">
+                                    <span class="peso-sign">₱</span>
                                     <?php echo htmlspecialchars($productPrice); ?>
                                 </div>
                             </div>
