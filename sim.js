@@ -11,25 +11,54 @@ scene.background = new THREE.Color(0xf4f4f4);
 
 // Camera setup
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 0, 2);
+camera.position.set(0, 0, 3.5); // Move camera back to fit larger shirt
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const canvasWidth = 600; 
+const canvasHeight = 300; 
+renderer.setSize(canvasWidth, canvasHeight);
 document.getElementById('viewerCanvas').appendChild(renderer.domElement);
 
 // Lighting
 const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
 scene.add(light);
 
-// Controls
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
+// Controls (safe fallback for OrbitControls)
+let ControlsCtor = null;
+console.log('All script tags:');
+document.querySelectorAll('script').forEach(s => console.log(s.src));
+console.log('window.OrbitControls:', window.OrbitControls);
+console.log('THREE.OrbitControls:', THREE.OrbitControls);
+if (typeof window.OrbitControls === 'function') {
+  ControlsCtor = window.OrbitControls;
+  console.log('Using window.OrbitControls');
+} else if (typeof THREE.OrbitControls === 'function') {
+  ControlsCtor = THREE.OrbitControls;
+  console.log('Using THREE.OrbitControls');
+} else {
+  // Show a visible error in the viewer
+  const viewer = document.getElementById('viewerCanvas');
+  if (viewer) {
+    viewer.innerHTML = '<div style="color:red;font-size:18px;padding:20px;">OrbitControls is not available!<br>Check your script order and CDN loading.</div>';
+  }
+  alert('OrbitControls is not available! Check your script order and CDN loading.');
+  throw new Error('OrbitControls is not available!');
+}
+const controls = new ControlsCtor(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.enableZoom = false;
-controls.enablePan = false;
+controls.enableZoom = true; // Enable zoom
+controls.enablePan = true; // Enable panning
+controls.screenSpacePanning = true; // Allow both directions
 controls.minPolarAngle = Math.PI / 2;
 controls.maxPolarAngle = Math.PI / 2;
+// Set left mouse to rotate, Shift+left mouse to pan (default behavior)
+if (controls.mouseButtons) {
+  controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+  controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
+  controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+}
 
 // Animate loop
 function animate() {
@@ -44,13 +73,43 @@ function initViewer() {
   if (viewerInitialized) return;
   viewerInitialized = true;
 
-  const loader = new THREE.GLTFLoader();
+  // Safe fallback for GLTFLoader
+  let GLTFLoaderCtor = null;
+  if (typeof window.GLTFLoader === 'function') {
+    GLTFLoaderCtor = window.GLTFLoader;
+    console.log('Using window.GLTFLoader');
+  } else if (typeof THREE.GLTFLoader === 'function') {
+    GLTFLoaderCtor = THREE.GLTFLoader;
+    console.log('Using THREE.GLTFLoader');
+  } else {
+    const viewer = document.getElementById('viewerCanvas');
+    if (viewer) {
+      viewer.innerHTML = '<div style="color:red;font-size:18px;padding:20px;">GLTFLoader is not available!<br>Check your script order and CDN loading.</div>';
+    }
+    alert('GLTFLoader is not available! Check your script order and CDN loading.');
+    throw new Error('GLTFLoader is not available!');
+  }
+  const loader = new GLTFLoaderCtor();
   loader.load('t-shirt/scene.gltf', function (gltf) {
     console.log("Model loaded:", gltf.scene);
-    const shirt = gltf.scene;
-    shirt.position.set(0, -2.5, 0);
-    shirt.scale.set(2, 2, 2);
-    scene.add(shirt);
+
+  const shirt = gltf.scene;
+  // Compute bounding box for uniform scaling
+  const box = new THREE.Box3().setFromObject(shirt);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  // Target width and height in scene units
+  const targetWidth = 1.5;
+  const targetHeight = 2.0;
+  const scaleX = targetWidth / size.x;
+  const scaleY = targetHeight / size.y;
+  const scale = Math.min(scaleX, scaleY); // uniform scale
+  shirt.scale.setScalar(scale);
+  // Center the shirt
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  shirt.position.set(-center.x * scale, -center.y * scale, 0);
+  scene.add(shirt);
 
     shirt.traverse((child) => {
       if (child.isMesh) {
@@ -116,51 +175,25 @@ function initViewer() {
   });
 }
 
-// Modal open/close
-function openViewerModal() {
-  lastScrollY = window.scrollY;
-  document.body.style.top = `-${lastScrollY}px`;
-  document.body.style.position = 'fixed';
-  document.getElementById('viewerModal').style.display = 'flex';
 
-  initViewer();
-}
+// Always initialize viewer and color picker on load
+window.addEventListener('DOMContentLoaded', () => {
 
-function closeViewerModal() {
-  document.getElementById('viewerModal').style.display = 'none';
-  document.body.style.position = '';
-  document.body.style.top = '';
-  window.scrollTo(0, lastScrollY);
-}
+  // DOM checks
+  if (!document.getElementById('viewerCanvas')) {
+    console.error('viewerCanvas element not found!');
+    return;
+  }
+  if (!document.getElementById('colorPickerContainer')) {
+    console.error('colorPickerContainer element not found!');
+    return;
+  }
 
-// Upload logic
-const uploadZone = document.getElementById('uploadZone');
-const browseBtn = document.getElementById('browseBtn');
-const graphicUpload = document.getElementById('graphicUpload');
-let uploadedFile = null;
+  try {
+    initViewer();
+  } catch (e) {
+    console.error('initViewer error:', e);
+  }
 
-uploadZone.addEventListener('click', () => graphicUpload.click());
-browseBtn.addEventListener('click', () => graphicUpload.click());
 
-graphicUpload.addEventListener('change', (e) => {
-  uploadedFile = e.target.files[0];
-});
-
-document.getElementById('cancelUpload').addEventListener('click', () => {
-  graphicUpload.value = '';
-  uploadedFile = null;
-});
-
-document.getElementById('confirmUpload').addEventListener('click', () => {
-  if (!uploadedFile) return;
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const texture = new THREE.TextureLoader().load(e.target.result);
-    shirtMeshList.forEach(mesh => {
-      mesh.material.map = texture;
-      mesh.material.needsUpdate = true;
-    });
-  };
-  reader.readAsDataURL(uploadedFile);
 });

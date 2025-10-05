@@ -22,6 +22,7 @@ $productPrice = $_GET['price'] ?? '150';
   <link href="login.css" rel="stylesheet" />
   <link rel="stylesheet" href="message.css">
   <link rel="stylesheet" href="sim.css">
+  <link rel="stylesheet" href="login.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
 <script>
@@ -159,12 +160,29 @@ $productPrice = $_GET['price'] ?? '150';
                     <button type="button" class="design-btn" onclick="selectDesign('upload')">
                         Upload Your Design
                     </button>
-                    <button type="button" class="design-btn" id="customizeBtn" onclick="selectDesign('customize')">
+                    <button type="button" class="design-btn" onclick="selectDesign('customize')">
                         Customize Design
                     </button>
                     <button type="button" class="design-btn" onclick="selectDesign('request')">
                         Request Design
                     </button>
+            <!-- 3D Customizer Modal -->
+            <div id="viewerModal" class="modal sim-modal" style="display:none;">
+                <div class="sim-modal-content">
+                    <span class="sim-close-btn" onclick="closeViewerModal()">&times;</span>
+                    <div class="sim-viewer-container">
+                        <div class="sim-viewer-layout">
+                            <div id="viewerCanvas" class="sim-viewer-left"></div>
+                            <div class="sim-viewer-right">
+                                <div class="sim-control-block">
+                                    <label>Shirt Color:</label>
+                                    <div id="colorPickerContainer"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
                 </div>
                 <p class="design-note">
                     <strong>Note:</strong> A digital proof of your design will be sent to your registered account. Please review and approve it to proceed with printing.
@@ -217,9 +235,52 @@ $productPrice = $_GET['price'] ?? '150';
     <!-- Login Modal Inline Start -->
     <?php include 'login.php'; ?>
     <!-- Login Modal Inline End -->
-    <div id="cart-notification" style="display:none;position:fixed;top:30px;right:30px;z-index:10000;background:#3a0d0d;color:#fff;padding:18px 32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);font-size:1.1rem;transition:opacity 0.3s;opacity:0;">
-        <i class="fa-solid fa-cart-plus" style="margin-right:10px;"></i>Added to cart!
-    </div>
+        <div id="cart-notification" style="display:none;position:fixed;top:30px;right:30px;z-index:10000;background:#3a0d0d;color:#fff;padding:18px 32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);font-size:1.1rem;transition:opacity 0.3s;opacity:0;">
+                <i class="fa-solid fa-cart-plus" style="margin-right:10px;"></i>Added to cart!
+        </div>
+
+            <!-- Request Design Modal -->
+            <div id="designModal" class="custom-modal" style="display:none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="modal-title">Request a Design</span>
+                        <button onclick="closeModal()" class="modal-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form onsubmit="submitDesign();return false;">
+                            <label for="requestDetails">Describe your design:</label>
+                            <textarea id="requestDetails" rows="4" class="modal-textarea"></textarea>
+                            <div class="modal-actions">
+                                <button type="submit" class="design-btn">Submit Request</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Design Modal -->
+            <div id="uploadModal" class="custom-modal" style="display:none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="modal-title">Upload Your Design</span>
+                        <button onclick="closeUploadModal()" class="modal-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form onsubmit="submitUpload();return false;">
+                            <div class="file-label-wrapper">
+                                <label for="uploadFile" class="file-label">
+                                    <span class="file-label-text">Choose file</span>
+                                    <input type="file" id="uploadFile" accept="image/*,application/pdf" class="modal-file-input" required />
+                                </label>
+                                <span id="fileNameDisplay" class="file-name-display"></span>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="submit" class="design-btn">Upload</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
     <!-- ...existing modals and scripts... -->
     <script src="app.js"></script>
     <script src="about.js"></script>

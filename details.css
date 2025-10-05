@@ -1,3 +1,245 @@
+/* --- Modern Modal Design for Request/Upload Design (scoped) --- */
+#uploadModal.custom-modal .modal-header,
+#designModal.custom-modal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+#uploadModal.custom-modal .modal-title,
+#designModal.custom-modal .modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #752525;
+    font-family: 'Poppins', sans-serif;
+}
+#uploadModal.custom-modal .modal-body,
+#designModal.custom-modal .modal-body {
+    padding: 0;
+}
+#uploadModal.custom-modal .modal-actions,
+#designModal.custom-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 18px;
+}
+#uploadModal.custom-modal .file-name-display,
+#designModal.custom-modal .file-name-display {
+    display: block;
+    margin-top: 8px;
+    color: #752525;
+    background: #f5eaea;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.97rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    word-break: break-all;
+}
+#uploadModal.custom-modal,
+#designModal.custom-modal {
+    display: none;
+    position: fixed;
+    z-index: 10001;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+#uploadModal.custom-modal .modal-content,
+#designModal.custom-modal .modal-content {
+    background: #fff;
+    padding: 36px 28px 28px 28px;
+    border-radius: 16px;
+    max-width: 420px;
+    width: 95vw;
+    box-shadow: 0 4px 24px rgba(117,37,37,0.13);
+    position: relative;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+#uploadModal.custom-modal .modal-content h3,
+#designModal.custom-modal .modal-content h3 {
+    color: #752525;
+    font-size: 1.3rem;
+    margin-bottom: 18px;
+    text-align: center;
+    font-weight: 600;
+}
+#uploadModal.custom-modal .modal-content label,
+#designModal.custom-modal .modal-content label {
+    font-weight: 600;
+    color: #752525;
+    margin-bottom: 8px;
+}
+#uploadModal.custom-modal .modal-textarea,
+#designModal.custom-modal .modal-textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 18px;
+    resize: vertical;
+    background: #fafafa;
+    color: #752525;
+}
+#uploadModal.custom-modal .modal-close-btn,
+#designModal.custom-modal .modal-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 2rem;
+    background: none;
+    border: none;
+    color: #752525;
+    cursor: pointer;
+    z-index: 2;
+    padding: 0;
+    line-height: 1;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+#uploadModal.custom-modal .modal-close-btn:hover,
+#designModal.custom-modal .modal-close-btn:hover {
+    background: #f5eaea;
+}
+#uploadModal.custom-modal .file-label,
+#designModal.custom-modal .file-label {
+    display: block;
+    width: 100%;
+    margin-bottom: 18px;
+    position: relative;
+}
+#uploadModal.custom-modal .file-label-text,
+#designModal.custom-modal .file-label-text {
+    display: inline-block;
+    padding: 12px 20px;
+    background: #752525;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 0;
+}
+#uploadModal.custom-modal .file-label-text:hover,
+#designModal.custom-modal .file-label-text:hover {
+    background: #a03b3b;
+}
+#uploadModal.custom-modal .modal-file-input,
+#designModal.custom-modal .modal-file-input {
+    display: none;
+}
+#uploadModal.custom-modal .file-label.selected .file-label-text::after,
+#designModal.custom-modal .file-label.selected .file-label-text::after {
+    content: attr(data-filename);
+    display: block;
+    color: #752525;
+    background: #f5eaea;
+    border-radius: 6px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    font-size: 0.97rem;
+    font-weight: 400;
+}
+/* --- Upload & Request Design Modal Styles --- */
+#uploadModal .modal-content,
+#designModal .modal-content {
+    background: #fff;
+    padding: 32px 24px;
+    border-radius: 14px;
+    max-width: 420px;
+    width: 95vw;
+    box-shadow: 0 4px 24px rgba(117,37,37,0.12);
+    position: relative;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+#uploadModal h3,
+#designModal h3 {
+    color: #752525;
+    font-size: 1.3rem;
+    margin-bottom: 18px;
+    text-align: center;
+}
+#uploadModal label,
+#designModal label {
+    font-weight: 600;
+    color: #752525;
+    margin-bottom: 8px;
+}
+#uploadModal textarea,
+#designModal textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 18px;
+    resize: vertical;
+    background: #fafafa;
+}
+#uploadModal input[type="file"] {
+    display: block;
+    width: 100%;
+    margin-bottom: 18px;
+    padding: 10px 0;
+    border: none;
+    background: #fafafa;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+}
+#uploadModal .design-btn,
+#designModal .design-btn {
+    background: #752525;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+}
+#uploadModal .design-btn:hover,
+#designModal .design-btn:hover {
+    background: #a03b3b;
+}
+#uploadModal button[onclick],
+#designModal button[onclick] {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 2rem;
+    background: none;
+    border: none;
+    color: #752525;
+    cursor: pointer;
+    z-index: 2;
+    padding: 0;
+    line-height: 1;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+#uploadModal button[onclick]:hover,
+#designModal button[onclick]:hover {
+    background: #f5eaea;
+}
 .price-box {
     display: flex;
     align-items: center;

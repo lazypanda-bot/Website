@@ -161,9 +161,6 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     <button type="button" class="design-btn" onclick="selectDesign('upload')">
                         Upload Your Design
                     </button>
-                    <button type="button" class="design-btn" id="customizeBtn" onclick="selectDesign('customize')">
-                        Customize Design
-                    </button>
                     <button type="button" class="design-btn" onclick="selectDesign('request')">
                         Request Design
                     </button>
@@ -343,34 +340,6 @@ $isAuthenticated = isset($_SESSION['user_id']);
         </div>
     </div>
 
-    <!-- Customize Modal -->
-    <div id="viewerModal" class="modal sim-modal">
-        <div class="sim-modal-content">
-            <span class="sim-close-btn" onclick="closeViewerModal()">&times;</span>
-            <div class="sim-viewer-container">
-                <div class="sim-viewer-layout">
-                    <div id="viewerCanvas" class="sim-viewer-left"></div>
-                    <div class="sim-viewer-right">
-                        <div class="sim-control-block">
-                            <label>Shirt Color:</label>
-                            <div id="colorPickerContainer"></div>
-                        </div>
-                        <div class="sim-control-block">
-                            <label>Upload Design:</label>
-                            <div id="uploadZone" class="sim-upload-zone">
-                                <p>Drag & Drop files here or</p>
-                                <button id="browseBtn">Browse Files</button>
-                                <input type="file" id="graphicUpload" accept="image/*" hidden />
-                            </div>
-                            <div class="sim-upload-actions">
-                                <button id="confirmUpload">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="login-container"></div>
 
     <script src="app.js"></script>
@@ -382,7 +351,6 @@ $isAuthenticated = isset($_SESSION['user_id']);
     <script src="GLTFLoader.js"></script>
     <script src="OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
-    <script src="sim.js"></script>
     <script src="forproductbtns.js"></script>
 
 </body>
