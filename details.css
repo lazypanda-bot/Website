@@ -1,3 +1,46 @@
+/* Align Buy Now and Add to Cart buttons horizontally and vertically */
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+    margin-top: 18px;
+}
+.action-buttons form {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+.action-buttons .buy-btn,
+.action-buttons .addcart-btn {
+    min-width: 120px;
+    height: 44px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+/* Collapsible 3D customizer dropdown styles */
+.sim-dropdown-collapsible {
+    width: 100%;
+    margin: 24px 0 0 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+    overflow: hidden;
+}
+.sim-dropdown-collapsible[style*="display: block"] {
+    max-height: 2000px;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.sim-dropdown-collapsible[style*="display: none"] {
+    max-height: 0;
+    padding: 0;
+}
 /* --- Modern Modal Design for Request/Upload Design (scoped) --- */
 #uploadModal.custom-modal .modal-header,
 #designModal.custom-modal .modal-header {

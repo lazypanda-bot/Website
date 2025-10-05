@@ -15,10 +15,12 @@
   <link rel="stylesheet" href="cart.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
+
+
 <?php
     session_start();
     $isAuthenticated = isset($_SESSION['user_id']);
-    ?>
+?>
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
@@ -44,20 +46,6 @@
             </form>
             <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
             <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
-            <div id="navbar">
-                <button id="close-menu" aria-label="Close Menu">x</button>
-                <div class="menu-user">
-                    <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
-                </div>      
-                <ul class="mobile-nav">
-                    <li><a href="home.php" class="nav-link">Home</a></li>
-                    <!-- <li><a href="services.php" class="nav-link">Services</a></li> -->
-                    <li><a href="products.php" class="nav-link">Products</a></li>
-                    <li><a href="about.php" class="nav-link">About</a></li>
-                    <li><a href="contact.php" class="nav-link">Contact</a></li>
-                </ul>
-            </div>
-            <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
         </div>
     </section>
 
@@ -76,14 +64,14 @@
         <form id="checkout-form" style="display:none; margin-top:2em;" onsubmit="return false;">
             <h3>Checkout</h3>
             <div class="form-group">
-                <label>Delivery Method:</label><br>
-                <input type="radio" name="delivery_method" value="pickup" required> Pick up
-                <input type="radio" name="delivery_method" value="standard"> Standard Delivery
+                <span>Delivery Method:</span><br>
+                <input type="radio" name="delivery_method" id="delivery_pickup" value="pickup" required> <label for="delivery_pickup">Pick up</label>
+                <input type="radio" name="delivery_method" id="delivery_standard" value="standard"> <label for="delivery_standard">Standard Delivery</label>
             </div>
             <div class="form-group">
-                <label>Payment Method:</label><br>
-                <input type="radio" name="payment_method" value="cash" required> Cash
-                <input type="radio" name="payment_method" value="gcash"> GCash
+                <span>Payment Method:</span><br>
+                <input type="radio" name="payment_method" id="payment_cash" value="cash" required> <label for="payment_cash">Cash</label>
+                <input type="radio" name="payment_method" id="payment_gcash" value="gcash"> <label for="payment_gcash">GCash</label>
             </div>
             <div class="form-group">
                 <label for="delivery_address">Delivery Address:</label><br>
@@ -93,7 +81,7 @@
                 <h4>Order Summary</h4>
                 <div id="order-summary"></div>
             </div>
-            <button type="submit" onclick="alert('Order placed! (Demo only)'); localStorage.removeItem('cart'); window.location.reload();">Place Order</button>
+            <button type="submit">Place Order</button>
         </form>
     </div>
 
@@ -165,28 +153,5 @@
         <script src="login.js"></script>
         <script src="message.js"></script>
         <script src="cart.js"></script>
-        <script>
-        // Populate order summary in checkout form
-        document.addEventListener('DOMContentLoaded', function() {
-            const orderSummary = document.getElementById('order-summary');
-            if (orderSummary) {
-                const items = JSON.parse(localStorage.getItem('cart') || '[]');
-                if (items.length > 0) {
-                    let html = '<ul style="padding-left:1em;">';
-                    let total = 0;
-                    items.forEach(product => {
-                        const price = parseFloat(product.price || '0');
-                        const subtotal = price * product.quantity;
-                        total += subtotal;
-                        html += `<li>${product.name} (${product.size}) x ${product.quantity} - ₱${subtotal.toFixed(2)}</li>`;
-                    });
-                    html += `</ul><strong>Total: ₱${total.toFixed(2)}</strong>`;
-                    orderSummary.innerHTML = html;
-                } else {
-                    orderSummary.innerHTML = '<em>No items in cart.</em>';
-                }
-            }
-        });
-        </script>
 </body>
 </html>

@@ -5,12 +5,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const cartIcon = document.querySelector('.cart-icon i');
 
   function getSelectedProduct() {
+    // Get product name
+    let name = document.getElementById('product-name')?.value || '';
+    // Get size
+    let size = document.getElementById('size')?.value || '';
+    // Get quantity
+    let quantity = parseInt(document.getElementById('quantity')?.value || '1');
+    // Get design
+    let design = document.getElementById('design-option')?.value || '';
+    // Get price from the price box (not from a hidden input)
+    let priceText = document.querySelector('.price-box')?.textContent || '';
+    let price = 0;
+    // Extract numeric value from text like '₱150'
+    let match = priceText.match(/([\d,.]+)/);
+    if (match) {
+      price = parseFloat(match[1].replace(/,/g, ''));
+    }
     return {
-      name: document.getElementById('product-name')?.value || '',
-      size: document.getElementById('size')?.value || '',
-      quantity: parseInt(document.getElementById('quantity')?.value || '1'),
-      design: document.getElementById('design-option')?.value || '',
-      price: parseFloat(document.getElementById('product-price')?.value || '0')
+      name,
+      size,
+      quantity,
+      design,
+      price
     };
   }
 
@@ -51,8 +67,17 @@ document.addEventListener('DOMContentLoaded', () => {
   if (addToCartBtn) {
     addToCartBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      const qtyInput = document.getElementById('quantity');
+      const cartQtyInput = document.getElementById('cart_quantity');
+      if (qtyInput && cartQtyInput) {
+        cartQtyInput.value = qtyInput.value;
+      }
       if (window.isAuthenticated) {
         const product = getSelectedProduct();
+        if (!product.quantity || product.quantity < 1) {
+          alert('Quantity must be at least 1 to add to cart.');
+          return;
+        }
         addToCart(product);
         if (cartIcon) cartIcon.classList.add('active');
         showCartNotification();
@@ -67,6 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (window.isAuthenticated) {
         const product = getSelectedProduct();
+        if (!product.quantity || product.quantity < 1) {
+          alert('Quantity must be at least 1 to order.');
+          return;
+        }
         addToCart(product);
         window.location.href = 'cart.php';
       } else {

@@ -49,7 +49,14 @@ $conn->close();
     <link rel="stylesheet" href="message.css">
     <link rel="stylesheet" href="services.css">
     <link rel="stylesheet" href="profile.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+</head>
+<?php
+    $isAuthenticated = isset($_SESSION['user_id']);
+?>
+<script>
+    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
 <body>
     <section id="header">
@@ -68,15 +75,15 @@ $conn->close();
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
-            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
+            <ul style="display: flex; align-items: center; gap: 10px; list-style: none; margin: 0; padding: 0;">
+                <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
+                <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
+            </ul>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <div class="menu-user">
-                        <a href="#" class="auth-link" id="mobile-profile-icon"><i class="fa-solid fa-user"></i></a>
-                    </div>
-                </div>      
+                    <a href="#" class="auth-link" id="mobile-profile-icon"><i class="fa-solid fa-user"></i></a>
+                </div>
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
                     <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
@@ -115,4 +122,6 @@ $conn->close();
         </section>
     </div>
 </body>
+<script src="login.js?v=<?= time() ?>"></script>
+<script src="cart.js"></script>
 </html>

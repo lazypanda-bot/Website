@@ -15,8 +15,8 @@ camera.position.set(0, 0, 3.5); // Move camera back to fit larger shirt
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-const canvasWidth = 600; 
-const canvasHeight = 300; 
+const canvasWidth = 800; 
+const canvasHeight = 600; 
 renderer.setSize(canvasWidth, canvasHeight);
 document.getElementById('viewerCanvas').appendChild(renderer.domElement);
 
@@ -98,9 +98,9 @@ function initViewer() {
   const box = new THREE.Box3().setFromObject(shirt);
   const size = new THREE.Vector3();
   box.getSize(size);
-  // Target width and height in scene units
-  const targetWidth = 1.5;
-  const targetHeight = 2.0;
+  // Target width and height in scene units (make shirt bigger)
+  const targetWidth = 2.2;
+  const targetHeight = 2.8;
   const scaleX = targetWidth / size.x;
   const scaleY = targetHeight / size.y;
   const scale = Math.min(scaleX, scaleY); // uniform scale
@@ -123,51 +123,54 @@ function initViewer() {
       const container = document.getElementById('colorPickerContainer');
       if (!container) {
         console.error("Color picker container not found");
+        // Show visible error in the UI
+        const rightPanel = document.querySelector('.sim-viewer-right');
+        if (rightPanel) {
+          rightPanel.insertAdjacentHTML('afterbegin', '<div style="color:red;font-size:16px;padding:12px 0;">Error: Color picker container not found.</div>');
+        }
         return;
       }
 
-      // Apply fallback styling directly
-      container.style.border = '1px solid red';
-      container.style.minHeight = '300px';
-      container.style.backgroundColor = '#fff';
-      container.style.padding = '10px';
-      container.style.borderRadius = '8px';
-
-      // Initialize Pickr only once
-      if (!pickrInstance) {
-        pickrInstance = Pickr.create({
-          el: container,
-          theme: 'classic',
-          inline: true,
-          showAlways: true,
-          default: '#ffffff',
-          components: {
-            preview: true,
-            opacity: false,
-            hue: true,
-            interaction: {
-              hex: true,
-              input: true,
-              save: false
+      try {
+        // Initialize Pickr only once
+        if (!pickrInstance) {
+          pickrInstance = Pickr.create({
+            el: container,
+            theme: 'classic',
+            inline: true,
+            showAlways: true,
+            default: '#ffffff',
+            components: {
+              preview: true,
+              opacity: false,
+              hue: true,
+              interaction: {
+                hex: true,
+                input: true,
+                save: false
+              }
             }
-          }
-        });
-
-        pickrInstance.on('change', (color) => {
-          const hex = color.toHEXA().toString();
-          shirtMeshList.forEach(mesh => {
-            mesh.material.color.set(hex);
           });
-        });
 
-        pickrInstance.on('swatchselect', (color) => {
-          const hex = color.toHEXA().toString();
-          shirtMeshList.forEach(mesh => {
-            mesh.material.color.set(hex);
+          pickrInstance.on('change', (color) => {
+            const hex = color.toHEXA().toString();
+            shirtMeshList.forEach(mesh => {
+              mesh.material.color.set(hex);
+            });
           });
-        });
 
-        console.log("✅ Pickr initialized:", pickrInstance);
+          pickrInstance.on('swatchselect', (color) => {
+            const hex = color.toHEXA().toString();
+            shirtMeshList.forEach(mesh => {
+              mesh.material.color.set(hex);
+            });
+          });
+
+          console.log("✅ Pickr initialized:", pickrInstance);
+        }
+      } catch (e) {
+        console.error('Pickr failed to initialize:', e);
+        container.innerHTML = '<div style="color:red;font-size:16px;padding:12px 0;">Error: Color picker failed to initialize.<br>' + e + '</div>';
       }
     }, 300);
   }, undefined, function (error) {
@@ -178,7 +181,6 @@ function initViewer() {
 
 // Always initialize viewer and color picker on load
 window.addEventListener('DOMContentLoaded', () => {
-
   // DOM checks
   if (!document.getElementById('viewerCanvas')) {
     console.error('viewerCanvas element not found!');
@@ -189,11 +191,17 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // Close button logic (moved from inline script)
+  var closeBtn = document.getElementById('simCloseBtn');
+  if (closeBtn) {
+    closeBtn.onclick = function() {
+      window.close();
+    };
+  }
+
   try {
     initViewer();
   } catch (e) {
     console.error('initViewer error:', e);
   }
-
-
 });

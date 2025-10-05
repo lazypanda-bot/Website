@@ -1,3 +1,24 @@
+/* Force Pickr color picker UI to be visible and sized correctly */
+#colorPickerContainer .pickr,
+#colorPickerContainer .pickr .pcr-app {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    min-width: 200px !important;
+    min-height: 200px !important;
+    width: 100% !important;
+    height: 220px !important;
+    position: static !important;
+    z-index: 10 !important;
+}
+#colorPickerContainer .pickr .pcr-app {
+    background: #fff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(117,37,37,0.07) !important;
+}
+#colorPickerContainer .pickr .pcr-button {
+    display: none !important;
+}
 .sim-viewer-container {
     width: 100%;
     max-width: 1200px;
@@ -27,9 +48,12 @@
 /* Layout for sim.html viewer and color picker */
 .sim-viewer-container {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 0;
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 32px 24px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(117,37,37,0.10);
     box-sizing: border-box;
 }
 .sim-viewer-layout {
@@ -37,23 +61,59 @@
     gap: 40px;
     align-items: flex-start;
 }
+/* ORIGINAL: Keep the shirt viewer at a natural size */
 .sim-viewer-left {
     flex: none;
-    width: 50%;
-    height: 700px;
-    max-height: 90vh;
+    width: 340px;
+    height: 480px;
+    max-height: 95vh;
+    background: #faf7f7;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(117,37,37,0.06);
+    padding: 18px 10px 18px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
+}
+.sim-close-btn {
+    position: absolute;
+    top: 18px;
+    right: 24px;
+    z-index: 100;
+    background: #fff;
+    color: #752525;
+    border: none;
+    border-radius: 50%;
+    font-size: 2.2rem;
+    font-weight: bold;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(117,37,37,0.10);
+    transition: background 0.2s, color 0.2s;
+}
+.sim-close-btn:hover {
+    background: #fbeaea;
+    color: #a53131;
 }
 .sim-viewer-right {
     flex: 1;
+    min-width: 260px;
     display: flex;
     flex-direction: column;
     gap: 30px;
+    background: #f8f6f6;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(117,37,37,0.04);
+    padding: 32px 24px;
+    margin-left: 0;
 }
 .sim-control-block {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-bottom: 18px;
 }
 .sim-control-block label {
     font-weight: 600;
@@ -65,14 +125,65 @@
     object-fit: contain;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+/* Make sure the color picker is always visible and styled */
 #colorPickerContainer {
     min-height: 220px;
-    padding: 10px;
+    min-width: 180px;
+    padding: 12px 8px;
     background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(117,37,37,0.07);
+    border: 1.5px solid #e7dede;
     position: relative;
     z-index: 1;
+    transition: box-shadow 0.2s, border 0.2s;
+    display: block !important;
+    overflow: visible;
+}
+@media (max-width: 900px) {
+    .sim-viewer-layout {
+        flex-direction: column;
+        gap: 24px;
+    }
+    .sim-viewer-left, .sim-viewer-right {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        height: auto;
+        box-shadow: none;
+        padding: 0;
+    }
+    .sim-viewer-container {
+        padding: 18px 2vw;
+    }
+    .sim-close-btn {
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+}
+#colorPickerContainer:hover {
+        box-shadow: 0 4px 18px rgba(117,37,37,0.13);
+        border: 1.5px solid #c9baba;
+}
+@media (max-width: 900px) {
+    .sim-viewer-layout {
+        flex-direction: column;
+        gap: 24px;
+    }
+    .sim-viewer-left, .sim-viewer-right {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        height: auto;
+        box-shadow: none;
+        padding: 0;
+    }
+    .sim-viewer-container {
+        padding: 18px 2vw;
+    }
 }
 .pickr .pcr-app {
     display: block !important;

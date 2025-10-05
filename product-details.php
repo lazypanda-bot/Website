@@ -7,6 +7,18 @@ $productName = $_GET['name'] ?? 'Product';
 $productImg = $_GET['img'] ?? 'img/snorlax.png';
 $productPrice = $_GET['price'] ?? '150';
 
+// Fetch product_id from database
+require_once 'database.php';
+$productId = 1; // fallback
+$stmt = $conn->prepare("SELECT id FROM products WHERE name = ? LIMIT 1");
+$stmt->bind_param("s", $productName);
+if ($stmt->execute()) {
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $productId = $row['id'];
+    }
+}
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -190,8 +202,25 @@ $productPrice = $_GET['price'] ?? '150';
                 <input type="hidden" name="design-option" id="design-option" value="" />
             </section>
             <div class="action-buttons">
-                <button class="buy-btn">Buy Now</button>
-                <button class="addcart-btn">Add to Cart</button>
+                <form action="place_order.php" method="POST" id="orderForm" style="margin-top:24px;display:inline-block;">
+                    <input type="hidden" name="product_id" value="<?php echo $productId; ?>" />
+                    <input type="hidden" name="size" id="form_size" value="12oz" />
+                    <input type="hidden" name="color" id="form_color" value="" />
+                    <input type="hidden" name="quantity" id="form_quantity" value="1" />
+                    <input type="hidden" name="isPartialPayment" value="0" />
+                    <input type="hidden" name="TotalAmount" id="form_totalAmount" value="" />
+                    <input type="hidden" name="OrderStatus" value="Pending" />
+                    <input type="hidden" name="DeliveryAddress" id="form_DeliveryAddress" value="" />
+                    <input type="hidden" name="DeliveryStatus" value="Not Shipped" />
+                    <button type="submit" class="buy-btn">Buy Now</button>
+                </form>
+                <form action="add_to_cart.php" method="POST" id="cartForm" style="display:inline-block;margin-left:16px;" onsubmit="return false;">
+                    <input type="hidden" name="product_id" value="<?php echo $productId; ?>" />
+                    <input type="hidden" name="size" id="cart_size" value="12oz" />
+                    <input type="hidden" name="color" id="cart_color" value="" />
+                    <input type="hidden" name="quantity" id="cart_quantity" value="1" />
+                    <button type="button" class="addcart-btn">Add to Cart</button>
+                </form>
             </div>
         </section>
     </section>

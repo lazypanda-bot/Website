@@ -106,7 +106,7 @@ function selectSize(el) {
 function adjustQuantity(change) {
   const input = document.getElementById('quantity');
   let value = parseInt(input.value);
-  value = Math.max(0, value + change);
+  value = Math.max(1, value + change);
   input.value = value;
 }
 
@@ -132,7 +132,7 @@ function selectDesign(option) {
     openUploadModal();
   }
   if (option === 'customize') {
-    openViewerModal(); 
+    openViewerModal();
   }
 }
 function openModal() {
@@ -204,11 +204,18 @@ const selectedProduct = localStorage.getItem('selectedProduct');
 document.getElementById('customizeBtn').setAttribute('data-product', selectedProduct);
 
 function openViewerModal() {
-  document.getElementById('viewerModal').style.display = 'flex';
-
-  if (!window.viewerInitialized) {
-    initViewer(); // defined in sim.js
-    window.viewerInitialized = true;
+  const modal = document.getElementById('viewerModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    // Wait for the modal to be visible before initializing viewer
+    setTimeout(() => {
+      if (!window.viewerInitialized) {
+        if (typeof initViewer === 'function') {
+          initViewer(); // defined in sim.js
+          window.viewerInitialized = true;
+        }
+      }
+    }, 100);
   }
 }
 
