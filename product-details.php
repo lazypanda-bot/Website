@@ -172,29 +172,10 @@ $stmt->close();
                     <button type="button" class="design-btn" onclick="selectDesign('upload')">
                         Upload Your Design
                     </button>
-                    <button type="button" class="design-btn" onclick="selectDesign('customize')">
-                        Customize Design
-                    </button>
+                    <a href="sim.html" class="design-btn" style="text-align:center;display:inline-block;">Customize Design</a>
                     <button type="button" class="design-btn" onclick="selectDesign('request')">
                         Request Design
                     </button>
-            <!-- 3D Customizer Modal -->
-            <div id="viewerModal" class="modal sim-modal" style="display:none;">
-                <div class="sim-modal-content">
-                    <span class="sim-close-btn" onclick="closeViewerModal()">&times;</span>
-                    <div class="sim-viewer-container">
-                        <div class="sim-viewer-layout">
-                            <div id="viewerCanvas" class="sim-viewer-left"></div>
-                            <div class="sim-viewer-right">
-                                <div class="sim-control-block">
-                                    <label>Shirt Color:</label>
-                                    <div id="colorPickerContainer"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
                 </div>
                 <p class="design-note">
                     <strong>Note:</strong> A digital proof of your design will be sent to your registered account. Please review and approve it to proceed with printing.
