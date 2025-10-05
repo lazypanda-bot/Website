@@ -1,3 +1,5 @@
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const cartItemsContainer = document.getElementById('cart-items');
   const cartSummary = document.getElementById('cart-summary');
@@ -6,6 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkoutForm = document.getElementById('checkout-form');
   const orderSummaryDiv = document.getElementById('order-summary');
   const deliveryAddressInput = document.getElementById('delivery_address');
+
+  // Only run cart logic if cart container exists
+  if (!cartItemsContainer || !cartSummary) return;
+  const deliveryPhoneInput = document.getElementById('delivery_phone');
+  const profileMissingInfo = document.getElementById('profile-missing-info');
 
   if (cartIcon) {
     cartIcon.classList.add('active');
@@ -42,38 +49,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupedItems = Object.values(grouped);
     let total = 0;
     if (groupedItems.length > 0) {
-      cartItemsContainer.innerHTML = '';
-      cartItemsContainer.style.display = 'flex';
-      cartItemsContainer.style.flexWrap = 'wrap';
-      cartItemsContainer.style.gap = '20px';
+      if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = '';
+        cartItemsContainer.style.display = 'flex';
+        cartItemsContainer.style.flexWrap = 'wrap';
+        cartItemsContainer.style.gap = '20px';
+      }
       let summaryHtml = '';
       groupedItems.forEach((product, idx) => {
         const pricePerItem = parseFloat(product.price || '0');
         const subtotal = pricePerItem * product.quantity;
         total += subtotal;
-        cartItemsContainer.innerHTML += `
-          <div class="cart-item cart-item-card">
-            <h4>${product.name}</h4>
-            <p>Size: ${product.size}</p>
-            <p>Quantity: ${product.quantity}</p>
-            <p>Design: ${product.design}</p>
-            <p>Price: ₱${pricePerItem.toFixed(2)} each</p>
-            <p><strong>Subtotal: ₱${subtotal.toFixed(2)}</strong></p>
-            <button class="delete-cart-item" data-key="${getKey(product)}" style="background:#9a4141;color:#fff;border:none;padding:6px 16px;border-radius:5px;cursor:pointer;margin-top:8px;"><i class="fa fa-trash"></i> Delete</button>
-          </div>
-        `;
+        if (cartItemsContainer) {
+          cartItemsContainer.innerHTML += `
+            <div class="cart-item cart-item-card">
+              <h4>${product.name}</h4>
+              <p>Size: ${product.size}</p>
+              <p>Quantity: ${product.quantity}</p>
+              <p>Design: ${product.design}</p>
+              <p>Price: ₱${pricePerItem.toFixed(2)} each</p>
+              <p><strong>Subtotal: ₱${subtotal.toFixed(2)}</strong></p>
+              <button class="delete-cart-item" data-key="${getKey(product)}" style="background:#9a4141;color:#fff;border:none;padding:6px 16px;border-radius:5px;cursor:pointer;margin-top:8px;"><i class="fa fa-trash"></i> Delete</button>
+            </div>
+          `;
+        }
         summaryHtml += `<div style="margin-bottom:8px;"><strong>${product.name}</strong> (${product.size}) x${product.quantity} - ₱${subtotal.toFixed(2)}</div>`;
       });
-      cartSummary.querySelector('h3').textContent = `Total: ₱${total.toFixed(2)}`;
-      checkoutBtn.disabled = false;
+      if (cartSummary && cartSummary.querySelector('h3')) cartSummary.querySelector('h3').textContent = `Total: ₱${total.toFixed(2)}`;
+      if (checkoutBtn) checkoutBtn.disabled = false;
       if (orderSummaryDiv) {
         orderSummaryDiv.innerHTML = summaryHtml + `<div style='margin-top:10px;font-weight:bold;'>Total: ₱${total.toFixed(2)}</div>`;
       }
     } else {
-      cartItemsContainer.innerHTML = `<p class=\"empty-cart-msg\">Your cart is currently empty.</p>`;
-      cartItemsContainer.style.display = '';
-      cartSummary.querySelector('h3').textContent = `Total: ₱0.00`;
-      checkoutBtn.disabled = true;
+      if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = `<p class=\"empty-cart-msg\">Your cart is currently empty.</p>`;
+        cartItemsContainer.style.display = '';
+      }
+      if (cartSummary && cartSummary.querySelector('h3')) cartSummary.querySelector('h3').textContent = `Total: ₱0.00`;
+      if (checkoutBtn) checkoutBtn.disabled = true;
       if (orderSummaryDiv) orderSummaryDiv.innerHTML = '';
     }
 
@@ -92,15 +105,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderCart();
 
+  // Autofill address/phone from user profile if available
+  if (checkoutForm && typeof window.userAddress !== 'undefined' && typeof window.userPhone !== 'undefined') {
+    if (window.userAddress && window.userPhone) {
+      deliveryAddressInput.value = window.userAddress;
+      deliveryPhoneInput.value = window.userPhone;
+      if (profileMissingInfo) profileMissingInfo.style.display = 'none';
+      deliveryAddressInput.readOnly = true;
+      deliveryPhoneInput.readOnly = true;
+      checkoutForm.querySelector('button[type="submit"]').disabled = false;
+    } else {
+      // Show prompt and disable checkout
+      if (profileMissingInfo) profileMissingInfo.style.display = 'block';
+      deliveryAddressInput.value = '';
+      deliveryPhoneInput.value = '';
+      deliveryAddressInput.readOnly = true;
+      deliveryPhoneInput.readOnly = true;
+      checkoutForm.querySelector('button[type="submit"]').disabled = true;
+    }
+  }
+
   // Checkout form validation and submission
   if (checkoutForm) {
     checkoutForm.addEventListener('submit', function(e) {
       e.preventDefault();
       // Validate delivery address
       const address = deliveryAddressInput.value.trim();
+      const phone = deliveryPhoneInput.value.trim();
       if (!address) {
         alert('Please enter your delivery address.');
         deliveryAddressInput.focus();
+        return;
+      }
+      if (!phone) {
+        alert('Please enter your phone number.');
+        deliveryPhoneInput.focus();
         return;
       }
       // Validate delivery method
@@ -116,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       // Show order summary (simulate order placement)
-      alert('Order placed!\n\nDelivery Address: ' + address + '\nDelivery Method: ' + deliveryMethod.value + '\nPayment Method: ' + paymentMethod.value + '\n\nThank you for your order!');
+      alert('Order placed!\n\nDelivery Address: ' + address + '\nPhone: ' + phone + '\nDelivery Method: ' + deliveryMethod.value + '\nPayment Method: ' + paymentMethod.value + '\n\nThank you for your order!');
       // Optionally clear cart
       localStorage.removeItem('cart');
       renderCart();

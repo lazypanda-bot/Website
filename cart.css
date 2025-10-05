@@ -102,11 +102,9 @@
     box-shadow: 0 0 10px rgba(0,0,0,0.05);
     border-radius: 8px;
 }
-
 #checkout-form {
     display: none;
 }
-
 #checkout-form.checkout-form {
     display: block;
 }

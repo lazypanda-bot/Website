@@ -17,12 +17,30 @@
 
 
 
+
 <?php
-    session_start();
-    $isAuthenticated = isset($_SESSION['user_id']);
+session_start();
+$isAuthenticated = isset($_SESSION['user_id']);
+$userAddress = '';
+$userPhone = '';
+if ($isAuthenticated) {
+    $userId = $_SESSION['user_id'];
+    $conn = new mysqli("localhost", "root", "", "printshop");
+    if (!$conn->connect_error) {
+        $stmt = $conn->prepare("SELECT address, phone_number FROM users WHERE id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $stmt->bind_result($userAddress, $userPhone);
+        $stmt->fetch();
+        $stmt->close();
+        $conn->close();
+    }
+}
 ?>
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+    window.userAddress = <?= json_encode($userAddress) ?>;
+    window.userPhone = <?= json_encode($userPhone) ?>;
 </script>
 <script src="login.js?v=<?= time() ?>"></script>
 
@@ -61,28 +79,36 @@
             <h3>Total: ₱0.00</h3>
             <button class="checkout-btn" disabled onclick="document.getElementById('checkout-form').style.display='block'">Proceed to Checkout</button>
         </div>
-        <form id="checkout-form" style="display:none; margin-top:2em;" onsubmit="return false;">
-            <h3>Checkout</h3>
-            <div class="form-group">
-                <span>Delivery Method:</span><br>
-                <input type="radio" name="delivery_method" id="delivery_pickup" value="pickup" required> <label for="delivery_pickup">Pick up</label>
-                <input type="radio" name="delivery_method" id="delivery_standard" value="standard"> <label for="delivery_standard">Standard Delivery</label>
-            </div>
-            <div class="form-group">
-                <span>Payment Method:</span><br>
-                <input type="radio" name="payment_method" id="payment_cash" value="cash" required> <label for="payment_cash">Cash</label>
-                <input type="radio" name="payment_method" id="payment_gcash" value="gcash"> <label for="payment_gcash">GCash</label>
-            </div>
-            <div class="form-group">
-                <label for="delivery_address">Delivery Address:</label><br>
-                <input type="text" id="delivery_address" name="delivery_address" required style="width:100%;max-width:400px;">
-            </div>
-            <div class="form-group">
-                <h4>Order Summary</h4>
-                <div id="order-summary"></div>
-            </div>
-            <button type="submit">Place Order</button>
-        </form>
+    <form id="checkout-form" class="checkout-form" style="display:none; margin-top:2em;" onsubmit="return false;">
+        <h3>Checkout</h3>
+        <div id="profile-missing-info" style="display:none; background:#ffeaea; color:#a53131; border:1px solid #a53131; padding:12px; border-radius:8px; margin-bottom:16px;">
+            <strong>Missing address or phone number.</strong><br>
+            Please <button type="button" onclick="window.location.href='profile.php'" style="background:#a53131;color:#fff;border:none;padding:6px 16px;border-radius:5px;cursor:pointer;">update your profile</button> to proceed with checkout.
+        </div>
+        <div class="form-group">
+            <span>Delivery Method:</span><br>
+            <input type="radio" name="delivery_method" id="delivery_pickup" value="pickup" required> <label for="delivery_pickup">Pick up</label>
+            <input type="radio" name="delivery_method" id="delivery_standard" value="standard"> <label for="delivery_standard">Standard Delivery</label>
+        </div>
+        <div class="form-group">
+            <span>Payment Method:</span><br>
+            <input type="radio" name="payment_method" id="payment_cash" value="cash" required> <label for="payment_cash">Cash</label>
+            <input type="radio" name="payment_method" id="payment_gcash" value="gcash"> <label for="payment_gcash">GCash</label>
+        </div>
+        <div class="form-group">
+            <label for="delivery_address">Delivery Address:</label><br>
+            <input type="text" id="delivery_address" name="delivery_address" required style="width:100%;max-width:400px;">
+        </div>
+        <div class="form-group">
+            <label for="delivery_phone">Phone Number:</label><br>
+            <input type="text" id="delivery_phone" name="delivery_phone" required style="width:100%;max-width:400px;">
+        </div>
+        <div class="form-group">
+            <h4>Order Summary</h4>
+            <div id="order-summary"></div>
+        </div>
+        <button type="submit">Place Order</button>
+    </form>
     </div>
 
     <footer id="footer">
