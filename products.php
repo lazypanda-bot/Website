@@ -257,6 +257,7 @@
                         <h4>Everyday & School Clothes</h4>
                     </div>
                 </div>
+            </section> 
         </div>
     </div>
 

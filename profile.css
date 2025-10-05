@@ -1,74 +1,3 @@
-.profile-avatar {
-    width: 160px;
-    height: 160px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid #9a4141;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-.profile-action-row {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    align-items: center;
-    margin-top: 30px;
-}
-/* --- Moved from profile.php inline CSS --- */
-.input-edit-group .input-edit-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-.input-edit-group input[type="text"] {
-    padding-right: 38px !important;
-}
-.input-edit-btn {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0 4px;
-    color: #9a4141;
-    font-size: 1.1em;
-    z-index: 2;
-    outline: none;
-    transition: color 0.2s;
-}
-.input-edit-btn:hover {
-    color: #3a0d0d;
-}
-.profile-toast-success {
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    z-index: 9999;
-    background: #e6ffe6;
-    color: #256029;
-    border: 1.5px solid #256029;
-    border-radius: 8px;
-    padding: 16px 32px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-30px);
-    transition: opacity 0.4s, transform 0.4s;
-}
-.profile-toast-success.show {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-}
-.no-padding {
-    padding: 0 !important;
-}
-.show-save-btn {
-    display: flex !important;
-}
 body {
     font-family: 'Poppins';
     background-color: #f4f4f4;
@@ -148,7 +77,8 @@ section {
 }
 .button-group {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    gap: 12px;
 }
 .btn {
     padding: 0.6rem 1.2rem;
@@ -174,8 +104,16 @@ section {
 }
 .logout-bar {
     display: flex;
-    justify-content: flex-end;
-    padding: 1rem 2rem 0 0;
+    justify-content: center;
+    padding: 0;
+}
+/* Ensure the action row at the bottom is centered and spaced */
+.profile-action-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
 }
 .logout-btn {
     background-color: #9a4141;
@@ -189,6 +127,8 @@ section {
 .logout-btn:hover {
     background-color: #3a0d0d;
 }
+
+/* Profile updated toast (original style, if any) */
 
 /* Responsive */
 @media (max-width: 768px) {

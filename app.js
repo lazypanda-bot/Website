@@ -15,7 +15,6 @@ links.forEach(link => {
   toggleBtn.addEventListener('click', () => {
     navbar.classList.add('active');
   });
-
   closeBtn.addEventListener('click', () => {
     navbar.classList.remove('active');
   });
@@ -27,15 +26,14 @@ links.forEach(link => {
 //   input.focus();
 // });
 
+
 const searchBtn = document.querySelector('.search-btn');
 const searchInput = document.querySelector('.search-input');
-
 searchBtn.addEventListener('click', () => {
   searchInput.classList.toggle('hidden');
   searchInput.classList.toggle('visible');
   searchInput.focus();
 });
-
 searchInput.addEventListener('blur', () => {
   if (searchInput.value.trim() === '') {
     searchInput.classList.remove('visible');
@@ -78,7 +76,6 @@ const reasonSwiper = new Swiper('.reason-carousel', {
 // pause outer carousel when "Why choose" slide is active
 whySwiper.on('slideChange', function () {
   const activeIndex = whySwiper.activeIndex;
-
   if (activeIndex === 1) {
     whySwiper.autoplay.stop();
     reasonSwiper.slideTo(0, 0);
@@ -87,11 +84,10 @@ whySwiper.on('slideChange', function () {
     whySwiper.autoplay.start();
   }
 });
-
 // resume outer carousel after inner carousel finishes
 reasonSwiper.on('reachEnd', function () {
-reasonSwiper.autoplay.stop();
-setTimeout(() => {
+  reasonSwiper.autoplay.stop();
+  setTimeout(() => {
     whySwiper.slideNext();  
     whySwiper.autoplay.start(); 
   }, 3000);

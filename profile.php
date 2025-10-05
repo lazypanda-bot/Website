@@ -128,18 +128,17 @@ if ($isAuthenticated) {
                         <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($phone ?? '') ?>" placeholder="Enter your phone number" required readonly />
                     </div>
                 </div>
-            </form>
-            <div class="profile-action-row">
-                <div class="button-group" id="save-btn-group">
-                    <button type="submit" form="profileForm" class="btn edit-btn">Save</button>
+                <div class="profile-action-row">
+                    <div class="button-group" id="save-btn-group">
+                        <button type="submit" form="profileForm" class="btn edit-btn">Save</button>
+                    </div>
+                    <form action="logout.php" method="post" class="logout-bar no-padding">
+                        <button type="submit" class="btn logout-btn">Logout</button>
+                    </form>
+                    <form action="#" method="post" class="delete-bar no-padding" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                        <button type="submit" class="btn delete-btn">Delete</button>
+                    </form>
                 </div>
-                <form action="logout.php" method="post" class="logout-bar no-padding">
-                    <button type="submit" class="btn logout-btn">Logout</button>
-                </form>
-                <form action="#" method="post" class="delete-bar no-padding" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
-                    <button type="submit" class="btn delete-btn">Delete</button>
-                </form>
-            </div>
             </form>
             <?php if (isset($_GET['updated']) && $isAuthenticated): ?>
                 <div id="profile-toast" class="profile-toast-success">Profile updated successfully!</div>

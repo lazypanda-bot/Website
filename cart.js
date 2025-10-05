@@ -1,6 +1,14 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Update profile button handler
+  const updateProfileBtn = document.getElementById('update-profile-btn');
+  if (updateProfileBtn) {
+    updateProfileBtn.addEventListener('click', function() {
+      window.location.href = 'profile.php';
+    });
+  }
+  const shippingFeeDiv = document.getElementById('shipping-fee');
   const cartItemsContainer = document.getElementById('cart-items');
   const cartSummary = document.getElementById('cart-summary');
   const checkoutBtn = document.querySelector('.checkout-btn');
@@ -47,8 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
       grouped[key].quantity += product.quantity;
     });
     const groupedItems = Object.values(grouped);
-    let total = 0;
-    if (groupedItems.length > 0) {
+  let total = 0;
+  let shippingFee = 0;
+  if (groupedItems.length > 0) {
       if (cartItemsContainer) {
         cartItemsContainer.innerHTML = '';
         cartItemsContainer.style.display = 'flex';
@@ -78,7 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cartSummary && cartSummary.querySelector('h3')) cartSummary.querySelector('h3').textContent = `Total: ₱${total.toFixed(2)}`;
       if (checkoutBtn) checkoutBtn.disabled = false;
       if (orderSummaryDiv) {
-        orderSummaryDiv.innerHTML = summaryHtml + `<div style='margin-top:10px;font-weight:bold;'>Total: ₱${total.toFixed(2)}</div>`;
+        orderSummaryDiv.innerHTML = summaryHtml + `<div style='margin-top:10px;font-weight:bold;'>Subtotal: ₱${total.toFixed(2)}</div>`;
+      }
+      // Set initial shipping fee display
+      if (shippingFeeDiv) {
+        shippingFeeDiv.textContent = '';
       }
     } else {
       if (cartItemsContainer) {
@@ -99,6 +112,42 @@ document.addEventListener('DOMContentLoaded', () => {
         items = items.filter(item => getKey(item) !== key);
         localStorage.setItem('cart', JSON.stringify(items));
         renderCart();
+  // Listen for delivery method change to update shipping fee
+  function updateShippingFee() {
+    let shippingFee = 0;
+    const deliveryMethod = checkoutForm.querySelector('input[name="delivery_method"]:checked');
+    if (deliveryMethod && deliveryMethod.value === 'standard') {
+      shippingFee = 25;
+    }
+    if (shippingFeeDiv) {
+      shippingFeeDiv.textContent = `Shipping Fee: ₱${shippingFee}`;
+    }
+    // Update total in summary
+    let subtotal = 0;
+    const grouped = {};
+    let items = JSON.parse(localStorage.getItem('cart') || '[]');
+    items.forEach(product => {
+      const key = getKey(product);
+      if (!grouped[key]) {
+        grouped[key] = { ...product, quantity: 0 };
+      }
+      grouped[key].quantity += product.quantity;
+    });
+    const groupedItems = Object.values(grouped);
+    groupedItems.forEach(product => {
+      subtotal += parseFloat(product.price || '0') * product.quantity;
+    });
+    if (orderSummaryDiv) {
+      orderSummaryDiv.innerHTML = groupedItems.map(product => `<div style="margin-bottom:8px;"><strong>${product.name}</strong> (${product.size}) x${product.quantity} - ₱${(parseFloat(product.price || '0') * product.quantity).toFixed(2)}</div>`).join('') + `<div style='margin-top:10px;font-weight:bold;'>Subtotal: ₱${subtotal.toFixed(2)}</div><div style='margin-top:5px;font-weight:bold;'>Shipping Fee: ₱${shippingFee}</div><div style='margin-top:5px;font-weight:bold;'>Total: ₱${(subtotal + shippingFee).toFixed(2)}</div>`;
+    }
+  }
+  // Attach event listeners to delivery method radios
+  const deliveryRadios = checkoutForm.querySelectorAll('input[name="delivery_method"]');
+  deliveryRadios.forEach(radio => {
+    radio.addEventListener('change', updateShippingFee);
+  });
+  // Initial call in case default is selected
+  updateShippingFee();
       });
     });
   }
@@ -110,13 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.userAddress && window.userPhone) {
       deliveryAddressInput.value = window.userAddress;
       deliveryPhoneInput.value = window.userPhone;
-      if (profileMissingInfo) profileMissingInfo.style.display = 'none';
+      if (profileMissingInfo) profileMissingInfo.classList.remove('show');
       deliveryAddressInput.readOnly = true;
       deliveryPhoneInput.readOnly = true;
       checkoutForm.querySelector('button[type="submit"]').disabled = false;
     } else {
       // Show prompt and disable checkout
-      if (profileMissingInfo) profileMissingInfo.style.display = 'block';
+      if (profileMissingInfo) profileMissingInfo.classList.add('show');
       deliveryAddressInput.value = '';
       deliveryPhoneInput.value = '';
       deliveryAddressInput.readOnly = true;

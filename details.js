@@ -55,6 +55,9 @@ function showTab(tabId, button) {
   button.classList.add('active');
 }
 
+// Ensure showTab is available globally for inline onclick
+window.showTab = showTab;
+
 // product deatail dropdown
 
 function toggleDropdown() {
@@ -171,9 +174,9 @@ function closeUploadModal() {
 
 function submitUpload() {
   const fileInput = document.getElementById('designFile');
-  const file = fileInput.files[0];
+    const file = fileInput ? fileInput.files[0] : null;
 
-  if (!file) {
+    if (!file) {
     alert("Please select a file to upload.");
     return;
   }
@@ -182,26 +185,35 @@ function submitUpload() {
   closeUploadModal();
 }
 
-// drag & drop
-const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.style.backgroundColor = '#f5eaea';
-});
 
-dropZone.addEventListener('dragleave', () => {
-  dropZone.style.backgroundColor = '#fafafa';
-});
+// drag & drop setup
+document.addEventListener('DOMContentLoaded', function() {
+  const dropZone = document.getElementById('dropZone');
+  if (dropZone) {
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '#f5eaea';
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.backgroundColor = '#fafafa';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '#fafafa';
+      const fileInput = document.getElementById('designFile');
+      if (fileInput) {
+        fileInput.files = e.dataTransfer.files;
+      }
+    });
+  }
 
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.style.backgroundColor = '#fafafa';
+  const selectedProduct = localStorage.getItem('selectedProduct');
+  const customizeBtn = document.getElementById('customizeBtn');
+  if (customizeBtn) {
+    customizeBtn.setAttribute('data-product', selectedProduct);
+  }
 
-  const fileInput = document.getElementById('designFile');
-  fileInput.files = e.dataTransfer.files;
 });
-const selectedProduct = localStorage.getItem('selectedProduct');
-document.getElementById('customizeBtn').setAttribute('data-product', selectedProduct);
 
 function openViewerModal() {
   const modal = document.getElementById('viewerModal');
@@ -223,3 +235,7 @@ function openViewerModal() {
 function closeViewerModal() {
   document.getElementById('viewerModal').style.display = 'none';
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+});
+

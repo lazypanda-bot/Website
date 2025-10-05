@@ -242,12 +242,7 @@ $stmt->close();
         </div>
     </footer>
     <div id="login-container"></div>
-    <!-- Login Modal Inline Start -->
     <?php include 'login.php'; ?>
-    <!-- Login Modal Inline End -->
-        <div id="cart-notification" style="display:none;position:fixed;top:30px;right:30px;z-index:10000;background:#3a0d0d;color:#fff;padding:18px 32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);font-size:1.1rem;transition:opacity 0.3s;opacity:0;">
-                <i class="fa-solid fa-cart-plus" style="margin-right:10px;"></i>Added to cart!
-        </div>
 
             <!-- Request Design Modal -->
             <div id="designModal" class="custom-modal" style="display:none;">
@@ -291,7 +286,7 @@ $stmt->close();
                     </div>
                 </div>
             </div>
-    <!-- ...existing modals and scripts... -->
+            
     <script src="app.js"></script>
     <script src="about.js"></script>
     <script src="login.js"></script>
@@ -303,5 +298,8 @@ $stmt->close();
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="sim.js"></script>
     <script src="forproductbtns.js"></script>
+</body>
+</html>
+</body>
 </body>
 </html>

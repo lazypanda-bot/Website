@@ -79,11 +79,16 @@ if ($isAuthenticated) {
             <h3>Total: ₱0.00</h3>
             <button class="checkout-btn" disabled onclick="document.getElementById('checkout-form').style.display='block'">Proceed to Checkout</button>
         </div>
-    <form id="checkout-form" class="checkout-form" style="display:none; margin-top:2em;" onsubmit="return false;">
+    <form id="checkout-form" class="checkout-form" style="display:none;" onsubmit="return false;">
         <h3>Checkout</h3>
-        <div id="profile-missing-info" style="display:none; background:#ffeaea; color:#a53131; border:1px solid #a53131; padding:12px; border-radius:8px; margin-bottom:16px;">
+        <div id="profile-missing-info" class="profile-missing-info">
             <strong>Missing address or phone number.</strong><br>
-            Please <button type="button" onclick="window.location.href='profile.php'" style="background:#a53131;color:#fff;border:none;padding:6px 16px;border-radius:5px;cursor:pointer;">update your profile</button> to proceed with checkout.
+            Please <button type="button" id="update-profile-btn">update your profile</button> to proceed with checkout.
+        </div>
+        <div class="form-group">
+            <span>Payment Type:</span><br>
+            <input type="radio" name="isPartialPayment" id="payment_partial" value="1" required> <label for="payment_partial">Partial</label>
+            <input type="radio" name="isPartialPayment" id="payment_full" value="0"> <label for="payment_full">Full</label>
         </div>
         <div class="form-group">
             <span>Delivery Method:</span><br>
@@ -97,19 +102,21 @@ if ($isAuthenticated) {
         </div>
         <div class="form-group">
             <label for="delivery_address">Delivery Address:</label><br>
-            <input type="text" id="delivery_address" name="delivery_address" required style="width:100%;max-width:400px;">
+            <input type="text" id="delivery_address" name="delivery_address" required>
         </div>
         <div class="form-group">
             <label for="delivery_phone">Phone Number:</label><br>
-            <input type="text" id="delivery_phone" name="delivery_phone" required style="width:100%;max-width:400px;">
+            <input type="text" id="delivery_phone" name="delivery_phone" required>
         </div>
         <div class="form-group">
             <h4>Order Summary</h4>
             <div id="order-summary"></div>
+            <div id="shipping-fee"></div>
         </div>
-        <button type="submit">Place Order</button>
+        <button type="submit" class="place-order-btn">Place Order</button>
     </form>
     </div>
+    <!-- No floating cart toast here in the original version -->
 
     <footer id="footer">
         <div class="footer-container">
@@ -145,34 +152,15 @@ if ($isAuthenticated) {
                 </div>
             </div>
         </div>
-    </footer>
-    <div id="login-container"></div>
-
-    <div class="chat-box" id="chatBox">
-        <div class="chat-header">
-            <div class="chat-logo">
-                <img src="img/logo.png" alt="Chat Logo" />
+        <div class="floating-chat">
+            <div class="chat-tooltip">Need help? Chat with us!</div>
+            <div class="chat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
             </div>
-            <div class="chat-menu">put +</div>
         </div>
-        <div class="chat-thread" id="chatThread">
-        <!-- Real-time messages will be injected here -->
-        </div>
-        <div class="chat-input">
-            <button class="icon-btn">✏️</button>
-            <input type="text" placeholder="Type here" />
-            <button class="icon-btn">📤</button>
-        </div>
-    </div>
-    <div class="floating-chat">
-        <div class="chat-tooltip">Need help? Chat with us!</div>
-        <div class="chat-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-        </div>
-    </div>
-    <div id="login-container"></div>
+        <div id="login-container"></div>
 
         <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
         <script src="app.js"></script>

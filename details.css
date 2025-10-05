@@ -1,4 +1,3 @@
-/* Align Buy Now and Add to Cart buttons horizontally and vertically */
 .action-buttons {
     display: flex;
     flex-direction: row;
@@ -22,7 +21,7 @@
     justify-content: center;
     margin: 0;
 }
-/* Collapsible 3D customizer dropdown styles */
+
 .sim-dropdown-collapsible {
     width: 100%;
     margin: 24px 0 0 0;
@@ -41,7 +40,6 @@
     max-height: 0;
     padding: 0;
 }
-/* --- Modern Modal Design for Request/Upload Design (scoped) --- */
 #uploadModal.custom-modal .modal-header,
 #designModal.custom-modal .modal-header {
     display: flex;
@@ -195,7 +193,6 @@
     font-size: 0.97rem;
     font-weight: 400;
 }
-/* --- Upload & Request Design Modal Styles --- */
 #uploadModal .modal-content,
 #designModal .modal-content {
     background: #fff;
@@ -321,7 +318,6 @@
     line-height: 1.2;
     white-space: nowrap;
 }
-/* Thumbnail wrapper and delete button for product-details.php */
 .thumbnail-wrapper {
     position: relative;
     display: inline-block;
@@ -348,7 +344,7 @@
 .thumbnail-wrapper:hover .delete-thumbnail-btn {
     display: block;
 }
-/* Style for the plus button in the thumbnail row */
+
 .thumbnail-row button#add-thumbnail-btn {
     display: flex;
     align-items: center;
