@@ -35,7 +35,7 @@
 .sim-viewer-left {
     flex: none;
     width: 500px;
-    height: 1000px;
+    height: 1400px;
     max-height: 95vh;
 }
 .sim-upload-actions button:hover {
@@ -47,7 +47,6 @@
     font-weight: 600;
     border-radius: 6px;
 }
-
 .sim-viewer-container {
     width: 100%;
     max-width: 1600px;
@@ -70,11 +69,10 @@
     gap: 40px;
     align-items: flex-start;
 }
-
 #shirt3d-wrapper, .sim-viewer-left {
     flex: none;
     width: 700px;
-    height: 40px;
+    height: 450px;
     max-height: 95vh;
     background: #faf7f7;
     border-radius: 14px;
@@ -87,7 +85,7 @@
 }
 #viewerCanvas {
     width: 1000px !important;
-    height: 400px !important;
+    height: 500px !important;
     min-width: 600px;
     min-height: 400px;
     max-width: 100%;
@@ -145,6 +143,7 @@
     object-fit: contain;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+/* Make sure the color picker is always visible and styled */
 #colorPickerContainer {
     min-height: 220px;
     min-width: 180px;
