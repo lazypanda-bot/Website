@@ -7,10 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!addressInput || !phoneInput || !editAddressBtn || !editPhoneBtn || !saveBtnGroup) return;
     let editing = false;
 
-    function showSaveBtn() {
-        saveBtnGroup.classList.add('show-save-btn');
-    }
-
     // Store original values to restore if switching
     let originalAddress = addressInput.value;
     let originalPhone = phoneInput.value;
@@ -44,10 +40,12 @@ document.addEventListener('DOMContentLoaded', function() {
         profileForm.addEventListener('reset', function() {
             addressInput.readOnly = true;
             phoneInput.readOnly = true;
-            saveBtnGroup.classList.remove('show-save-btn');
+            hideSaveBtn();
             editing = false;
         });
     }
+
+    // Save button is always visible
 
     // Show toast if profile updated
     const toast = document.getElementById('profile-toast');

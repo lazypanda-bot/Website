@@ -107,7 +107,6 @@ $stmt->close();
             </div>
         <div class="tab-content" id="description">
             <p class="product-description">
-                <!-- You can make this dynamic as well -->
                 High quality custom printing for your needs.
             </p>
             <ul class="product-features">

@@ -167,19 +167,24 @@
     color: #9a4141;
     border-color: #3a0d0d;
 }
-.auth-box .auth-btn {
+.auth-box .auth-btn,
+.auth-box .auth-btn.solid,
+.auth-box .auth-btn.transparent {
     width: 150px;
-    background-color: #3a0d0d;
-    border: none;
-    outline: none;
     height: 49px;
     border-radius: 49px;
-    color: #fff;
-    text-transform: uppercase;
     font-weight: 600;
+    font-size: 1rem;
+    text-transform: uppercase;
     margin: 10px 0;
     cursor: pointer;
     transition: 0.5s;
+}
+.auth-box .auth-btn {
+    background-color: #3a0d0d;
+    border: none;
+    outline: none;
+    color: #fff;
 }
 .auth-box .auth-btn:hover {
     background-color: #9a4141;
@@ -187,10 +192,7 @@
 .auth-box .auth-btn.transparent {
     background: none;
     border: 2px solid #fff;
-    width: 130px;
-    height: 41px;
-    font-weight: 600;
-    font-size: 0.8rem;
+    color: #fff;
 }
 .auth-box .panels-container {
     position: relative;

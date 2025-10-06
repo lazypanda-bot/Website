@@ -116,7 +116,6 @@ if ($isAuthenticated) {
         <button type="submit" class="place-order-btn">Place Order</button>
     </form>
     </div>
-    <!-- No floating cart toast here in the original version -->
 
     <footer id="footer">
         <div class="footer-container">

@@ -81,12 +81,19 @@ section {
     gap: 12px;
 }
 .btn {
-    padding: 0.6rem 1.2rem;
+    width: 90px;
+    height: 32px;
     border: none;
-    border-radius: 25px;
+    border-radius: 18px;
     font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
     cursor: pointer;
     transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 0;
 }
 .edit-btn {
     background-color: #3a0d0d;
@@ -107,7 +114,6 @@ section {
     justify-content: center;
     padding: 0;
 }
-/* Ensure the action row at the bottom is centered and spaced */
 .profile-action-row {
     display: flex;
     gap: 16px;
@@ -115,21 +121,39 @@ section {
     align-items: center;
     margin-top: 30px;
 }
+#save-btn-group {
+    display: flex;
+}
+.profile-image-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    align-items: center;
+}
+.profile-image-actions .logout-bar,
+.profile-image-actions .delete-bar {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+#save-btn-group {
+    display: none;
+}
+#save-btn-group.show-save-btn {
+    display: flex;
+}
 .logout-btn {
     background-color: #9a4141;
     color: #fff;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
     text-decoration: none;
-    font-weight: 600;
-    transition: background 0.3s ease;
 }
 .logout-btn:hover {
     background-color: #3a0d0d;
 }
 
-
-/* Profile updated toast bottom right */
 .profile-toast-success.bottom-right {
     position: fixed;
     bottom: 40px;
@@ -155,8 +179,6 @@ section {
 @keyframes fadeOutDown {
     to { opacity: 0; transform: translateY(30px); }
 }
-
-/* Responsive */
 @media (max-width: 768px) {
   .account-flex {
     flex-direction: column;

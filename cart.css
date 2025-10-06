@@ -23,8 +23,7 @@
     max-width: 340px;
     text-align: center;
 }
-
-/* Profile missing info alert */
+/* profile missing alert */
 .profile-missing-info {
     display: none;
     background: #ffeaea;
@@ -37,7 +36,6 @@
 .profile-missing-info.show {
     display: block;
 }
-
 #update-profile-btn {
     background: #a53131;
     color: #fff;
@@ -238,4 +236,3 @@
   color: #d62828;
   margin-bottom: 10px;
 }
-

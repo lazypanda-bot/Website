@@ -108,7 +108,6 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     <p class="step-note">Follow the steps below to place your order.</p>
                     <div class="details-container">
                         <form class="product-options-row">
-                            <!-- Row 1: Product Name and Size -->
                             <div class="form-group" style="grid-column: 1;">
                                 <label for="product-name">Product Name</label>
                                 <div class="custom-dropdown" id="productDropdown">
@@ -132,7 +131,6 @@ $isAuthenticated = isset($_SESSION['user_id']);
                                     <input type="hidden" name="size" id="size" value="12oz" />
                                 </div>
                             </div>
-                            <!-- Row 2: Quantity and Price -->
                             <div class="form-group" style="grid-column: 1;">
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
@@ -212,7 +210,6 @@ $isAuthenticated = isset($_SESSION['user_id']);
             </div>
         </div>
     </footer>
-        <!-- Login Modal Inline Start -->
         <div class="modal" id="auth-modal">
             <div class="auth-box" id="auth-box">
                 <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>
@@ -303,14 +300,11 @@ $isAuthenticated = isset($_SESSION['user_id']);
                 </div>
             </div>
         </div>
-            <!-- Login Modal Inline End -->
 
-            <!-- Custom Added to Cart Notification -->
             <div id="cart-notification" style="display:none;position:fixed;top:30px;right:30px;z-index:10000;background:#3a0d0d;color:#fff;padding:18px 32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);font-size:1.1rem;transition:opacity 0.3s;opacity:0;">
                 <i class="fa-solid fa-cart-plus" style="margin-right:10px;"></i>Added to cart!
             </div>
 
-    <!-- Request Modal -->
     <div id="designModal" class="modal-overlay">
         <div class="modal-box">
             <h2>Describe your design</h2>

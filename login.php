@@ -24,6 +24,7 @@ $formType = $_POST['form_type'] ?? null;
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   $email = trim($_POST['identifier'] ?? '');
   $password = $_POST['password'] ?? '';
+  $redirect = $_POST['redirect_after_auth'] ?? 'profile.php';
 
   if ($email && $password) {
     $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
@@ -39,17 +40,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
 
-        header("Location: " . $_SESSION['redirect_after_auth']);
+        header("Location: " . $redirect);
         exit();
       } else {
-        $loginMessage = "Incorrect password.";
+        // Redirect back with error
+        header("Location: $redirect?login_error=1");
+        exit();
       }
     } else {
-      $loginMessage = "User not found.";
+      // Redirect back with error
+      header("Location: $redirect?login_error=1");
+      exit();
     }
     $stmt->close();
   } else {
-    $loginMessage = "Please fill in all fields.";
+    // Redirect back with error
+    header("Location: $redirect?login_error=1");
+    exit();
   }
 }
 

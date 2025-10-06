@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let modal;
 
   function openLoginModal(redirectPath) {
-    sessionStorage.setItem('redirect_after_auth', redirectPath);
-    //temporary
-    console.log('Redirect path:', sessionStorage.getItem('redirect_after_auth'));
+    // Always use the current page as the redirect path
+    const path = redirectPath || window.location.href;
+    sessionStorage.setItem('redirect_after_auth', path);
     if (modal) {
       modal.classList.add('active');
       setRedirectInput();
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function setRedirectInput() {
     const loginRedirectInput = document.getElementById('login-redirect-after-auth');
     const registerRedirectInput = document.getElementById('register-redirect-after-auth');
+    // Always set to the last stored path (where icon was clicked)
     const redirectPath = sessionStorage.getItem('redirect_after_auth') || window.location.href;
     if (loginRedirectInput) loginRedirectInput.value = redirectPath;
     if (registerRedirectInput) registerRedirectInput.value = redirectPath;
@@ -92,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        setRedirectInput(); // ✅ Set redirect after modal is injected
+        setRedirectInput();
 
         // Login social toggles
         const loginInput = document.getElementById('login-identifier-input');
