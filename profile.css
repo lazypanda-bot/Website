@@ -128,7 +128,33 @@ section {
     background-color: #3a0d0d;
 }
 
-/* Profile updated toast (original style, if any) */
+
+/* Profile updated toast bottom right */
+.profile-toast-success.bottom-right {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 9999;
+    background: #3a0d0d;
+    color: #fff;
+    border-radius: 50px;
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeInUp 0.4s, fadeOutDown 0.4s 2s forwards;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOutDown {
+    to { opacity: 0; transform: translateY(30px); }
+}
 
 /* Responsive */
 @media (max-width: 768px) {

@@ -6,21 +6,47 @@ ini_set('display_errors', 1);
 $isAuthenticated = isset($_SESSION['user_id']);
 $username = $email = $address = $phone = '';
 if ($isAuthenticated) {
-    // Handle profile update BEFORE any output
+    // Handle profile update or delete BEFORE any output
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $address = trim($_POST['address'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
         $userId = $_SESSION['user_id'];
-        if ($address && $phone) {
+        // If delete is set, delete the user
+        if (isset($_POST['delete_account'])) {
             $conn = new mysqli("localhost", "root", "", "printshop");
             if (!$conn->connect_error) {
-                $stmt = $conn->prepare("UPDATE users SET address = ?, phone_number = ? WHERE id = ?");
-                $stmt->bind_param("ssi", $address, $phone, $userId);
+                $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+                $stmt->bind_param("i", $userId);
                 $stmt->execute();
                 $stmt->close();
                 $conn->close();
-                header("Location: profile.php?updated=1");
+                // Log out and redirect to home
+                session_destroy();
+                header("Location: home.php?deleted=1");
                 exit();
+            }
+        } else {
+            $address = trim($_POST['address'] ?? '');
+            $phone = trim($_POST['phone'] ?? '');
+            // Allow updating even if only one field is changed
+            if ($address !== '' || $phone !== '') {
+                $conn = new mysqli("localhost", "root", "", "printshop");
+                if (!$conn->connect_error) {
+                    // Fetch current values if not provided
+                    $stmt = $conn->prepare("SELECT address, phone_number FROM users WHERE id = ?");
+                    $stmt->bind_param("i", $userId);
+                    $stmt->execute();
+                    $stmt->bind_result($currentAddress, $currentPhone);
+                    $stmt->fetch();
+                    $stmt->close();
+                    if ($address === '') $address = $currentAddress;
+                    if ($phone === '') $phone = $currentPhone;
+                    $stmt = $conn->prepare("UPDATE users SET address = ?, phone_number = ? WHERE id = ?");
+                    $stmt->bind_param("ssi", $address, $phone, $userId);
+                    $stmt->execute();
+                    $stmt->close();
+                    $conn->close();
+                    header("Location: profile.php?updated=1");
+                    exit();
+                }
             }
         }
     }
@@ -135,13 +161,14 @@ if ($isAuthenticated) {
                     <form action="logout.php" method="post" class="logout-bar no-padding">
                         <button type="submit" class="btn logout-btn">Logout</button>
                     </form>
-                    <form action="#" method="post" class="delete-bar no-padding" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                    <form action="profile.php" method="post" class="delete-bar no-padding" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                        <input type="hidden" name="delete_account" value="1">
                         <button type="submit" class="btn delete-btn">Delete</button>
                     </form>
                 </div>
             </form>
             <?php if (isset($_GET['updated']) && $isAuthenticated): ?>
-                <div id="profile-toast" class="profile-toast-success">Profile updated successfully!</div>
+                <div id="profile-toast" class="profile-toast-success bottom-right">Profile updated successfully!</div>
             <?php endif; ?>
         </section>
     </div>

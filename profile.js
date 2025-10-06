@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
             phoneInput.value = originalPhone;
         }
         addressInput.readOnly = false;
-        addressInput.value = '';
         addressInput.focus();
         showSaveBtn();
         editing = true;
@@ -34,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
             addressInput.value = originalAddress;
         }
         phoneInput.readOnly = false;
-        phoneInput.value = '';
         phoneInput.focus();
         showSaveBtn();
         editing = true;
