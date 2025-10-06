@@ -42,7 +42,7 @@ if ($isAuthenticated && !$conn->connect_error) {
 <script src="login.js?v=<?= time() ?>"></script>
 
 </head>
-<body>
+<body class="cart-page">
     <section id="header">
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
@@ -60,7 +60,8 @@ if ($isAuthenticated && !$conn->connect_error) {
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
-            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
+            <?php include_once 'nav_avatar.php'; ?>
+            <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
         </div>
     </section>
 

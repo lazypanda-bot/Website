@@ -19,6 +19,7 @@
     session_start();
     require_once 'database.php';
     $isAuthenticated = isset($_SESSION['user_id']);
+    include_once 'nav_avatar.php';
 
     // Fetch services with a representative product image if available
     $servicesHome = [];
@@ -74,12 +75,12 @@
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
-            <li><a href="#" class="auth-link" id="profile-icon"><i class="fa-solid fa-user"></i></a></li>
+            <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
                     <div class="menu-user">
-                        <a href="#" class="auth-link" id="mobile-profile-icon"><i class="fa-solid fa-user"></i></a>
+                        <a href="profile.php" class="auth-link" id="mobile-profile-icon"><?= $NAV_AVATAR_HTML ?></a>
                     </div>
                 </div>      
                 <ul class="mobile-nav">

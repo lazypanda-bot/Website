@@ -118,7 +118,7 @@ if ($isAuthenticated) {
     <link rel="stylesheet" href="profile.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
-<body>
+<body class="profile-page">
     <section id="header">
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
@@ -136,12 +136,13 @@ if ($isAuthenticated) {
             </form>
             <ul style="display: flex; align-items: center; gap: 10px; list-style: none; margin: 0; padding: 0;">
                 <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
-                <li><a href="profile.php" id="profile-icon" class="auth-link"><i class="fa-solid fa-user"></i></a></li>
+                <?php include_once 'nav_avatar.php'; ?>
+                <li><a href="profile.php" id="profile-icon" class="auth-link"><?= $NAV_AVATAR_HTML ?></a></li>
             </ul>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
-                    <a href="#" class="auth-link" id="mobile-profile-icon"><i class="fa-solid fa-user"></i></a>
+                    <a href="profile.php" class="auth-link" id="mobile-profile-icon"><?= $NAV_AVATAR_HTML ?></a>
                 </div>
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>

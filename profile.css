@@ -1,7 +1,7 @@
 body {
     font-family: 'Poppins';
-    /* Ultra-subtle: almost flat with a whisper tint */
-    background: linear-gradient(140deg,#fdfdfd 0%, #fbfbfb 50%, #f8f6f6 100%);
+    /* Even more neutral, remove visible banding */
+    background: linear-gradient(140deg,#fcfcfc 0%, #fafafa 45%, #f6f6f6 100%);
     color: #2f2b2b;
 }
 .settings-container {
@@ -77,13 +77,13 @@ section {
     width: var(--ring-size);
     height: var(--ring-size);
     padding: 4px;
-    background: conic-gradient(from 180deg, #c9b8b8, #e9e2e2, #c9b8b8); /* very soft neutralized red */
+    background: conic-gradient(from 180deg, #dcd7d7, #ebe9e9, #dcd7d7); /* toned down neutral */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     mask: radial-gradient(circle calc(50% - 6px),#000 95%,transparent 100%);
-    filter: brightness(1.02) contrast(1.01);
+    filter: brightness(1.01) contrast(1.0) saturate(.9);
 }
 @keyframes spinRing {
     to { transform: rotate(360deg); }
@@ -133,13 +133,13 @@ section {
 .profile-identity h1 {
     font-size: 1.5rem;
     margin: 0 0 6px;
-    background: linear-gradient(90deg,#6d4949 0%, #a78c8c 70%);
+    background: linear-gradient(90deg,#5d5151 0%, #9b8d8d 70%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     font-weight: 600;
     letter-spacing: .4px;
-    filter: saturate(.85);
+    filter: saturate(.75) brightness(.95);
 }
 .profile-identity .email-handle {
     font-size: .85rem;
@@ -178,7 +178,7 @@ section {
 .account-form:before {
     content: "";
     position: absolute; inset:0; border-radius: 26px; pointer-events:none;
-    background: linear-gradient(140deg,rgba(170,110,110,0.10),rgba(210,180,180,0.08) 55%, transparent 72%); /* lighter / more subtle */
+    background: linear-gradient(140deg,rgba(160,140,140,0.08),rgba(200,190,190,0.06) 55%, transparent 72%); /* further toned */
 }
 .form-group {
     margin-bottom: 1rem;
@@ -216,9 +216,9 @@ section {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    background: #f7efef;
-    border: 1px solid #e2c4c4;
-    color: #752525;
+    background: #f3f1f1;
+    border: 1px solid #ddd5d5;
+    color: #5d4f4f;
     cursor: pointer;
     width: 34px;
     height: 34px;
@@ -226,25 +226,25 @@ section {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 .input-edit-btn:hover,
 .input-edit-btn:focus {
-    background: #9a4141;
+    background: #7d6767;
     color: #fff;
-    border-color: #9a4141;
+    border-color: #816e6e;
     outline: none;
-    transform: translateY(-50%) scale(1.08);
+    transform: translateY(-50%) scale(1.06);
 }
 .input-edit-btn i {
     font-size: 0.8rem;
     pointer-events: none;
 }
 
-/* Readonly styling distinction */
-input[readonly] { background: #f9f7f7; cursor: not-allowed; }
-input:not([readonly]) { background: #fff; box-shadow: 0 0 0 3px rgba(154,65,65,0.15); }
+/* Readonly styling distinction (scoped to profile form to avoid affecting global search bar) */
+#profileForm input[readonly] { background: #f9f7f7; cursor: not-allowed; }
+#profileForm input:not([readonly]) { background: #fff; box-shadow: 0 0 0 3px rgba(154,65,65,0.15); }
 .form-group input:focus {
     border-color: #9a4141;
     outline: none;
