@@ -135,41 +135,7 @@
         </div>
     </section>
 
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-column">
-                <h4>Customer Service</h4>
-                <p>Available 7am to 12pm</p>
-                <p>+63 917 123 4567</p>
-                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
-            </div>
-            <div class="footer-column">
-                <h4>Information</h4>
-                <ul>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Services</h4>
-                <ul>
-                    <li>Tarpaulin Printing</li>
-                    <li>Apparel Printing</li>
-                    <li>Personalized Items</li>
-                    <li>Stickers</li>
-                    <li>Signages</li>
-                    <li>Tailoring</li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Follow Us</h4>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <?php include 'footer.php'; ?>
     <div id="login-container"></div>
 
     <div class="chat-box" id="chatBox">

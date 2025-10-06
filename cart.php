@@ -114,54 +114,21 @@ if ($isAuthenticated && !$conn->connect_error) {
     </form>
     </div>
 
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-column">
-                <h4>Customer Service</h4>
-                <p>Available 7am to 12pm</p>
-                <p>+63 917 123 4567</p>
-                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
-            </div>
-            <div class="footer-column">
-                <h4>Information</h4>
-                <ul>
-                    <li><a href="about.php">About</a></li>
-                    <li><a href="contact.php">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Services</h4>
-                <ul>
-                    <li>Tarpaulin Printing</li>
-                    <li>Apparel Printing</li>
-                    <li>Personalized Items</li>
-                    <li>Stickers</li>
-                    <li>Signages</li>
-                    <li>Tailoring</li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Follow Us</h4>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                </div>
-            </div>
+    <?php include 'footer.php'; ?>
+    <div class="floating-chat">
+        <div class="chat-tooltip">Need help? Chat with us!</div>
+        <div class="chat-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
         </div>
-        <div class="floating-chat">
-            <div class="chat-tooltip">Need help? Chat with us!</div>
-            <div class="chat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-            </div>
-        </div>
-        <div id="login-container"></div>
+    </div>
+    <div id="login-container"></div>
 
-        <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-        <script src="app.js"></script>
-        <script src="login.js"></script>
-        <script src="message.js"></script>
-        <script src="cart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script src="login.js"></script>
+    <script src="message.js"></script>
+    <script src="cart.js"></script>
 </body>
 </html>

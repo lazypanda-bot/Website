@@ -198,7 +198,10 @@ body {
     padding: 0 20px;
     font-size: 10px;
     color: #333;
-    height: 200px;
+    /* Allow dynamic content height instead of fixed */
+    height: auto;
+    min-height: 140px; /* safety baseline */
+    display: block;
 }
 .footer-container {
     display: flex;

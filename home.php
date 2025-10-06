@@ -17,8 +17,40 @@
 
 <?php
     session_start();
+    require_once 'database.php';
     $isAuthenticated = isset($_SESSION['user_id']);
-    ?>
+
+    // Fetch services with a representative product image if available
+    $servicesHome = [];
+    if ($conn && !$conn->connect_error) {
+        // Ensure services table exists before querying (non-fatal if missing)
+        if ($chk = $conn->query("SHOW TABLES LIKE 'services'")) {
+            if ($chk->num_rows > 0) {
+                $sql = "SELECT s.name, (SELECT images FROM products p WHERE p.service_type = s.name ORDER BY p.created_at DESC LIMIT 1) AS sample_images FROM services s ORDER BY s.name ASC";
+                if ($res = $conn->query($sql)) {
+                    while ($row = $res->fetch_assoc()) { $servicesHome[] = $row; }
+                    $res->free();
+                }
+            }
+            $chk->free();
+        }
+    }
+
+    function firstImageHome($imagesField) {
+        if (!$imagesField) return 'img/snorlax.png';
+        $trim = trim($imagesField);
+        if ($trim === '') return 'img/snorlax.png';
+        if (str_starts_with($trim, '[')) {
+            $decoded = json_decode($trim, true);
+            if (is_array($decoded) && count($decoded) > 0 && $decoded[0] !== '') return $decoded[0];
+        }
+        if (strpos($trim, ',') !== false) {
+            $parts = array_map('trim', explode(',', $trim));
+            if (!empty($parts[0])) return $parts[0];
+        }
+        return $trim;
+    }
+?>
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
@@ -156,54 +188,24 @@
         </div>
     </section>
     <section id="featured" class="section5">
-        <a href="products.php#tarpaulin" class="serv-link">
-            <div class="serv">
-                <img src="img/snorlax.png" alt="">
-                <div class="title-price">
-                    <h3>Tarpaulin</h3>
+        <?php if (empty($servicesHome)): ?>
+            <div style="padding:10px 15px;font-size:.9rem;color:#555;font-style:italic;">No services added yet.</div>
+        <?php else: ?>
+            <?php foreach ($servicesHome as $srv): 
+                $name = $srv['name'];
+                $slug = strtolower(preg_replace('/\s+/', '-', $name));
+                $img = htmlspecialchars(firstImageHome($srv['sample_images'] ?? ''));
+            ?>
+            <a href="products.php#<?= htmlspecialchars($slug) ?>" class="serv-link">
+                <div class="serv">
+                    <img src="<?= $img ?>" alt="<?= htmlspecialchars($name) ?>">
+                    <div class="title-price">
+                        <h3><?= htmlspecialchars($name) ?></h3>
+                    </div>
                 </div>
-            </div>
-        </a>
-        <a href="products.php#apparel" class="serv-link">
-            <div class="serv">
-                <img src="img/snorlax.png" alt="">
-                <div class="title-price">
-                    <h3>Apparel Printing</h3>
-                </div>
-            </div>
-        </a>
-        <a href="products.php#personalized" class="serv-link">
-            <div class="serv">
-                <img src="img/snorlax.png" alt="">
-                <div class="title-price">
-                    <h3>Personalized Printing</h3>
-                </div>
-            </div>
-        </a>
-        <a href="products.php#stickers" class="serv-link">
-            <div class="serv">
-                <img src="img/snorlax.png" alt="">
-                <div class="title-price">
-                    <h3>Stickers</h3>
-                </div>
-            </div>
-        </a>
-        <a href="products.php#signages" class="serv-link">
-            <div class="serv">
-                <img src="img/snorlax.png" alt="">
-                <div class="title-price">
-                    <h3>Signages</h3>
-                </div>
-            </div>
-        </a>
-        <a href="products.php#tailoring" class="serv-link">
-            <div class="serv">
-                <img src="img/snorlax.png" alt="">
-                <div class="title-price">
-                    <h3>Tailoring Services</h3>
-                </div>
-            </div>
-        </a>
+            </a>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </section>
 
     <footer id="footer">
@@ -224,12 +226,14 @@
             <div class="footer-column">
                 <h4>Services</h4>
                 <ul>
-                    <li>Tarpaulin Printing</li>
-                    <li>Apparel Printing</li>
-                    <li>Personalized Items</li>
-                    <li>Stickers</li>
-                    <li>Signages</li>
-                    <li>Tailoring</li>
+                    <?php if (!empty($servicesHome)):
+                        foreach ($servicesHome as $srv):
+                            $name = $srv['name'];
+                            $slug = strtolower(preg_replace('/\s+/', '-', $name)); ?>
+                            <li><a href="products.php#<?= htmlspecialchars($slug) ?>"><?= htmlspecialchars($name) ?></a></li>
+                        <?php endforeach; else: ?>
+                            <li style="font-style:italic;color:#666;">No services yet</li>
+                    <?php endif; ?>
                 </ul>
             </div>
             <div class="footer-column">
