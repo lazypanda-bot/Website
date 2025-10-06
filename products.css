@@ -85,25 +85,28 @@ body {
 }
 .service-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 8px; /* reduced gap */
-    margin-top: 12px; /* tighter top spacing */
-    justify-items: start;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px; /* ultra-tight gap */
+    margin-top: 8px; /* tighter top spacing */
+    justify-items: stretch;
 }
 .service-card {
     background-color: #fff;
-    border-radius: 28px; /* slightly smaller radius */
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-    transition: transform 0.25s ease;
-    min-width: 170px;
-    max-width: 210px;
-    margin-top: 6px; /* reduced vertical gap */
-    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    transition: transform 0.18s ease;
+    min-width: 150px;
+    max-width: 190px;
+    height: 240px;
+    margin-top: 0; /* remove extra vertical gap */
+    overflow: hidden; /* ensures image edges are flush */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-start;
     text-align: center;
+    padding: 0; /* remove side/top padding so image is flush */
+    line-height: 1.5; /* eliminates inline-gap around image */
 }
 .service-card:hover {
     transform: scale(1.03);
@@ -111,19 +114,22 @@ body {
 }
 .service-img {
     width: 100%;
-    height: 150px; /* slightly shorter card */
+    height: 170px; /* slightly longer height */
     object-fit: cover;
-    margin-bottom: 8px;
-    border-top-left-radius: 28px;
-    border-top-right-radius: 28px;
+    margin: 0 0 8px 0; /* keep a bit more breathing room below */
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    display: block; /* remove inline whitespace */
 }
 .service-card h4 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: #752525;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
     text-align: center;
     font-weight: 500;
+    line-height: 1.15;
+    line-height: 1.25; /* reset after parent line-height:0 */
 }
 .service-card a {
     text-decoration: none;

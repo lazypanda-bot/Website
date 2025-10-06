@@ -16,28 +16,26 @@ navLinks.forEach(link => {
     });
   });
 
-  //show first section by default
-  navLinks[0].classList.add('active');
-  contentBoxes[0].classList.add('active');
+// Defer initial activation until DOMContentLoaded so categories rendered server-side are in place
+window.addEventListener('DOMContentLoaded', () => {
+  if (!navLinks.length || !contentBoxes.length) return; // safety guard
 
-  window.addEventListener('DOMContentLoaded', () => {
-  const hash = window.location.hash.replace('#', '') || 'tarpaulin';
-  const target = document.getElementById(hash);
+  const rawHash = window.location.hash.replace('#','').trim();
+  const hasValidHash = rawHash !== '' && document.getElementById(rawHash);
 
-  // remove hash to prevent browser auto-scroll
-  history.replaceState(null, '', window.location.pathname);
+  // clear any pre-existing active states just in case
+  navLinks.forEach(l => l.classList.remove('active'));
+  contentBoxes.forEach(b => b.classList.remove('active'));
 
-  // remove all active states
-  document.querySelectorAll('.content-box').forEach(box => box.classList.remove('active'));
-  document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
-
-  // activate matching content box and sidebar link
-  if (target) {
-    target.classList.add('active');
-    const activeLink = document.querySelector(`.nav-links a[data-target="${hash}"]`);
+  if (hasValidHash) {
+    // activate section referenced by hash
+    document.getElementById(rawHash).classList.add('active');
+    const activeLink = document.querySelector(`.nav-links a[data-target="${rawHash}"]`);
     if (activeLink) activeLink.classList.add('active');
-
-    // manually scroll to top of page
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    history.replaceState(null,'',window.location.pathname); // remove hash to prevent jump
+  } else {
+    // fallback: first category highlighted & shown
+    navLinks[0].classList.add('active');
+    contentBoxes[0].classList.add('active');
   }
 });
