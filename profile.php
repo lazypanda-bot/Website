@@ -2,6 +2,7 @@
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+require_once __DIR__ . '/database.php';
 
 $isAuthenticated = isset($_SESSION['user_id']);
 $username = $email = $address = $phone = '';
@@ -11,13 +12,11 @@ if ($isAuthenticated) {
         $userId = $_SESSION['user_id'];
         // If delete is set, delete the user
         if (isset($_POST['delete_account'])) {
-            $conn = new mysqli("localhost", "root", "", "printshop");
             if (!$conn->connect_error) {
-                $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+                $stmt = $conn->prepare("DELETE FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
                 $stmt->bind_param("i", $userId);
                 $stmt->execute();
                 $stmt->close();
-                $conn->close();
                 // Log out and redirect to home
                 session_destroy();
                 header("Location: home.php?deleted=1");
@@ -28,10 +27,9 @@ if ($isAuthenticated) {
             $phone = trim($_POST['phone'] ?? '');
             // Allow updating even if only one field is changed
             if ($address !== '' || $phone !== '') {
-                $conn = new mysqli("localhost", "root", "", "printshop");
                 if (!$conn->connect_error) {
                     // Fetch current values if not provided
-                    $stmt = $conn->prepare("SELECT address, phone_number FROM users WHERE id = ?");
+                    $stmt = $conn->prepare("SELECT " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
                     $stmt->bind_param("i", $userId);
                     $stmt->execute();
                     $stmt->bind_result($currentAddress, $currentPhone);
@@ -39,31 +37,25 @@ if ($isAuthenticated) {
                     $stmt->close();
                     if ($address === '') $address = $currentAddress;
                     if ($phone === '') $phone = $currentPhone;
-                    $stmt = $conn->prepare("UPDATE users SET address = ?, phone_number = ? WHERE id = ?");
+                    $stmt = $conn->prepare("UPDATE " . ACCOUNT_TABLE . " SET " . ACCOUNT_ADDRESS_COL . " = ?, " . ACCOUNT_PHONE_COL . " = ? WHERE " . ACCOUNT_ID_COL . " = ?");
                     $stmt->bind_param("ssi", $address, $phone, $userId);
                     $stmt->execute();
                     $stmt->close();
-                    $conn->close();
                     header("Location: profile.php?updated=1");
                     exit();
                 }
             }
         }
     }
-    // connect to database
-    $conn = new mysqli("localhost", "root", "", "printshop");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    // Use existing $conn from database.php
     // fetch user data
     $userId = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT username, email, address, phone_number FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT " . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $stmt->bind_result($username, $email, $address, $phone);
     $stmt->fetch();
     $stmt->close();
-    $conn->close();
 }
 ?>
 

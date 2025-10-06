@@ -2,23 +2,136 @@
 session_start();
 $isAuthenticated = isset($_SESSION['user_id']);
 
-// Get product info from query string
-$productName = $_GET['name'] ?? 'Product';
-$productImg = $_GET['img'] ?? 'img/snorlax.png';
-$productPrice = $_GET['price'] ?? '150';
-
-// Fetch product_id from database
+// Include DB for product lookup
 require_once 'database.php';
-$productId = 1; // fallback
-$stmt = $conn->prepare("SELECT id FROM products WHERE name = ? LIMIT 1");
-$stmt->bind_param("s", $productName);
-if ($stmt->execute()) {
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        $productId = $row['id'];
+
+// Adaptive detection of product columns (id, name, price, images) once
+$productIdCol = 'product_id';
+$productNameCol = null;
+$productPriceCol = null;
+$productImagesCol = null;
+
+$productsTableExists = false;
+if ($conn && !$conn->connect_error) {
+    if ($colsRes = $conn->query("SHOW COLUMNS FROM products")) {
+        $productsTableExists = true;
+        $available = [];
+        while ($cRow = $colsRes->fetch_assoc()) { $available[strtolower($cRow['Field'])] = $cRow['Field']; }
+        $colsRes->free();
+        foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($available[$c])) { $productIdCol = $available[$c]; break; } }
+        foreach(['product_name','name','title','producttitle','product'] as $c){ if(isset($available[$c])) { $productNameCol = $available[$c]; break; } }
+        foreach(['price','product_price','amount','cost'] as $c){ if(isset($available[$c])) { $productPriceCol = $available[$c]; break; } }
+        foreach(['images','image','img','picture'] as $c){ if(isset($available[$c])) { $productImagesCol = $available[$c]; break; } }
     }
 }
-$stmt->close();
+
+$productId = null; // will resolve below
+$productRow = null;
+$debugMessages = [];
+
+// Prefer explicit id param (?id=) for reliability; fallback to name when only name is provided
+if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
+    $productId = (int)$_GET['id'];
+    $debugMessages[] = "Got id param=" . $productId;
+    if ($productsTableExists) {
+        if ($stmt = $conn->prepare("SELECT * FROM products WHERE $productIdCol = ? LIMIT 1")) {
+            $stmt->bind_param('i', $productId);
+            if ($stmt->execute()) {
+                $res = $stmt->get_result();
+                $productRow = $res->fetch_assoc();
+            }
+            $stmt->close();
+        }
+    }
+} else {
+    // Fallback: attempt lookup by name if provided
+    $nameParam = isset($_GET['name']) ? trim($_GET['name']) : '';
+    if ($nameParam !== '' && $productsTableExists && $productNameCol) {
+        if ($stmt = $conn->prepare("SELECT * FROM products WHERE $productNameCol = ? LIMIT 1")) {
+            $stmt->bind_param('s', $nameParam);
+            if ($stmt->execute()) {
+                $res = $stmt->get_result();
+                if ($productRow = $res->fetch_assoc()) {
+                    $productId = (int)$productRow[$productIdCol];
+                }
+            }
+            $stmt->close();
+        }
+        $debugMessages[] = $productRow ? 'Resolved by name param' : 'Name param lookup failed';
+    }
+}
+
+// If product still null, do NOT default to 1 silently; mark not found
+$productNotFound = ($productId === null || !$productRow);
+
+// Derive display variables – trust DB row over query params
+if (!$productNotFound) {
+    $productName = $productRow[$productNameCol] ?? ($_GET['name'] ?? 'Product');
+    $productPrice = $productPriceCol && isset($productRow[$productPriceCol]) ? $productRow[$productPriceCol] : ($_GET['price'] ?? '0');
+    $rawImages = ($productImagesCol && isset($productRow[$productImagesCol])) ? $productRow[$productImagesCol] : '';
+    // Basic first image extraction if images stored as JSON or comma-separated; fallback to provided img param
+    $productImg = $_GET['img'] ?? 'img/snorlax.png';
+    if ($rawImages) {
+        if (str_starts_with(trim($rawImages), '[')) { // JSON array
+            $decoded = json_decode($rawImages, true);
+            if (is_array($decoded) && count($decoded) > 0) { $productImg = $decoded[0]; }
+        } elseif (strpos($rawImages, ',') !== false) {
+            $parts = array_map('trim', explode(',', $rawImages));
+            if ($parts[0] !== '') $productImg = $parts[0];
+        } elseif (trim($rawImages) !== '') {
+            $productImg = trim($rawImages);
+        }
+    }
+} else {
+    $productName = 'Product Not Found';
+    $productPrice = '0.00';
+    $productImg = 'img/snorlax.png';
+}
+
+// Optional debug view (?debug_products=1)
+if (isset($_GET['debug_products'])) {
+    header('Content-Type: text/plain');
+    echo "productsTableExists=" . ($productsTableExists ? 'yes' : 'no') . "\n";
+    echo "productIdCol=$productIdCol\n";
+    echo "productNameCol=" . ($productNameCol ?? 'n/a') . "\n";
+    echo "productPriceCol=" . ($productPriceCol ?? 'n/a') . "\n";
+    echo "productImagesCol=" . ($productImagesCol ?? 'n/a') . "\n";
+    echo "Resolved productId=" . ($productId ?? 'null') . "\n";
+    echo "NotFound=" . ($productNotFound ? '1' : '0') . "\n";
+    foreach($debugMessages as $m){ echo "DBG: $m\n"; }
+    if ($productRow) { echo "Row JSON=" . json_encode($productRow, JSON_PRETTY_PRINT) . "\n"; }
+    exit;
+}
+
+// Fetch related products (same service_type) if available
+$relatedProducts = [];
+if (!$productNotFound && isset($productRow['service_type']) && $productRow['service_type'] !== '') {
+    if ($stmtRel = $conn->prepare("SELECT product_id, product_name, price, images FROM products WHERE service_type = ? AND product_id <> ? ORDER BY created_at DESC LIMIT 8")) {
+        $svc = $productRow['service_type'];
+        $pid = $productId;
+        $stmtRel->bind_param('si', $svc, $pid);
+        if ($stmtRel->execute()) {
+            $resRel = $stmtRel->get_result();
+            while ($r = $resRel->fetch_assoc()) { $relatedProducts[] = $r; }
+        }
+        $stmtRel->close();
+    }
+}
+
+function pd_first_image($imagesField) {
+    if (!$imagesField) return 'img/snorlax.png';
+    $trim = trim($imagesField);
+    if ($trim === '') return 'img/snorlax.png';
+    if (str_starts_with($trim, '[')) {
+        $decoded = json_decode($trim, true);
+        if (is_array($decoded) && count($decoded) > 0) return $decoded[0];
+    }
+    if (strpos($trim, ',') !== false) {
+        $parts = array_map('trim', explode(',', $trim));
+        if ($parts[0] !== '') return $parts[0];
+    }
+    return $trim;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -119,6 +232,27 @@ $stmt->close();
                 <h4 class="review-title">Reviews</h4>
                 <div class="no-reviews">No reviews yet</div>
             </div>
+            <?php if (!$productNotFound && count($relatedProducts) > 0): ?>
+            <div class="related-products">
+                <h4>More in this Service</h4>
+                <div class="related-grid">
+                <?php foreach($relatedProducts as $rp): 
+                    $rImg = htmlspecialchars(pd_first_image($rp['images'] ?? ''));
+                    $rName = htmlspecialchars($rp['product_name']);
+                    $rPrice = htmlspecialchars(number_format($rp['price'],2));
+                    $rId = (int)$rp['product_id'];
+                ?>
+                  <a class="related-card" href="product-details.php?id=<?=$rId?>" title="<?=$rName?>">
+                    <div class="rel-img-wrap"><img src="<?=$rImg?>" alt="<?=$rName?>"></div>
+                    <div class="rel-info">
+                        <span class="rel-name"><?=$rName?></span>
+                        <span class="rel-price">₱<?=$rPrice?></span>
+                    </div>
+                  </a>
+                <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     <section class="tab-content" id="order" hidden>
             <section class="product-detail-section">
@@ -186,8 +320,13 @@ $stmt->close();
                 <input type="hidden" name="design-option" id="design-option" value="" />
             </section>
             <div class="action-buttons">
+                <?php if ($productNotFound): ?>
+                    <div class="product-warning" style="color:#b30000; font-weight:600; padding:10px 0;">
+                        This product could not be found. It may have been removed or the link is invalid.
+                    </div>
+                <?php endif; ?>
                 <form action="place_order.php" method="POST" id="orderForm" class="order-form">
-                    <input type="hidden" name="product_id" value="<?php echo $productId; ?>" />
+                    <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="form_size" value="12oz" />
                     <input type="hidden" name="color" id="form_color" value="" />
                     <input type="hidden" name="quantity" id="form_quantity" value="1" />
@@ -196,14 +335,14 @@ $stmt->close();
                     <input type="hidden" name="OrderStatus" value="Pending" />
                     <input type="hidden" name="DeliveryAddress" id="form_DeliveryAddress" value="" />
                     <input type="hidden" name="DeliveryStatus" value="Not Shipped" />
-                    <button type="submit" class="buy-btn">Buy Now</button>
+                    <button type="submit" class="buy-btn" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Buy Now</button>
                 </form>
                 <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
-                    <input type="hidden" name="product_id" value="<?php echo $productId; ?>" />
+                    <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="cart_size" value="12oz" />
                     <input type="hidden" name="color" id="cart_color" value="" />
                     <input type="hidden" name="quantity" id="cart_quantity" value="1" />
-                    <button type="button" class="addcart-btn">Add to Cart</button>
+                    <button type="button" class="addcart-btn" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Add to Cart</button>
                 </form>
             </div>
         </section>

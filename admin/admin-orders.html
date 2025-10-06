@@ -1,10 +1,11 @@
+<?php session_start(); require_once '../database.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin</title>
+    <title>Admin - Orders</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="nav&side.css">
@@ -19,7 +20,7 @@
             <nav class="admin-nav">
                 <ul class="nav-links">
                     <li><a href="admin.html">Dashboard</a></li>
-                    <li><a href="admin-products.html">Products</a></li>
+                    <li><a href="admin-products.php">Products</a></li>
                     <li><a href="admin-orders.html">Orders</a></li>
                     <li><a href="admin-payments.html">Payments</a></li>
                     <li><a href="admin-reports.html">Reports</a></li>
@@ -54,7 +55,7 @@
                         <button class="add-btn"><i class="fas fa-plus"></i> Add Order</button>
                     </div>
                 </div>
-                <table class="product-table">
+                <table class="product-table" id="ordersTable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -63,14 +64,57 @@
                             <th>Address</th>
                             <th>Product</th>
                             <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Total</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- orders will be inserted -->
-                    </tbody>
+                    <tbody id="ordersTbody"></tbody>
                 </table>
 
-    <script src="admin-orders.js"></script>
+    <div class="modal" id="orderStatusModal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Order Status</h2>
+                <button type="button" data-close class="close-modal">&times;</button>
+            </div>
+            <form id="orderStatusForm">
+                <input type="hidden" name="order_id" id="status_order_id" />
+                <div class="form-row">
+                    <label>Status</label>
+                    <select name="OrderStatus" id="status_OrderStatus" required>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="add-btn">Save</button>
+                    <button type="button" data-close class="filter-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+    .modal { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:2000; }
+    .modal-content { background:#fff; padding:20px 24px; border-radius:12px; width:360px; max-width:90%; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .close-modal { background:none; border:none; font-size:1.4rem; cursor:pointer; }
+    .form-row { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+    .form-row select { padding:8px 10px; border:1px solid #ccc; border-radius:8px; }
+    .badge-status { padding:2px 8px; border-radius:12px; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .st-Pending { background:#ffe8c5; color:#8a5200; }
+    .st-Processing { background:#cfe5ff; color:#003e73; }
+    .st-Paid { background:#c8f7d0; color:#1b6e2a; }
+    .st-Shipped { background:#e0dcff; color:#3c278a; }
+    .st-Completed { background:#d4ffd8; color:#136b1d; }
+    .st-Cancelled { background:#ffd4d4; color:#7d0e0e; }
+    </style>
+
+    <script src="admin-orders.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

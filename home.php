@@ -29,7 +29,7 @@
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
             <ul class="desktop-nav">
-                <li><a href="home.php" class="nav-link">Home</a></li>
+                <li><a href="home.php" class="nav-link active">Home</a></li>
                 <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                 <li><a href="products.php" class="nav-link">Products</a></li>
                 <li><a href="about.php" class="nav-link">About</a></li>
@@ -51,7 +51,7 @@
                     </div>
                 </div>      
                 <ul class="mobile-nav">
-                    <li><a href="home.php" class="nav-link">Home</a></li>
+                    <li><a href="home.php" class="nav-link active">Home</a></li>
                     <!-- <li><a href="services.html" class="nav-link">Services</a></li> -->
                     <li><a href="products.php" class="nav-link">Products</a></li>
                     <li><a href="about.php" class="nav-link">About</a></li>

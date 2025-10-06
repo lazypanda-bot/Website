@@ -1,3 +1,62 @@
+<?php
+// Start session and load DB for dynamic products
+session_start();
+require_once 'database.php';
+// Fetch products grouped by service_type (if available) else uncategorized
+$productsByCategory = [];
+$queryError = null;
+$servicesList = [];
+if ($conn && !$conn->connect_error) {
+    $sqlProducts = "SELECT product_id, product_name, price, service_type, images, created_at FROM products ORDER BY created_at DESC";
+    $q = $conn->query($sqlProducts);
+    if ($q instanceof mysqli_result) {
+        while ($row = $q->fetch_assoc()) {
+            $cat = trim($row['service_type'] ?? '');
+            if ($cat === '') $cat = 'Uncategorized';
+            if (!isset($productsByCategory[$cat])) { $productsByCategory[$cat] = []; }
+            $productsByCategory[$cat][] = $row;
+        }
+        $q->free();
+    } else {
+        $queryError = $conn->error; // capture for debug output
+    }
+
+    // Fetch services table (if exists) so categories show even without products
+    if ($srv = $conn->query("SHOW TABLES LIKE 'services'")) {
+        if ($srv->num_rows > 0) {
+            if ($rs = $conn->query("SELECT name FROM services ORDER BY name ASC")) {
+                while ($srow = $rs->fetch_assoc()) {
+                    $sname = trim($srow['name']);
+                    if ($sname !== '' && !isset($productsByCategory[$sname])) {
+                        $productsByCategory[$sname] = []; // empty bucket (no products yet)
+                    }
+                    if ($sname !== '') { $servicesList[] = $sname; }
+                }
+                $rs->free();
+            }
+        }
+        $srv->free();
+    }
+} else {
+    $queryError = 'DB connection failed.';
+}
+$isAuthenticated = isset($_SESSION['user_id']);
+// Helper to derive first image path
+function firstImage($imagesField) {
+    if (!$imagesField) return 'img/snorlax.png';
+    $trim = trim($imagesField);
+    if ($trim === '') return 'img/snorlax.png';
+    if (str_starts_with($trim, '[')) {
+        $decoded = json_decode($trim, true);
+        if (is_array($decoded) && count($decoded)>0) return $decoded[0];
+    }
+    if (strpos($trim, ',') !== false) {
+        $parts = array_map('trim', explode(',', $trim));
+        if ($parts[0] !== '') return $parts[0];
+    }
+    return $trim; // single path
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,10 +72,6 @@
   <link rel="stylesheet" href="products.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
-  <?php
-    session_start();
-    $isAuthenticated = isset($_SESSION['user_id']);
-    ?>
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
@@ -64,200 +119,61 @@
             <div class="back-container">
                 <button onclick="history.back()" class="back-btn">← Back</button>
             </div>
-            <ul class="nav-links">
-                <li><a href="#" data-target="tarpaulin">Tarpaulin</a></li>
-                <li><a href="#" data-target="apparel">Apparel Printing</a></li>
-                <li><a href="#" data-target="personalized">Personalized Printing</a></li>
-                <li><a href="#" data-target="stickers">Stickers</a></li>
-                <li><a href="#" data-target="signages">Signages</a></li>
-                <li><a href="#" data-target="tailoring">Tailoring Services</a></li>
+            <ul class="nav-links" id="dynamicCategoryNav">
+                <?php
+                // Preferred known categories ordering; any others appended.
+                $preferredOrder = ['Tarpaulin','Apparel Printing','Personalized Printing','Stickers','Signages','Tailoring Services','Uncategorized'];
+                $allCategories = array_keys($productsByCategory);
+                $ordered = [];
+                foreach ($preferredOrder as $p) { if (in_array($p, $allCategories)) $ordered[] = $p; }
+                foreach ($allCategories as $c) { if (!in_array($c, $ordered)) $ordered[] = $c; }
+                if (empty($ordered)) {
+                    echo '<li><span style="font-size:.8rem;color:#666;">No categories</span></li>';
+                } else {
+                    foreach ($ordered as $cat) {
+                        $anchor = strtolower(preg_replace('/\s+/', '-', $cat));
+                        echo '<li><a href="#' . htmlspecialchars($anchor) . '" data-target="' . htmlspecialchars($anchor) . '">' . htmlspecialchars($cat) . '</a></li>';
+                    }
+                }
+                ?>
             </ul>
+            <?php if (isset($_GET['debug_products'])): ?>
+                <div style="padding:10px; font-size:11px; line-height:1.3; background:#fff8f5; border:1px solid #f1d0c2; margin:10px; border-radius:6px;">
+                    <strong>Debug Products</strong><br>
+                    Categories: <?= count($productsByCategory) ?><br>
+                    Rows: <?= array_sum(array_map('count',$productsByCategory)) ?><br>
+                    <?= $queryError ? ('SQL Error: '.htmlspecialchars($queryError)) : 'OK' ?>
+                </div>
+            <?php endif; ?>
         </nav>
         <div class="main-panel">
-            <section class="content-box" id="tarpaulin">
-                <h3>Tarpaulin</h3>
-                <div class="service-card">
-                    <a href="product-details.php?name=Tarpaulin%20Printing&img=img/snorlax.png&price=100">
-                        <img src="img/snorlax.png" alt="Tarpaulin Printing" class="service-img">
-                    </a>
-                    <h4>Tarpaulin</h4>
-                </div>
-            </section>
-            <section class="content-box" id="apparel">
-                <h3>Apparel Printing</h3>
-                <div class="service-grid">
-                    <div class="service-card">
-                        <a href="product-details.php?name=T-Shirt%20Printing&img=img/snorlax.png&price=150">
-                            <img src="img/snorlax.png" alt="T-Shirt Printing" class="service-img">
-                        </a>
-                        <h4>T-Shirt Printing</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Polo%20Shirts&img=img/snorlax.png&price=180">
-                            <img src="img/snorlax.png" alt="Polo Shirts" class="service-img">
-                        </a>
-                        <h4>Polo Shirts</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Jerseys&img=img/snorlax.png&price=200">
-                            <img src="img/snorlax.png" alt="Jerseys" class="service-img">
-                        </a>
-                        <h4>Jerseys</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Hoodies&img=img/snorlax.png&price=250">
-                            <img src="img/snorlax.png" alt="Hoodies" class="service-img">
-                        </a>
-                        <h4>Hoodies</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Caps&img=img/snorlax.png&price=100">
-                            <img src="img/snorlax.png" alt="Caps" class="service-img">
-                        </a>
-                        <h4>Caps</h4>
-                    </div>
-                </div>
-            </section>
-            <section class="content-box" id="personalized">
-                <h3>Personalized Printing</h3>
-                <div class="service-grid">
-                    <div class="service-card">
-                        <a href="product-details.php?name=Mug%20Printing&img=img/snorlax.png&price=120">
-                            <img src="img/snorlax.png" alt="Mugs" class="service-img">
-                        </a>
-                        <h4>Mugs</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Plate%20Printing&img=img/snorlax.png&price=110">
-                            <img src="img/snorlax.png" alt="Plate" class="service-img">
-                        </a>
-                        <h4>Plate</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Tumbler%20Printing&img=img/snorlax.png&price=130">
-                            <img src="img/snorlax.png" alt="Tumbler" class="service-img">
-                        </a>
-                        <h4>Tumbler</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Keychain%20Printing&img=img/snorlax.png&price=50">
-                            <img src="img/snorlax.png" alt="Keychain" class="service-img">
-                        </a>
-                        <h4>Keychain</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Ref%20Magnet%20Printing&img=img/snorlax.png&price=60">
-                            <img src="img/snorlax.png" alt="Ref Magnet" class="service-img">
-                        </a>
-                        <h4>Ref Magnet</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Mouse%20Pad%20Printing&img=img/snorlax.png&price=70">
-                            <img src="img/snorlax.png" alt="Mouse Pad" class="service-img">
-                        </a>
-                        <h4>Mouse Pad</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Plaque%20Printing&img=img/snorlax.png&price=200">
-                            <img src="img/snorlax.png" alt="Plaque / Medal" class="service-img">
-                        </a>
-                        <h4>Plaque / Medal</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=ID%20Lanyard%20Printing&img=img/snorlax.png&price=40">
-                            <img src="img/snorlax.png" alt="ID / Lanyard" class="service-img">
-                        </a>
-                        <h4>ID / Lanyard</h4>
-                    </div>
-                </div>
-            </section>
-            <section class="content-box" id="stickers">
-                <h3>Stickers</h3>
-                <div class="service-grid">
-                    <div class="service-card">
-                        <a href="product-details.php?name=Vinyl%20White%20Sticker&img=img/snorlax.png&price=20">
-                            <img src="img/snorlax.png" alt="Vinyl White" class="service-img">
-                        </a>
-                        <h4>Vinyl White</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Clear%20Sticker&img=img/snorlax.png&price=20">
-                            <img src="img/snorlax.png" alt="Clear" class="service-img">
-                        </a>
-                        <h4>Clear</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Perforated%20Sticker&img=img/snorlax.png&price=25">
-                            <img src="img/snorlax.png" alt="Perforated" class="service-img">
-                        </a>
-                        <h4>Perforated</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Frosted%20Sticker&img=img/snorlax.png&price=25">
-                            <img src="img/snorlax.png" alt="Frosted" class="service-img">
-                        </a>
-                        <h4>Frosted</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=3M%20Reflective%20Sticker&img=img/snorlax.png&price=30">
-                            <img src="img/snorlax.png" alt="3M Reflective" class="service-img">
-                        </a>
-                        <h4>3M Reflective</h4>
-                    </div>
-                </div>
-            </section>
-            <section class="content-box" id="signages">
-                <h3>Signages</h3>
-                <div class="service-grid">
-                    <div class="service-card">
-                        <a href="product-details.php?name=Printable%20Panaflex&img=img/snorlax.png&price=200">
-                            <img src="img/snorlax.png" alt="Printable Panaflex" class="service-img">
-                        </a>
-                        <h4>Printable Panaflex</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Panaflex%20with%20Sticker&img=img/snorlax.png&price=220">
-                            <img src="img/snorlax.png" alt="Panaflex with Sticker" class="service-img">
-                        </a>
-                        <h4>Panaflex with Sticker</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Acrylic%20Build-Up&img=img/snorlax.png&price=300">
-                            <img src="img/snorlax.png" alt="Acrylic Build-Up" class="service-img">
-                        </a>
-                        <h4>Acrylic Build-Up</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Stainless%20Signage&img=img/snorlax.png&price=350">
-                            <img src="img/snorlax.png" alt="Stainless" class="service-img">
-                        </a>
-                        <h4>Stainless</h4>
-                    </div>
-                </div>
-            </section>
-            <section class="content-box" id="tailoring">
-                <h3>Tailoring Services</h3>
-                <div class="service-grid">            
-                    <div class="service-card">
-                        <a href="product-details.php?name=Repair%20Services&img=img/snorlax.png&price=80">
-                            <img src="img/snorlax.png" alt="Repair Services" class="service-img">
-                        </a>
-                        <h4>Repair Services</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Fit%20Adjustment&img=img/snorlax.png&price=60">
-                            <img src="img/snorlax.png" alt="Fit Adjustment" class="service-img">
-                        </a>
-                        <h4>Fit Adjustment</h4>
-                    </div>
-                    <div class="service-card">
-                        <a href="product-details.php?name=Everyday%20and%20School%20Clothes&img=img/snorlax.png&price=100">
-                            <img src="img/snorlax.png" alt="Everyday & School Clothes" class="service-img">
-                        </a>
-                        <h4>Everyday & School Clothes</h4>
-                    </div>
-                </div>
-            </section> 
+            <?php
+            if (empty($productsByCategory)) {
+                echo '<div style="padding:20px;font-weight:600;">No products found. Please add products in the database.</div>';
+            } else {
+                foreach ($ordered as $cat) { // $ordered defined earlier in sidebar build
+                    $sectionId = strtolower(preg_replace('/\s+/', '-', $cat));
+                    echo '<section class="content-box" id="' . htmlspecialchars($sectionId) . '">';
+                    echo '<h3>' . htmlspecialchars($cat) . '</h3>';
+                    echo '<div class="service-grid">';
+                    foreach ($productsByCategory[$cat] as $p) {
+                        $img = htmlspecialchars(firstImage($p['images'] ?? ''));
+                        $nameEsc = htmlspecialchars($p['product_name']);
+                        $priceEsc = htmlspecialchars($p['price']);
+                        $id = (int)$p['product_id'];
+                        echo '<div class="service-card">';
+                        echo '<a href="product-details.php?id=' . $id . '">';
+                        echo '<img src="' . $img . '" alt="' . $nameEsc . '" class="service-img">';
+                        echo '</a>';
+                        echo '<h4>' . $nameEsc . '</h4>';
+                        echo '<div class="service-price">₱' . $priceEsc . '</div>';
+                        echo '</div>';
+                    }
+                    echo '</div>';
+                    echo '</section>';
+                }
+            }
+            ?>
         </div>
     </div>
 

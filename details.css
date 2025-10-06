@@ -5,6 +5,17 @@
     gap: 18px;
     margin-top: 18px;
 }
+/* Related products */
+.related-products { margin-top: 30px; }
+.related-products h4 { margin:0 0 12px; font-size:1.1rem; color:#752525; }
+.related-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; }
+.related-card { text-decoration:none; background:#fff; border:1px solid #e2e2e2; border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; transition:.2s box-shadow,.2s transform; }
+.related-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.12); transform:translateY(-2px); }
+.rel-img-wrap { width:100%; aspect-ratio:1/1; overflow:hidden; border-radius:8px; background:#fafafa; display:flex; align-items:center; justify-content:center; }
+.rel-img-wrap img { max-width:100%; max-height:100%; object-fit:cover; }
+.rel-info { display:flex; flex-direction:column; }
+.rel-name { font-size:.75rem; font-weight:600; color:#333; line-height:1.2; }
+.rel-price { font-size:.7rem; color:#752525; font-weight:600; }
 .action-buttons form {
     margin: 0;
     padding: 0;

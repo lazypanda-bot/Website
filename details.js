@@ -237,5 +237,113 @@ function closeViewerModal() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Back button handling (falls back to products page if no history)
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'products.php';
+      }
+    });
+  }
+
+  // Tab switching: ensure clicking tab buttons toggles content even if inline handlers missing
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-tab');
+      if (!target) return;
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const allTabs = document.querySelectorAll('.tab-content');
+      allTabs.forEach(t => {
+        if (t.id === target) {
+          t.hidden = false;
+          t.style.display = 'block';
+        } else {
+          t.hidden = true;
+          t.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Ensure initial active tab is visible
+  const firstActive = document.querySelector('.tab-btn.active');
+  if (firstActive) {
+    const target = firstActive.getAttribute('data-tab');
+    const tabEl = document.getElementById(target);
+    if (tabEl) { tabEl.hidden = false; tabEl.style.display = 'block'; }
+  }
+
+  // Add to Cart (AJAX) handler
+  const addCartBtn = document.querySelector('.addcart-btn');
+  const cartForm = document.getElementById('cartForm');
+  if (addCartBtn && cartForm) {
+    addCartBtn.addEventListener('click', async () => {
+      const quantityInput = document.getElementById('quantity');
+      const sizeHidden = document.getElementById('cart_size');
+      const qtyValue = quantityInput ? parseInt(quantityInput.value || '1', 10) : 1;
+      if (quantityInput && qtyValue < 1) { quantityInput.value = 1; }
+      if (sizeHidden) {
+        const ddToggle = document.getElementById('sizeDropdownToggle');
+        if (ddToggle) sizeHidden.value = ddToggle.textContent.trim();
+      }
+      // Mirror displayed quantity into hidden cart form quantity
+      const cartQty = document.getElementById('cart_quantity');
+      if (cartQty) cartQty.value = Math.max(1, qtyValue);
+
+      // Build form data
+      const fd = new FormData(cartForm);
+      try {
+        const res = await fetch('add_to_cart.php', { method: 'POST', body: fd });
+        const text = await res.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch (_) {}
+        if (!res.ok || !data || data.status !== 'ok') {
+          const msg = (data && data.message) ? data.message : ('Failed to add to cart' + (text && !data ? ' (non-JSON response)' : ''));
+          throw new Error(msg);
+        }
+        showAddCartToast(data.action === 'updated' ? 'Cart updated' : 'Added to cart');
+      } catch (err) {
+        console.error(err);
+        showAddCartToast(err.message || 'Error adding to cart', true);
+      }
+    });
+  }
+
+  function showAddCartToast(message, isError = false) {
+    let toast = document.getElementById('cart-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'cart-toast';
+      toast.style.position = 'fixed';
+      toast.style.bottom = '30px';
+      toast.style.right = '30px';
+      toast.style.zIndex = '9999';
+      toast.style.padding = '14px 26px';
+      toast.style.borderRadius = '40px';
+      toast.style.fontWeight = '600';
+      toast.style.fontFamily = 'Poppins, sans-serif';
+      toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.18)';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.background = isError ? '#b32626' : '#3a0d0d';
+    toast.style.color = '#fff';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity .25s, transform .25s';
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => { if (toast && toast.parentNode) toast.parentNode.removeChild(toast); }, 320);
+    }, 1800);
+  }
 });
 

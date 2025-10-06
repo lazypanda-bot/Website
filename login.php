@@ -11,11 +11,8 @@ $_SESSION['redirect_after_auth'] = $_POST['redirect_after_auth'] ?? $_SESSION['r
 $loginMessage = "";
 $registerMessage = "";
 
-// connect to database
-$conn = new mysqli("localhost", "root", "", "printshop");
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
+// Central DB connection
+require_once __DIR__ . '/database.php';
 
 // determine form type
 $formType = $_POST['form_type'] ?? null;
@@ -27,7 +24,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   $redirect = $_POST['redirect_after_auth'] ?? 'profile.php';
 
   if ($email && $password) {
-    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
+  $stmt = $conn->prepare(
+    "SELECT " . ACCOUNT_ID_COL . ", " . ACCOUNT_NAME_COL . ", " . ACCOUNT_PASS_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_EMAIL_COL . " = ?"
+  );
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
@@ -68,7 +67,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
   $password = password_hash($passwordRaw, PASSWORD_DEFAULT);
 
   if ($username && $email && $passwordRaw) {
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+  $stmt = $conn->prepare(
+    "SELECT " . ACCOUNT_ID_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_EMAIL_COL . " = ?"
+  );
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
@@ -76,7 +77,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
     if ($stmt->num_rows > 0) {
       $registerMessage = "Email already registered.";
     } else {
-      $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
+  $stmt = $conn->prepare(
+    "INSERT INTO " . ACCOUNT_TABLE . " (" . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_PASS_COL . ") VALUES (?, ?, ?)"
+  );
       $stmt->bind_param("sss", $username, $email, $password);
       if ($stmt->execute()) {
         $_SESSION['user_id'] = $stmt->insert_id;
@@ -95,10 +98,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
   }
 }
 
-$conn->close();
+// Optional: leave connection open for included components; PHP will close automatically.
 ?>
 
 <div class="modal" id="auth-modal">
+  <?php if(!empty($registerMessage)): ?>
+    <div style="color:#b30000;font-weight:600;text-align:center;margin-bottom:10px;"><?= htmlspecialchars($registerMessage) ?></div>
+  <?php endif; ?>
   <div class="auth-box" id="auth-box">
     <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>
 

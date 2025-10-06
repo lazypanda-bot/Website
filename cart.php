@@ -20,21 +20,18 @@
 
 <?php
 session_start();
+require_once __DIR__ . '/database.php';
 $isAuthenticated = isset($_SESSION['user_id']);
 $userAddress = '';
 $userPhone = '';
-if ($isAuthenticated) {
+if ($isAuthenticated && !$conn->connect_error) {
     $userId = $_SESSION['user_id'];
-    $conn = new mysqli("localhost", "root", "", "printshop");
-    if (!$conn->connect_error) {
-        $stmt = $conn->prepare("SELECT address, phone_number FROM users WHERE id = ?");
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $stmt->bind_result($userAddress, $userPhone);
-        $stmt->fetch();
-        $stmt->close();
-        $conn->close();
-    }
+    $stmt = $conn->prepare("SELECT " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?"); // adaptive mapping from database.php already applied
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($userAddress, $userPhone);
+    $stmt->fetch();
+    $stmt->close();
 }
 ?>
 <script>
@@ -72,8 +69,8 @@ if ($isAuthenticated) {
     </div>
     <div class="cart-container">
         <h2>Your Cart</h2>
-        <div class="cart-items" id="cart-items">
-            <p class="empty-cart-msg">Your cart is currently empty.</p>
+        <div class="cart-items" id="cart-items" data-source="db">
+            <p class="empty-cart-msg">Loading cart...</p>
         </div>
         <div class="cart-summary" id="cart-summary">
             <h3>Total: ₱0.00</h3>

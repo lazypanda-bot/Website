@@ -3,57 +3,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneInput = document.getElementById('phone');
     const editAddressBtn = document.getElementById('edit-address-btn');
     const editPhoneBtn = document.getElementById('edit-phone-btn');
-    const saveBtnGroup = document.getElementById('save-btn-group');
-    if (!addressInput || !phoneInput || !editAddressBtn || !editPhoneBtn || !saveBtnGroup) return;
-    let editing = false;
+    if (!addressInput || !phoneInput || !editAddressBtn || !editPhoneBtn) return;
 
-    // Store original values to restore if switching
     let originalAddress = addressInput.value;
     let originalPhone = phoneInput.value;
 
-    editAddressBtn.addEventListener('click', function() {
-        // If phone is being edited, restore its value and set readonly
+    function enableEditing(targetInput, originalValueStoreCallback) {
+        if (targetInput.readOnly) {
+            targetInput.readOnly = false;
+            targetInput.focus();
+            targetInput.setSelectionRange(targetInput.value.length, targetInput.value.length);
+        } else {
+            // second click toggles back to readonly and restores original if unchanged
+            targetInput.readOnly = true;
+            originalValueStoreCallback();
+        }
+    }
+
+    editAddressBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // If phone was being edited, lock it & restore if untouched
         if (!phoneInput.readOnly) {
             phoneInput.readOnly = true;
-            phoneInput.value = originalPhone;
+            // keep updated value (do not overwrite)
         }
-        addressInput.readOnly = false;
-        addressInput.focus();
-        showSaveBtn();
-        editing = true;
-    });
-    editPhoneBtn.addEventListener('click', function() {
-        // If address is being edited, restore its value and set readonly
-        if (!addressInput.readOnly) {
-            addressInput.readOnly = true;
-            addressInput.value = originalAddress;
-        }
-        phoneInput.readOnly = false;
-        phoneInput.focus();
-        showSaveBtn();
-        editing = true;
+        enableEditing(addressInput, () => { originalAddress = addressInput.value; });
     });
 
-    // Optional: Hide save button if not editing (reset on page load)
+    editPhoneBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!addressInput.readOnly) {
+            addressInput.readOnly = true;
+        }
+        enableEditing(phoneInput, () => { originalPhone = phoneInput.value; });
+    });
+
+    // When submitting form, ensure readonly removed so values post
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
-        profileForm.addEventListener('reset', function() {
-            addressInput.readOnly = true;
-            phoneInput.readOnly = true;
-            hideSaveBtn();
-            editing = false;
+        profileForm.addEventListener('submit', () => {
+            addressInput.readOnly = false;
+            phoneInput.readOnly = false;
         });
     }
 
-    // Save button is always visible
-
-    // Show toast if profile updated
     const toast = document.getElementById('profile-toast');
     if (toast) {
         toast.classList.add('show');
         setTimeout(function() {
             toast.classList.remove('show');
-            // Remove ?updated=1 from URL
             if (window.history.replaceState) {
                 const url = new URL(window.location);
                 url.searchParams.delete('updated');

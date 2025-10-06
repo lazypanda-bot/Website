@@ -26,7 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cartIcon.classList.add('active');
   }
 
-  let items = JSON.parse(localStorage.getItem('cart') || '[]');
+  // Determine if we use DB-backed cart (presence of data-source attribute)
+  const useDb = cartItemsContainer && cartItemsContainer.getAttribute('data-source') === 'db' && window.isAuthenticated;
+  let items = [];
   let total = 0;
 
   // Group items by name, size, design, and price
@@ -43,8 +45,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   const groupedItems = Object.values(grouped);
 
-  function renderCart() {
-    items = JSON.parse(localStorage.getItem('cart') || '[]');
+  async function fetchDbCart() {
+    try {
+      const res = await fetch('cart_items.php');
+      if (!res.ok) throw new Error('Failed to fetch cart');
+      const data = await res.json();
+      items = Array.isArray(data.items) ? data.items : [];
+    } catch (e) {
+      console.error(e);
+      items = [];
+    }
+  }
+
+  async function renderCart() {
+    if (useDb) {
+      await fetchDbCart();
+    } else {
+      items = JSON.parse(localStorage.getItem('cart') || '[]');
+    }
     // regroup in case of deletion
     const grouped = {};
     items.forEach(product => {
@@ -52,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!grouped[key]) {
         grouped[key] = { ...product, quantity: 0 };
       }
-      grouped[key].quantity += product.quantity;
+      grouped[key].quantity += parseInt(product.quantity, 10);
     });
     const groupedItems = Object.values(grouped);
   let total = 0;
@@ -78,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <p>Design: ${product.design}</p>
               <p>Price: ₱${pricePerItem.toFixed(2)} each</p>
               <p><strong>Subtotal: ₱${subtotal.toFixed(2)}</strong></p>
-              <button class="delete-cart-item" data-key="${getKey(product)}" style="background:#9a4141;color:#fff;border:none;padding:6px 16px;border-radius:5px;cursor:pointer;margin-top:8px;"><i class="fa fa-trash"></i> Delete</button>
+              <button class="delete-cart-item" data-key="${getKey(product)}" data-id="${product.id || ''}" style="background:#9a4141;color:#fff;border:none;padding:6px 16px;border-radius:5px;cursor:pointer;margin-top:8px;"><i class="fa fa-trash"></i> Delete</button>
             </div>
           `;
         }
@@ -105,12 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add delete button logic
     document.querySelectorAll('.delete-cart-item').forEach(btn => {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', async function() {
+        if (useDb && this.dataset.id) {
+          try {
+            const formData = new FormData();
+            formData.append('id', this.dataset.id);
+            await fetch('delete_cart_item.php', { method: 'POST', body: formData });
+          } catch (e) { console.error(e); }
+          renderCart();
+          return;
+        }
         const key = this.getAttribute('data-key');
-        // Remove all items with this key
-        let items = JSON.parse(localStorage.getItem('cart') || '[]');
-        items = items.filter(item => getKey(item) !== key);
-        localStorage.setItem('cart', JSON.stringify(items));
+        let locItems = JSON.parse(localStorage.getItem('cart') || '[]');
+        locItems = locItems.filter(item => getKey(item) !== key);
+        localStorage.setItem('cart', JSON.stringify(locItems));
         renderCart();
   // Listen for delivery method change to update shipping fee
   function updateShippingFee() {

@@ -1,10 +1,11 @@
+<?php session_start(); require_once '../database.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin</title>
+    <title>Admin - Payments</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="nav&side.css">
@@ -19,7 +20,7 @@
             <nav class="admin-nav">
                 <ul class="nav-links">
                     <li><a href="admin.html">Dashboard</a></li>
-                    <li><a href="admin-products.html">Products</a></li>
+                    <li><a href="admin-products.php">Products</a></li>
                     <li><a href="admin-orders.html">Orders</a></li>
                     <li><a href="admin-payments.html">Payments</a></li>
                     <li><a href="admin-reports.html">Reports</a></li>
@@ -54,7 +55,7 @@
                         <!-- <button class="add-btn"><i class="fas fa-plus"></i> Add Order</button> -->
                     </div>
                 </div>
-                <table class="payments-table">
+                <table class="payments-table" id="paymentsTable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -63,13 +64,13 @@
                             <th>Address</th>
                             <th>Product</th>
                             <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Total</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    <!-- Data rows will be inserted here -->
-                    </tbody>
+                    <tbody id="paymentsTbody"></tbody>
                 </table>
 
-    <script src="admin-payments.js"></script>
+    <script src="admin-payments.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

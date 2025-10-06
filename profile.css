@@ -71,6 +71,52 @@ section {
     margin-left: 10px;
     width: 500px;
 }
+#profileForm .input-edit-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#profileForm .input-edit-wrapper input {
+    padding-right: 2.3rem; /* space for icon button */
+}
+
+.input-edit-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #752525;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+.input-edit-btn:hover,
+.input-edit-btn:focus {
+    background: #f1e1e1;
+    color: #9a4141;
+    outline: none;
+}
+.input-edit-btn i {
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+/* Readonly styling distinction */
+input[readonly] {
+    background: #fafafa;
+    cursor: not-allowed;
+}
+input:not([readonly]) {
+    background: #fff;
+}
 .form-group input:focus {
     border-color: #9a4141;
     outline: none;
