@@ -143,3 +143,45 @@ function hideSpinner(video) {
 //     }
 //   }
 // });
+
+// Global welcome toast (login / registration)
+document.addEventListener('DOMContentLoaded', () => {
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+  const raw = getCookie('welcome_toast');
+  if (raw) {
+    // Decode any percent-encoding artifacts (%20, %2C, UTF-8 sequences) safely
+    let message = raw.replace(/\+/g, ' ');
+    try {
+      // First pass decode
+      message = decodeURIComponent(message);
+      // If decoding introduced new % sequences (double-encoded), attempt one more time
+      if (/%[0-9A-Fa-f]{2}/.test(message)) {
+        try { message = decodeURIComponent(message); } catch(_){}
+      }
+    } catch (e) {
+      // fallback: replace common encodings manually
+      message = message
+        .replace(/%20/g,' ')
+        .replace(/%2C/gi,',')
+        .replace(/%21/g,'!')
+        .replace(/%3A/gi,':')
+        .replace(/%3B/gi,';')
+        .replace(/%2D/gi,'-');
+    }
+    message = message.trim();
+    const toast = document.createElement('div');
+    toast.className = 'site-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.classList.add('show'); });
+    setTimeout(() => { toast.classList.remove('show'); }, 3200);
+    setTimeout(() => { toast.remove(); }, 3800);
+    document.cookie = 'welcome_toast=; Max-Age=0; path=/';
+  }
+});

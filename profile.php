@@ -5,11 +5,37 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/database.php';
 
 $isAuthenticated = isset($_SESSION['user_id']);
-$username = $email = $address = $phone = '';
+$username = $email = $address = $phone = $avatarPath = '';
 if ($isAuthenticated) {
     // Handle profile update or delete BEFORE any output
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userId = $_SESSION['user_id'];
+        // Avatar upload handling (independent quick form)
+        if (isset($_POST['upload_avatar']) && isset($_FILES['avatar_file'])) {
+            $file = $_FILES['avatar_file'];
+            if ($file['error'] === UPLOAD_ERR_OK) {
+                $allowed = ['image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif','image/webp'=>'webp'];
+                $mime = mime_content_type($file['tmp_name']);
+                if (isset($allowed[$mime])) {
+                    $ext = $allowed[$mime];
+                    $destDir = __DIR__ . '/uploads/avatars';
+                    if (!is_dir($destDir)) { @mkdir($destDir, 0775, true); }
+                    $newName = 'avatar_' . $userId . '_' . time() . '.' . $ext;
+                    $destPath = $destDir . '/' . $newName;
+                    if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                        $relPath = 'uploads/avatars/' . $newName;
+                        if (!$conn->connect_error) {
+                            $stmt = $conn->prepare("UPDATE " . ACCOUNT_TABLE . " SET " . ACCOUNT_AVATAR_COL . " = ? WHERE " . ACCOUNT_ID_COL . " = ?");
+                            $stmt->bind_param('si', $relPath, $userId);
+                            $stmt->execute();
+                            $stmt->close();
+                        }
+                        header('Location: profile.php?avatar=1');
+                        exit();
+                    }
+                }
+            }
+        }
         // If delete is set, delete the user
         if (isset($_POST['delete_account'])) {
             if (!$conn->connect_error) {
@@ -24,36 +50,51 @@ if ($isAuthenticated) {
             }
         } else {
             $address = trim($_POST['address'] ?? '');
-            $phone = trim($_POST['phone'] ?? '');
-            // Allow updating even if only one field is changed
-            if ($address !== '' || $phone !== '') {
-                if (!$conn->connect_error) {
-                    // Fetch current values if not provided
-                    $stmt = $conn->prepare("SELECT " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
-                    $stmt->bind_param("i", $userId);
-                    $stmt->execute();
-                    $stmt->bind_result($currentAddress, $currentPhone);
-                    $stmt->fetch();
-                    $stmt->close();
-                    if ($address === '') $address = $currentAddress;
-                    if ($phone === '') $phone = $currentPhone;
-                    $stmt = $conn->prepare("UPDATE " . ACCOUNT_TABLE . " SET " . ACCOUNT_ADDRESS_COL . " = ?, " . ACCOUNT_PHONE_COL . " = ? WHERE " . ACCOUNT_ID_COL . " = ?");
-                    $stmt->bind_param("ssi", $address, $phone, $userId);
-                    $stmt->execute();
-                    $stmt->close();
-                    header("Location: profile.php?updated=1");
-                    exit();
+            $phoneRaw = trim($_POST['phone'] ?? '');
+            $digits = preg_replace('/\D+/', '', $phoneRaw);
+            if (strlen($digits) > 15) { $digits = substr($digits, 0, 15); }
+            $MIN_PHONE_DIGITS = 11; // configurable minimum
+
+            if (!$conn->connect_error) {
+                // Fetch current stored values
+                $stmt = $conn->prepare("SELECT " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
+                $stmt->bind_param("i", $userId);
+                $stmt->execute();
+                $stmt->bind_result($currentAddress, $currentPhone);
+                $stmt->fetch();
+                $stmt->close();
+
+                if ($address === '') $address = $currentAddress;
+                $invalidPhone = false;
+                if ($digits === '') {
+                    $finalPhone = $currentPhone; // unchanged
+                } elseif (strlen($digits) < $MIN_PHONE_DIGITS) {
+                    $invalidPhone = true;
+                    $finalPhone = $currentPhone; // keep existing
+                } else {
+                    $finalPhone = $digits;
                 }
+
+                $stmt = $conn->prepare("UPDATE " . ACCOUNT_TABLE . " SET " . ACCOUNT_ADDRESS_COL . " = ?, " . ACCOUNT_PHONE_COL . " = ? WHERE " . ACCOUNT_ID_COL . " = ?");
+                $stmt->bind_param("ssi", $address, $finalPhone, $userId);
+                $stmt->execute();
+                $stmt->close();
+                if ($invalidPhone) {
+                    header("Location: profile.php?invalid_phone=1");
+                } else {
+                    header("Location: profile.php?updated=1");
+                }
+                exit();
             }
         }
     }
     // Use existing $conn from database.php
     // fetch user data
     $userId = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT " . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
+    $stmt = $conn->prepare("SELECT " . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . ", " . ACCOUNT_AVATAR_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
-    $stmt->bind_result($username, $email, $address, $phone);
+    $stmt->bind_result($username, $email, $address, $phone, $avatarPath);
     $stmt->fetch();
     $stmt->close();
 }
@@ -114,18 +155,32 @@ if ($isAuthenticated) {
     </section>
     <div class="settings-container">
         <section class="account-flex">
-            <div class="profile-image">
-                <img src="img/snorlax.png" alt="Profile Image" class="profile-avatar" />
-                <div class="profile-image-actions">
-                    <form class="save-bar no-padding" method="post" action="profile.php" id="profileFormSave">
-                        <button type="submit" form="profileForm" class="btn edit-btn">Save</button>
+            <div class="profile-side" style="position:relative;">
+                <div class="profile-image-wrapper">
+                    <div class="profile-avatar-ring">
+                        <?php $avatarSafe = ($avatarPath && file_exists(__DIR__ . '/' . $avatarPath)) ? htmlspecialchars($avatarPath) : 'img/snorlax.png'; ?>
+                        <img src="<?= $avatarSafe ?>" alt="Profile Image" class="profile-avatar" id="profileAvatarImg" />
+                        <button type="button" class="avatar-edit-btn" id="avatarEditBtn" aria-label="Change avatar"><i class="fa fa-camera"></i></button>
+                        <form id="avatarUploadForm" action="profile.php" method="post" enctype="multipart/form-data" style="display:none;">
+                            <input type="hidden" name="upload_avatar" value="1" />
+                            <input type="file" name="avatar_file" id="avatarFileInput" accept="image/*" />
+                        </form>
+                    </div>
+                </div>
+                <div class="profile-identity">
+                    <h1><?= htmlspecialchars($username ?: 'User') ?></h1>
+                    <div class="email-handle"><?= htmlspecialchars($email ?: '') ?></div>
+                </div>
+                <div class="profile-image-actions" id="profileActions">
+                    <form action="logout.php" method="post" class="logout-bar no-padding" title="Logout">
+                        <button type="submit" class="btn logout-btn" id="logoutBtn" aria-label="Logout"><i class="fa fa-right-from-bracket"></i></button>
                     </form>
-                    <form action="logout.php" method="post" class="logout-bar no-padding">
-                        <button type="submit" class="btn logout-btn">Logout</button>
-                    </form>
-                    <form action="profile.php" method="post" class="delete-bar no-padding" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                    <form action="profile.php" method="post" class="delete-bar no-padding" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');" title="Delete Account">
                         <input type="hidden" name="delete_account" value="1">
-                        <button type="submit" class="btn delete-btn">Delete</button>
+                        <button type="submit" class="btn delete-btn" id="deleteAccountBtn" aria-label="Delete Account"><i class="fa fa-trash"></i></button>
+                    </form>
+                    <form class="save-bar no-padding" method="post" action="profile.php" id="profileFormSave" title="Save Changes">
+                        <button type="submit" form="profileForm" class="btn edit-btn" id="saveProfileBtn" aria-label="Save" disabled><i class="fa fa-save"></i></button>
                     </form>
                 </div>
             </div>
@@ -154,7 +209,7 @@ if ($isAuthenticated) {
                         <button type="button" id="edit-phone-btn" class="input-edit-btn" tabindex="-1">
                             <i class="fa fa-pencil-alt" aria-hidden="true"></i>
                         </button>
-                        <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($phone ?? '') ?>" placeholder="Enter your phone number" required readonly />
+                        <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($phone ?? '') ?>" placeholder="Enter your phone number" required readonly inputmode="numeric" />
                     </div>
                 </div>
             </form>
@@ -170,6 +225,6 @@ if ($isAuthenticated) {
     </script>
     <script src="login.js?v=<?= time() ?>"></script>
     <script src="cart.js"></script>
-    <script src="profile.js"></script>
+    <script src="profile.js?v=<?= time() ?>"></script>
 </body>
 </html>

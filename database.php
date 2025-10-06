@@ -52,6 +52,7 @@ $passCol     = pickCol(['cust_password','password','pass','user_password'], $ava
 $addrCol     = pickCol(['address','addr','address_line','home_address'], $availableCols, 'address');
 $phoneCol    = pickCol(['phone_number','phone','contact_number','mobile','mobile_number'], $availableCols, 'phone_number');
 $createdCol  = pickCol(['registration__date','registration_date','created_at','created','date_created'], $availableCols, 'registration__date');
+$avatarCol   = pickCol(['profile_pic','profilepicture','avatar','profile_image','avatar_path'], $availableCols, 'profile_pic');
 
 if (!defined('ACCOUNT_ID_COL')) define('ACCOUNT_ID_COL', $idCol);
 if (!defined('ACCOUNT_NAME_COL')) define('ACCOUNT_NAME_COL', $nameCol);
@@ -60,6 +61,7 @@ if (!defined('ACCOUNT_PASS_COL')) define('ACCOUNT_PASS_COL', $passCol);
 if (!defined('ACCOUNT_ADDRESS_COL')) define('ACCOUNT_ADDRESS_COL', $addrCol);
 if (!defined('ACCOUNT_PHONE_COL')) define('ACCOUNT_PHONE_COL', $phoneCol);
 if (!defined('ACCOUNT_CREATED_COL')) define('ACCOUNT_CREATED_COL', $createdCol);
+if (!defined('ACCOUNT_AVATAR_COL')) define('ACCOUNT_AVATAR_COL', $avatarCol);
 
 // Optional debug: append ?debug_schema=1 to any page including this file to view resolved mappings (admin/dev use only)
 if (!headers_sent() && isset($_GET['debug_schema'])) {
@@ -72,6 +74,7 @@ if (!headers_sent() && isset($_GET['debug_schema'])) {
     echo "ACCOUNT_ADDRESS_COL=" . ACCOUNT_ADDRESS_COL . "\n";
     echo "ACCOUNT_PHONE_COL=" . ACCOUNT_PHONE_COL . "\n";
     echo "ACCOUNT_CREATED_COL=" . ACCOUNT_CREATED_COL . "\n";
+    echo "ACCOUNT_AVATAR_COL=" . ACCOUNT_AVATAR_COL . "\n";
     exit; // stop normal page rendering
 }
 ?>

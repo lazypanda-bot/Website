@@ -38,7 +38,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
         $_SESSION['user_id'] = $id;
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
-
+        // Set short-lived welcome toast cookie (URL encoded message)
+  $welcomeMsg = 'Welcome back, ' . ($username ?: 'user') . '!';
+  // Store plain text (avoid URL encoding artifacts like %20 in UI)
+  $safeMsg = str_replace(["\r","\n",";"], ' ', $welcomeMsg);
+  setcookie('welcome_toast', $safeMsg, time()+60, '/');
         header("Location: " . $redirect);
         exit();
       } else {
@@ -85,7 +89,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
         $_SESSION['user_id'] = $stmt->insert_id;
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
-
+        // Set welcome toast for new registration
+  $welcomeMsg = 'Account created — welcome, ' . ($username ?: 'user') . '!';
+  $safeMsg = str_replace(["\r","\n",";"], ' ', $welcomeMsg);
+  setcookie('welcome_toast', $safeMsg, time()+60, '/');
         header("Location: " . $_SESSION['redirect_after_auth']);
         exit();
       } else {
