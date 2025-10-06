@@ -84,7 +84,6 @@ if ($isAuthenticated) {
     <link rel="stylesheet" href="services.css">
     <link rel="stylesheet" href="profile.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
-    <!-- Inline CSS moved to profile.css -->
 </head>
 <body>
     <section id="header">

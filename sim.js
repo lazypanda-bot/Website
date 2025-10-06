@@ -205,3 +205,13 @@ window.addEventListener('DOMContentLoaded', () => {
     console.error('initViewer error:', e);
   }
 });
+// Move back button logic to external JS or here if not present in sim.js
+    document.addEventListener('DOMContentLoaded', function() {
+      var backBtn = document.getElementById('sim-back-btn');
+      if (backBtn) {
+        backBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          history.back();
+        });
+      }
+    });

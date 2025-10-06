@@ -77,24 +77,24 @@ $stmt->close();
     <section class="product-listing">
         <div class="product-main">
             <div class="back-container">
-                <button onclick="history.back()" class="back-btn">← Back</button>
+                <button class="back-btn" id="backBtn">← Back</button>
             </div>
             <div class="image-column">
                 <img src="<?php echo htmlspecialchars($productImg); ?>" alt="<?php echo htmlspecialchars($productName); ?>" class="product-image" id="mainImage" />
                 <div class="thumbnail-row">
                     <div class="thumbnail-wrapper">
-                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 1" class="thumbnail" onclick="changeImage(this)" />
-                        <button class="delete-thumbnail-btn" type="button" onclick="deleteThumbnail(this)" title="Delete thumbnail">-</button>
+                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 1" class="thumbnail" />
+                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
                     </div>
                     <div class="thumbnail-wrapper">
-                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 2" class="thumbnail" onclick="changeImage(this)" />
-                        <button class="delete-thumbnail-btn" type="button" onclick="deleteThumbnail(this)" title="Delete thumbnail">-</button>
+                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 2" class="thumbnail" />
+                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
                     </div>
                     <div class="thumbnail-wrapper">
-                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 3" class="thumbnail" onclick="changeImage(this)" />
-                        <button class="delete-thumbnail-btn" type="button" onclick="deleteThumbnail(this)" title="Delete thumbnail">-</button>
+                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 3" class="thumbnail" />
+                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
                     </div>
-                    <button type="button" id="add-thumbnail-btn" onclick="addThumbnail()">
+                    <button type="button" id="add-thumbnail-btn">
                         <span>+</span>
                     </button>
                 </div>
@@ -102,8 +102,8 @@ $stmt->close();
         <div class="product-text">
             <h2><?php echo htmlspecialchars($productName); ?></h2>
             <div class="tab-header">
-                <button class="tab-btn active" onclick="showTab('description', this)">Description</button>
-                <button class="tab-btn" onclick="showTab('order', this)">Start Your Order</button>
+                <button class="tab-btn active" data-tab="description">Description</button>
+                <button class="tab-btn" data-tab="order">Start Your Order</button>
             </div>
         <div class="tab-content" id="description">
             <p class="product-description">
@@ -116,8 +116,12 @@ $stmt->close();
             </ul>
             <h4>Product Details</h4>
             <ul class="product-details"></ul>
+            <div class="review-container">
+                <h4 class="review-title">Reviews</h4>
+                <div class="no-reviews">No reviews yet</div>
+            </div>
         </div>
-        <section class="tab-content" id="order" style="display: none;">
+    <section class="tab-content" id="order" hidden>
             <section class="product-detail-section">
                 <div class="order-step product-detail">
                     <h3>1. Product Detail</h3>
@@ -127,24 +131,24 @@ $stmt->close();
                     <p class="step-note">Follow the steps below to place your order.</p>
                     <div class="details-container">
                         <form class="product-options-row">
-                            <div class="form-group" style="grid-column: 1;">
+                            <div class="form-group grid-col-1">
                                 <label for="product-name">Product Name</label>
                                 <div class="product-static-box auto-width-box">
                                     <?php echo htmlspecialchars($productName); ?>
                                 </div>
                             </div>
-                            <div class="form-group" style="grid-column: 2;">
+                            <div class="form-group grid-col-2">
                                 <label for="size">Size</label>
                                 <div class="custom-dropdown" id="sizeDropdown">
-                                    <button type="button" class="dropdown-toggle" onclick="toggleSizeDropdown()" style="width:170px;">12oz</button>
+                                    <button type="button" class="dropdown-toggle" id="sizeDropdownToggle">12oz</button>
                                     <ul class="dropdown-menu">
-                                        <li onclick="selectSize(this)">12oz</li>
-                                        <li onclick="selectSize(this)">15oz</li>
+                                        <li class="size-option">12oz</li>
+                                        <li class="size-option">15oz</li>
                                     </ul>
                                     <input type="hidden" name="size" id="size" value="12oz" />
                                 </div>
                             </div>
-                            <div class="form-group" style="grid-column: 1;">
+                            <div class="form-group grid-col-1">
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
                                     <button type="button" onclick="adjustQuantity(-1)">−</button>
@@ -152,7 +156,7 @@ $stmt->close();
                                     <button type="button" onclick="adjustQuantity(1)">+</button>
                                 </div>
                             </div>
-                            <div class="form-group price-group" style="grid-column: 2;">
+                            <div class="form-group price-group grid-col-2">
                                 <label for="product-price">Price</label>
                                 <div class="product-static-box price-box">
                                     <span class="peso-sign">₱</span>
@@ -169,11 +173,11 @@ $stmt->close();
                     Choose how you'd like to personalize your order. You can upload your own artwork or use our customization tools to create something unique.
                 </p>
                 <div class="design-buttons">
-                    <button type="button" class="design-btn" onclick="selectDesign('upload')">
+                    <button type="button" class="design-btn" id="uploadDesignBtn">
                         Upload Your Design
                     </button>
-                    <a href="sim.html" class="design-btn" style="text-align:center;display:inline-block;">Customize Design</a>
-                    <button type="button" class="design-btn" onclick="selectDesign('request')">
+                    <a href="sim.html" class="design-btn">Customize Design</a>
+                    <button type="button" class="design-btn" id="requestDesignBtn">
                         Request Design
                     </button>
                 </div>
@@ -183,7 +187,7 @@ $stmt->close();
                 <input type="hidden" name="design-option" id="design-option" value="" />
             </section>
             <div class="action-buttons">
-                <form action="place_order.php" method="POST" id="orderForm" style="margin-top:24px;display:inline-block;">
+                <form action="place_order.php" method="POST" id="orderForm" class="order-form">
                     <input type="hidden" name="product_id" value="<?php echo $productId; ?>" />
                     <input type="hidden" name="size" id="form_size" value="12oz" />
                     <input type="hidden" name="color" id="form_color" value="" />
@@ -195,7 +199,7 @@ $stmt->close();
                     <input type="hidden" name="DeliveryStatus" value="Not Shipped" />
                     <button type="submit" class="buy-btn">Buy Now</button>
                 </form>
-                <form action="add_to_cart.php" method="POST" id="cartForm" style="display:inline-block;margin-left:16px;" onsubmit="return false;">
+                <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
                     <input type="hidden" name="product_id" value="<?php echo $productId; ?>" />
                     <input type="hidden" name="size" id="cart_size" value="12oz" />
                     <input type="hidden" name="color" id="cart_color" value="" />
@@ -245,14 +249,14 @@ $stmt->close();
     <?php include 'login.php'; ?>
 
             <!-- Request Design Modal -->
-            <div id="designModal" class="custom-modal" style="display:none;">
+            <div id="designModal" class="custom-modal" hidden>
                 <div class="modal-content">
                     <div class="modal-header">
                         <span class="modal-title">Request a Design</span>
-                        <button onclick="closeModal()" class="modal-close-btn">&times;</button>
+                        <button type="button" class="modal-close-btn" id="closeDesignModalBtn">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <form onsubmit="submitDesign();return false;">
+                        <form id="requestDesignForm">
                             <label for="requestDetails">Describe your design:</label>
                             <textarea id="requestDetails" rows="4" class="modal-textarea"></textarea>
                             <div class="modal-actions">
@@ -264,14 +268,14 @@ $stmt->close();
             </div>
 
             <!-- Upload Design Modal -->
-            <div id="uploadModal" class="custom-modal" style="display:none;">
+            <div id="uploadModal" class="custom-modal" hidden>
                 <div class="modal-content">
                     <div class="modal-header">
                         <span class="modal-title">Upload Your Design</span>
-                        <button onclick="closeUploadModal()" class="modal-close-btn">&times;</button>
+                        <button type="button" class="modal-close-btn" id="closeUploadModalBtn">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <form onsubmit="submitUpload();return false;">
+                        <form id="uploadDesignForm">
                             <div class="file-label-wrapper">
                                 <label for="uploadFile" class="file-label">
                                     <span class="file-label-text">Choose file</span>

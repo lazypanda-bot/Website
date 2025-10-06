@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="login.css" />
 </head>
 <body>
-  <!-- Navbar/Header Start -->
   <section id="header">
     <div class="left-nav">
       <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
@@ -45,11 +44,10 @@
       <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
     </div>
   </section>
-  <!-- Navbar/Header End -->
 
   <main class="sim-viewer-container">
     <div class="back-container">
-      <button id="sim-back-btn" class="back-btn"><i class="fa-solid fa-arrow-left icon-left"></i>Back</button>
+        <button onclick="history.back()" class="back-btn">← Back</button>
     </div>
   <h2 class="sim-title">Customize</h2>
     <div class="sim-viewer-layout">
@@ -69,7 +67,6 @@
     </div>
   </main>
 
-  <!-- Footer Start -->
   <footer id="footer">
     <div class="footer-container">
       <div class="footer-column">
@@ -105,7 +102,6 @@
       </div>
     </div>
   </footer>
-  <!-- Footer End -->
 
   <div id="login-container"></div>
 
@@ -117,17 +113,5 @@
   <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
   <script src="login.js"></script>
   <script src="sim.js"></script>
-  <script>
-    // Move back button logic to external JS or here if not present in sim.js
-    document.addEventListener('DOMContentLoaded', function() {
-      var backBtn = document.getElementById('sim-back-btn');
-      if (backBtn) {
-        backBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          history.back();
-        });
-      }
-    });
-  </script>
 </body>
 </html>
