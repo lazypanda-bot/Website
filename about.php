@@ -24,7 +24,7 @@
 <script src="login.js?v=<?= time() ?>"></script>
 
 </head>
-<body>
+<body class="about-page">
     <section id="header">
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>

@@ -86,6 +86,8 @@ window.addEventListener('DOMContentLoaded', () => {
           if(wrap) wrap.remove();
           cell.classList.add('completed-readonly');
         }
+        // Auto-refresh page shortly after any successful status change for real-time sync
+        setTimeout(()=>{ window.location.reload(); }, 700);
       } else {
         alert(d.message||'Update failed');
       }

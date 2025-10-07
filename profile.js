@@ -220,4 +220,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Passive auto-refresh when user returns to tab (if data might be stale >30s)
+    let lastVisibilityTs = Date.now();
+    document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible') {
+            const now = Date.now();
+            if(now - lastVisibilityTs > 30000) { // >30s away
+                window.location.reload();
+            }
+        } else {
+            lastVisibilityTs = Date.now();
+        }
+    });
 });

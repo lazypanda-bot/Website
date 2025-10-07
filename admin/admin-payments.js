@@ -80,6 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
       sel.className = 'payment-status-select ' + statusClass(status);
       sel.value = status;
       // TODO: Persist via payments_api.php (add new action) once backend supports it.
+      setTimeout(()=>{ window.location.reload(); }, 600);
     }, 400);
   }
 

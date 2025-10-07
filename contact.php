@@ -7,7 +7,8 @@
   <title>Printing Website</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="navbar-footer.css" rel="stylesheet" />
+    <link href="navbar-footer.css" rel="stylesheet" />
+    <link href="style.css" rel="stylesheet" />
   <link rel="stylesheet" href="contact.css">
   <link href="login.css" rel="stylesheet" />
   <link rel="stylesheet" href="message.css">
@@ -23,7 +24,7 @@
 <script src="login.js?v=<?= time() ?>"></script>
 
 </head>
-<body>
+<body class="contact-page">
     <section id="header">
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
