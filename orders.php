@@ -119,26 +119,7 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
     </div>
     <p style="margin-top:24px;"><a href="products.php">Continue Shopping</a></p>
     </div>
-    <style>
-        body { font-family:'Poppins',sans-serif; background:linear-gradient(140deg,#fcfcfc 0%, #fafafa 45%, #f6f6f6 100%); margin:0; padding:40px 0 60px; }
-        h2 { margin:0 0 24px; font-size:2rem; font-weight:600; color:#752525; letter-spacing:.6px; }
-        .orders-page-container { max-width:1400px; width:95%; margin:0 auto; background:rgba(255,255,255,.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:46px 54px 54px; border-radius:34px; box-shadow:0 25px 55px -18px rgba(117,37,37,.25),0 8px 22px -6px rgba(0,0,0,.12); position:relative; overflow:hidden; }
-        .orders-page-container:before, .orders-page-container:after { content:""; position:absolute; border-radius:50%; filter:blur(28px); opacity:.35; pointer-events:none; }
-        .orders-page-container:before { width:200px; height:200px; top:-80px; right:-80px; background:radial-gradient(circle at center,rgba(201,6,6,.25),transparent 70%); }
-        .orders-page-container:after { width:240px; height:240px; bottom:-110px; left:-110px; background:radial-gradient(circle at center,rgba(154,65,65,.25),transparent 70%); }
-        .orders-table-wrapper { overflow:auto; border:1px solid rgba(255,255,255,.7); border-radius:22px; background:linear-gradient(145deg,rgba(255,255,255,.85),rgba(255,255,255,.6)); box-shadow:0 10px 28px -10px rgba(117,37,37,.28),0 4px 12px -4px rgba(0,0,0,.12); }
-        table.orders-table-class { border:none; font-size:.85rem; min-width:800px; }
-        table.orders-table-class th { background:#752525; color:#fff; font-weight:600; font-size:.7rem; letter-spacing:.7px; text-transform:uppercase; padding:14px 16px; position:sticky; top:0; }
-        table.orders-table-class td { padding:12px 16px; background:rgba(255,255,255,.75); border-bottom:1px solid #e9dada; }
-        table.orders-table-class tr:nth-child(even) td { background:rgba(0,0,0,0.03); }
-        table.orders-table-class tr:hover td { background:rgba(201,6,6,0.08); }
-        a { color:#7b1e1e; font-weight:600; text-decoration:none; position:relative; }
-        a:after { content:""; position:absolute; left:0; bottom:-2px; height:2px; width:0; background:#c90606; transition:width .35s ease; }
-        a:hover:after { width:100%; }
-        @media (max-width:1100px){ .orders-page-container { padding:40px 40px 48px; } }
-        @media (max-width:840px){ .orders-page-container { padding:34px 30px 44px; } table.orders-table-class { font-size:.78rem; } }
-    @media (max-width:640px){ .orders-page-container { padding:30px 22px 40px; border-radius:28px; } h2 { font-size:1.6rem; } table.orders-table-class { min-width:600px; } .order-lines li { grid-template-columns: minmax(140px,190px) repeat(4,auto); } }
-    </style>
+
 </body>
 </html>
 <?php

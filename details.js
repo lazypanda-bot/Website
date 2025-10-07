@@ -188,6 +188,73 @@ function submitUpload() {
 
 // drag & drop setup
 document.addEventListener('DOMContentLoaded', function() {
+  // Back button
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'products.php';
+      }
+    });
+  }
+
+  // Thumbnails
+  document.querySelectorAll('.thumbnail[data-action="change-image"]').forEach(img => {
+    img.addEventListener('click', function() { changeImage(img); });
+  });
+  const addThumbBtn = document.getElementById('add-thumbnail-btn');
+  if (addThumbBtn) addThumbBtn.addEventListener('click', addThumbnail);
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const tabId = btn.getAttribute('data-tab');
+      showTab(tabId, btn);
+    });
+  });
+
+  // Dropdowns
+  const productDropdownToggle = document.getElementById('productDropdownToggle');
+  if (productDropdownToggle) productDropdownToggle.addEventListener('click', toggleDropdown);
+  document.querySelectorAll('#productDropdown .dropdown-menu li[data-action="select-option"]').forEach(li => {
+    li.addEventListener('click', function() { selectOption(li); });
+  });
+  const sizeDropdownToggle = document.getElementById('sizeDropdownToggle');
+  if (sizeDropdownToggle) sizeDropdownToggle.addEventListener('click', toggleSizeDropdown);
+  document.querySelectorAll('#sizeDropdown .dropdown-menu li[data-action="select-size"]').forEach(li => {
+    li.addEventListener('click', function() { selectSize(li); });
+  });
+
+  // Quantity
+  const qtyMinus = document.getElementById('qtyMinus');
+  const qtyPlus = document.getElementById('qtyPlus');
+  if (qtyMinus) qtyMinus.addEventListener('click', function() { adjustQuantity(-1); });
+  if (qtyPlus) qtyPlus.addEventListener('click', function() { adjustQuantity(1); });
+
+  // Design option buttons
+  const uploadDesignBtn = document.getElementById('uploadDesignBtn');
+  if (uploadDesignBtn) uploadDesignBtn.addEventListener('click', function() { selectDesign('upload'); });
+  const requestDesignBtn = document.getElementById('requestDesignBtn');
+  if (requestDesignBtn) requestDesignBtn.addEventListener('click', function() { selectDesign('request'); });
+
+  // Modal actions
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+  const submitDesignBtn = document.getElementById('submitDesignBtn');
+  if (submitDesignBtn) submitDesignBtn.addEventListener('click', submitDesign);
+  const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
+  if (closeUploadModalBtn) closeUploadModalBtn.addEventListener('click', closeUploadModal);
+  const submitUploadBtn = document.getElementById('submitUploadBtn');
+  if (submitUploadBtn) submitUploadBtn.addEventListener('click', submitUpload);
+
+  // Cart notification (no inline style)
+  const cartNotif = document.getElementById('cart-notification');
+  if (cartNotif) cartNotif.style.display = 'none';
+
+  // Drag & drop setup
   const dropZone = document.getElementById('dropZone');
   if (dropZone) {
     dropZone.addEventListener('dragover', (e) => {
@@ -207,15 +274,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Customize button
   const selectedProduct = localStorage.getItem('selectedProduct');
   const customizeBtn = document.getElementById('customizeBtn');
   if (customizeBtn) {
     customizeBtn.setAttribute('data-product', selectedProduct);
   }
 
-});
+  // Add to Cart (AJAX) handler (already present below, keep as is)
 
-function openViewerModal() {
+  // Ensure initial active tab is visible
+  const firstActive = document.querySelector('.tab-btn.active');
+  if (firstActive) {
+    const target = firstActive.getAttribute('data-tab');
+    const tabEl = document.getElementById(target);
+    if (tabEl) { tabEl.hidden = false; tabEl.style.display = 'block'; }
+  }
+});
   const modal = document.getElementById('viewerModal');
   if (modal) {
     modal.style.display = 'flex';

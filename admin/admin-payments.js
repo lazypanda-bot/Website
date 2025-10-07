@@ -12,8 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
-  function orderBadge(status){ return `<span class="badge-status st-${escapeHtml(status)}">${escapeHtml(status)}</span>`; }
-  // Payment badge removed; styling applied directly to select
+  // Order status badge removed; only payment status select retained
 
   function fetchPayments(){
     fetch('payments_api.php?action=list').then(r=>r.json()).then(d=>{
@@ -23,23 +22,27 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function render(list){
     tbody.innerHTML='';
-    if(!list || list.length===0){ tbody.innerHTML='<tr><td colspan="9" style="padding:25px;text-align:center;color:#555;">No payment records</td></tr>'; return; }
+    if(!list || list.length===0){ tbody.innerHTML='<tr><td colspan="8" style="padding:25px;text-align:center;color:#555;">No payment records</td></tr>'; return; }
     list.forEach(p=>{
       const tr = document.createElement('tr');
-      const paymentStatus = derivePaymentStatus(p);
+  // Use payment_status and payment_method from API if present
+  const paymentStatus = p.payment_status || derivePaymentStatus(p);
+      // Calculate balance
+      const total = Number(p.TotalAmount)||0;
+      const paid = Number(p.AmountPaid)||0;
+      const balance = total - paid;
       tr.innerHTML=`
         <td>${p.order_id}</td>
         <td>${escapeHtml(p.customer_name||'')}</td>
-        <td>${escapeHtml(p.phone||'')}</td>
-        <td>${escapeHtml(p.address||'')}</td>
-        <td>${escapeHtml(p.product_name||'')}</td>
-        <td>${p.quantity||''}</td>
-        <td>${orderBadge(p.OrderStatus||'Pending')}</td>
+        <td>${escapeHtml(p.payment_date||'')}</td>
+        <td>₱${total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td>₱${paid.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td>₱${balance.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td>${escapeHtml(p.payment_method||'')}</td>
         <td class="payment-cell" data-id="${p.order_id}">
           ${buildPaymentSelect(paymentStatus)}
           <div class="saving-text" style="display:none;">Saving...</div>
-        </td>
-        <td>₱${Number(p.TotalAmount).toFixed(2)}</td>`;
+        </td>`;
       tbody.appendChild(tr);
     });
   }

@@ -218,9 +218,11 @@ if ($isMulti) {
 
 // Build redirect with query params
 if ($isMulti) {
-    $redirect = 'profile.php?order=1&multi=1&count=' . count($multiItems) . '#ordersPanel';
+    $_SESSION['flash_profile_order_success'] = [ 'count' => count($multiItems) ];
+    $redirect = 'profile.php#ordersPanel';
 } else {
-    $redirect = 'profile.php?order=1&pid=' . $legacyProdId . '&qty=' . $legacyQty . '&name=' . rawurlencode($primaryName) . '#ordersPanel';
+    $_SESSION['flash_profile_order_success'] = [ 'name' => $primaryName, 'qty' => $legacyQty ];
+    $redirect = 'profile.php#ordersPanel';
 }
 qlog('SUCCESS order_id='.$orderId.' redirect='.$redirect.' items=' . ($isMulti?count($multiItems):1) . ' partial='.$isPartial);
 respond([

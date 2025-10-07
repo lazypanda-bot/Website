@@ -58,7 +58,11 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("iissssss", $user_id, $isPartialPayment, $TotalAmount, $OrderStatus, $DeliveryAddress, $DeliveryStatus, $created_at, $phone_number);
 
 if ($stmt->execute()) {
-    echo "<script>alert('Order placed successfully!'); window.location.href='product-details.php';</script>";
+    // Set a flash flag so we can show a one-time message on the destination page
+    $_SESSION['flash_order_success'] = true;
+    // Prefer server redirect (avoids duplicate alert on refresh)
+    header('Location: product-details.php');
+    exit;
 } else {
     echo "Error: " . $stmt->error;
 }

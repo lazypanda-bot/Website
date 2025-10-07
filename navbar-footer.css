@@ -272,12 +272,11 @@ body {
 }
 #footer {
     background-color: #ecebeb;
-    padding: 0 20px;
+    padding: 6px 18px 10px; /* reduced top & bottom padding */
     font-size: 10px;
     color: #333;
-    /* Allow dynamic content height instead of fixed */
     height: auto;
-    min-height: 140px; /* safety baseline */
+    min-height: 110px; /* smaller baseline */
     display: block;
 }
 .footer-container {
@@ -421,7 +420,7 @@ body {
         display: none;
     }
     #footer {
-        padding: 20px;
+        padding: 10px 16px 12px; /* tighten on medium screens */
         font-size: 9px;
         height: auto;
     }
@@ -537,7 +536,7 @@ body {
         transform: scale(1.1);
     }
     #footer {
-        padding: 5px 10px;
+        padding: 4px 8px 8px; /* ultra compact mobile */
         font-size: 5px;
         height: auto;
         width: 100%;

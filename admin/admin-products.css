@@ -1,3 +1,24 @@
+/* Modal and Form Styles moved from admin-products.php */
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:2000; }
+.modal-content { background:#fff; padding:20px 24px; border-radius:12px; width:420px; max-height:90vh; overflow:auto; box-shadow:0 10px 30px rgba(0,0,0,.25); animation:pop .25s ease; }
+@keyframes pop { from{ transform:translateY(10px); opacity:0;} to {transform:translateY(0); opacity:1;} }
+.modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.modal-header h2 { font-size:1.2rem; margin:0; color:#752525; }
+.close-modal { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#752525; }
+.form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.form-row label { font-size:.85rem; font-weight:600; color:#752525; }
+.form-row input[type=text], .form-row input[type=number], .form-row textarea { padding:8px 10px; font-size:.9rem; border:1px solid #ccc; border-radius:8px; resize:vertical; font-family:inherit; }
+.form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
+.action-icon-btn { background:none; border:none; cursor:pointer; font-size:1.1rem; margin-right:6px; }
+.action-icon-btn.edit { color:#2e7d32; }
+.action-icon-btn.delete { color:#c62828; }
+.badge { display:inline-block; background:#752525; color:#fff; padding:2px 8px; border-radius:20px; font-size:.7rem; margin-left:6px; }
+.service-price { font-size:.75rem; color:#555; }
+.empty-row { text-align:center; padding:30px 10px; font-size:.9rem; color:#555; }
+#servicesTbody tr td { border-top:1px solid #f0e6e6; padding:6px 10px; vertical-align:middle; }
+#servicesTbody tr:first-child td { border-top:none; }
+.svc-del { background:none; border:none; cursor:pointer; color:#c62828; font-size:.9rem; }
+.svc-del:hover { color:#8e1d1d; }
 body {
     margin: 0;
     padding: 0;

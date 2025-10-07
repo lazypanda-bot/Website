@@ -2,40 +2,102 @@
 // Start session and load DB for dynamic products
 session_start();
 require_once 'database.php';
-// Fetch products grouped by service_type (if available) else uncategorized
+
+// --- Search Handling ---
+$searchTerm = isset($_GET['q']) ? trim($_GET['q']) : '';
+$isSearching = ($searchTerm !== '');
+
+// Fetch products grouped by service_type (filtered if searching)
 $productsByCategory = [];
 $queryError = null;
 $servicesList = [];
+$totalMatches = 0;
 if ($conn && !$conn->connect_error) {
-    $sqlProducts = "SELECT product_id, product_name, price, service_type, images, created_at FROM products ORDER BY created_at DESC";
-    $q = $conn->query($sqlProducts);
-    if ($q instanceof mysqli_result) {
-        while ($row = $q->fetch_assoc()) {
-            $cat = trim($row['service_type'] ?? '');
-            if ($cat === '') $cat = 'Uncategorized';
-            if (!isset($productsByCategory[$cat])) { $productsByCategory[$cat] = []; }
-            $productsByCategory[$cat][] = $row;
-        }
-        $q->free();
-    } else {
-        $queryError = $conn->error; // capture for debug output
-    }
-
-    // Fetch services table (if exists) so categories show even without products
-    if ($srv = $conn->query("SHOW TABLES LIKE 'services'")) {
-        if ($srv->num_rows > 0) {
-            if ($rs = $conn->query("SELECT name FROM services ORDER BY name ASC")) {
-                while ($srow = $rs->fetch_assoc()) {
-                    $sname = trim($srow['name']);
-                    if ($sname !== '' && !isset($productsByCategory[$sname])) {
-                        $productsByCategory[$sname] = []; // empty bucket (no products yet)
+    if ($isSearching) {
+        // Prepared statement for search to avoid injection & allow partial matching
+        $sqlProducts = "SELECT product_id, product_name, price, service_type, images, created_at
+                        FROM products
+                        WHERE product_name LIKE ? OR service_type LIKE ?
+                        ORDER BY created_at DESC";
+        if ($stmt = $conn->prepare($sqlProducts)) {
+            $like = '%' . $searchTerm . '%';
+            $stmt->bind_param('ss', $like, $like);
+            if ($stmt->execute()) {
+                if ($res = $stmt->get_result()) {
+                    while ($row = $res->fetch_assoc()) {
+                        $cat = trim($row['service_type'] ?? '');
+                        if ($cat === '') $cat = 'Uncategorized';
+                        if (!isset($productsByCategory[$cat])) { $productsByCategory[$cat] = []; }
+                        $productsByCategory[$cat][] = $row;
+                        $totalMatches++;
                     }
-                    if ($sname !== '') { $servicesList[] = $sname; }
+                    $res->free();
                 }
-                $rs->free();
+            } else {
+                $queryError = $stmt->error;
             }
+            $stmt->close();
+        } else {
+            $queryError = $conn->error;
         }
-        $srv->free();
+        // Also search services table names so users can discover services without products yet
+        if ($srv = $conn->query("SHOW TABLES LIKE 'services'")) {
+            if ($srv->num_rows > 0) {
+                if ($stmtS = $conn->prepare("SELECT name FROM services WHERE name LIKE ? ORDER BY name ASC")) {
+                    $like = '%' . $searchTerm . '%';
+                    $stmtS->bind_param('s', $like);
+                    if ($stmtS->execute()) {
+                        if ($resS = $stmtS->get_result()) {
+                            while ($srow = $resS->fetch_assoc()) {
+                                $sname = trim($srow['name']);
+                                if ($sname !== '') {
+                                    if (!isset($productsByCategory[$sname])) {
+                                        $productsByCategory[$sname] = []; // empty bucket (no products yet)
+                                    }
+                                    $servicesList[] = $sname;
+                                }
+                            }
+                            $resS->free();
+                        }
+                    }
+                    $stmtS->close();
+                }
+            }
+            $srv->free();
+        }
+    } else {
+        // Non-search: load all products & ensure service categories appear
+        $sqlProducts = "SELECT product_id, product_name, price, service_type, images, created_at FROM products ORDER BY created_at DESC";
+        $q = $conn->query($sqlProducts);
+        if ($q instanceof mysqli_result) {
+            while ($row = $q->fetch_assoc()) {
+                $cat = trim($row['service_type'] ?? '');
+                if ($cat === '') $cat = 'Uncategorized';
+                if (!isset($productsByCategory[$cat])) { $productsByCategory[$cat] = []; }
+                $productsByCategory[$cat][] = $row;
+                $totalMatches++;
+            }
+            $q->free();
+        } else {
+            $queryError = $conn->error; // capture for debug output
+        }
+
+        // Fetch services table (if exists) so categories show even without products
+        if ($srv = $conn->query("SHOW TABLES LIKE 'services'")) {
+            if ($srv->num_rows > 0) {
+                if ($rs = $conn->query("SELECT name FROM services ORDER BY name ASC")) {
+                    while ($srow = $rs->fetch_assoc()) {
+                        $sname = trim($srow['name']);
+                        if ($sname !== '' && !isset($productsByCategory[$sname])) {
+                            $productsByCategory[$sname] = []; // empty bucket (no products yet)
+                        }
+                        if ($sname !== '') { $servicesList[] = $sname; }
+                    }
+                    $rs->free();
+                }
+            }
+            $srv->free();
+        }
     }
 } else {
     $queryError = 'DB connection failed.';
@@ -91,10 +153,10 @@ function firstImage($imagesField) {
             </ul>
         </div>
         <div class="right-nav">
-            <form class="search-bar">
-                <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
-                <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-            </form>
+                        <form class="search-bar" id="productSearchForm">
+                            <input type="search" placeholder="Search" name="searchbar" class="search-input hidden" value="<?= htmlspecialchars($searchTerm) ?>">
+                            <button type="button" class="search-btn" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </form>
             <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
             <?php include_once 'nav_avatar.php'; ?>
             <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
@@ -118,7 +180,7 @@ function firstImage($imagesField) {
     <div class="admin-wrapper">
         <nav class="sidebar">
             <div class="back-container">
-                <button onclick="history.back()" class="back-btn">← Back</button>
+                <button type="button" class="back-btn" id="backBtn">← Back</button>
             </div>
             <ul class="nav-links" id="dynamicCategoryNav">
                 <?php
@@ -129,7 +191,7 @@ function firstImage($imagesField) {
                 foreach ($preferredOrder as $p) { if (in_array($p, $allCategories)) $ordered[] = $p; }
                 foreach ($allCategories as $c) { if (!in_array($c, $ordered)) $ordered[] = $c; }
                 if (empty($ordered)) {
-                    echo '<li><span style="font-size:.8rem;color:#666;">No categories</span></li>';
+                    echo '<li><span class="no-categories-msg">No categories</span></li>';
                 } else {
                     foreach ($ordered as $cat) {
                         $anchor = strtolower(preg_replace('/\s+/', '-', $cat));
@@ -139,7 +201,7 @@ function firstImage($imagesField) {
                 ?>
             </ul>
             <?php if (isset($_GET['debug_products'])): ?>
-                <div style="padding:10px; font-size:11px; line-height:1.3; background:#fff8f5; border:1px solid #f1d0c2; margin:10px; border-radius:6px;">
+                <div class="debug-products-box">
                     <strong>Debug Products</strong><br>
                     Categories: <?= count($productsByCategory) ?><br>
                     Rows: <?= array_sum(array_map('count',$productsByCategory)) ?><br>
@@ -149,28 +211,59 @@ function firstImage($imagesField) {
         </nav>
         <div class="main-panel">
             <?php
+            // Prepare ordering of categories (existing logic reused)
+            $preferredOrder = ['Tarpaulin','Apparel Printing','Personalized Printing','Stickers','Signages','Tailoring Services','Uncategorized'];
+            $allCategories = array_keys($productsByCategory);
+            $ordered = [];
+            foreach ($preferredOrder as $p) { if (in_array($p, $allCategories)) $ordered[] = $p; }
+            foreach ($allCategories as $c) { if (!in_array($c, $ordered)) $ordered[] = $c; }
+
+            $searchTermEsc = htmlspecialchars($searchTerm);
+
+            if ($isSearching) {
+                echo '<div class="search-results-bar">';
+                if ($totalMatches > 0 || !empty($productsByCategory)) {
+                    $countProducts = array_sum(array_map('count', $productsByCategory));
+                    echo '<span>Search results for <strong>"' . $searchTermEsc . '"</strong>: ' . $countProducts . ' product' . ($countProducts===1?'':'s') . '</span>';
+                } else {
+                    echo '<span>Search results for <strong>"' . $searchTermEsc . '"</strong>:</span>';
+                }
+                if ($queryError) {
+                    echo '<span class="query-error-msg">(Query error: ' . htmlspecialchars($queryError) . ')</span>';
+                }
+                echo '<a href="products.php" class="clear-search-link" aria-label="Clear search">'
+                    . '<i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>'
+                    . '</a>';
+                echo '</div>';
+            }
+
             if (empty($productsByCategory)) {
-                echo '<div style="padding:20px;font-weight:600;">No products found. Please add products in the database.</div>';
+                echo '<div class="no-products-msg">' . ($isSearching ? 'No results found.' : 'No products found. Please add products in the database.') . '</div>';
             } else {
-                foreach ($ordered as $cat) { // $ordered defined earlier in sidebar build
+                foreach ($ordered as $cat) {
                     $sectionId = strtolower(preg_replace('/\s+/', '-', $cat));
                     echo '<section class="content-box" id="' . htmlspecialchars($sectionId) . '">';
                     echo '<h3>' . htmlspecialchars($cat) . '</h3>';
-                    echo '<div class="service-grid">';
-                    foreach ($productsByCategory[$cat] as $p) {
-                        $img = htmlspecialchars(firstImage($p['images'] ?? ''));
-                        $nameEsc = htmlspecialchars($p['product_name']);
-                        $priceEsc = htmlspecialchars($p['price']);
-                        $id = (int)$p['product_id'];
-                        echo '<div class="service-card">';
-                        echo '<a href="product-details.php?id=' . $id . '">';
-                        echo '<img src="' . $img . '" alt="' . $nameEsc . '" class="service-img">';
-                        echo '</a>';
-                        echo '<h4>' . $nameEsc . '</h4>';
-                        echo '<div class="service-price">₱' . $priceEsc . '</div>';
+                    if (empty($productsByCategory[$cat])) {
+                        echo '<div class="no-service-products-msg">No products yet for this service.</div>';
+                    } else {
+                        echo '<div class="service-grid">';
+                        foreach ($productsByCategory[$cat] as $p) {
+                            $img = htmlspecialchars(firstImage($p['images'] ?? ''));
+                            $nameEsc = htmlspecialchars($p['product_name']);
+                            // No highlighting while searching per request
+                            $priceEsc = htmlspecialchars($p['price']);
+                            $id = (int)$p['product_id'];
+                            echo '<div class="service-card">';
+                            echo '<a href="product-details.php?id=' . $id . '">';
+                            echo '<img src="' . $img . '" alt="' . strip_tags($nameEsc) . '" class="service-img">';
+                            echo '</a>';
+                            echo '<h4>' . $nameEsc . '</h4>';
+                            echo '<div class="service-price">₱' . $priceEsc . '</div>';
+                            echo '</div>';
+                        }
                         echo '</div>';
                     }
-                    echo '</div>';
                     echo '</section>';
                 }
             }

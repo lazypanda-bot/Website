@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // Attach #order-now-btn click event (moved from home.php inline script)
+  var orderBtn = document.getElementById('order-now-btn');
+  if (orderBtn) {
+    orderBtn.addEventListener('click', function() {
+      window.location.href = 'products.php';
+    });
+  }
+
   const toggleBtn = document.getElementById('menu-toggle');
   const navbar = document.getElementById('navbar');
   const closeBtn = document.getElementById('close-menu');
@@ -29,17 +37,52 @@ links.forEach(link => {
 
 const searchBtn = document.querySelector('.search-btn');
 const searchInput = document.querySelector('.search-input');
-searchBtn.addEventListener('click', () => {
-  searchInput.classList.toggle('hidden');
-  searchInput.classList.toggle('visible');
-  searchInput.focus();
-});
-searchInput.addEventListener('blur', () => {
-  if (searchInput.value.trim() === '') {
-    searchInput.classList.remove('visible');
-    searchInput.classList.add('hidden');
+
+function performSearch() {
+  if (!searchInput) return;
+  const val = searchInput.value.trim();
+  if (val === '') return;
+  window.location.href = 'products.php?q=' + encodeURIComponent(val);
+}
+
+if (searchBtn && searchInput) {
+  // Preload existing query if on products page with ?q=
+  const params = new URLSearchParams(window.location.search);
+  const existingQ = params.get('q');
+  if (existingQ) {
+    searchInput.value = existingQ;
+    searchInput.classList.remove('hidden');
+    searchInput.classList.add('visible');
   }
-});
+
+  searchBtn.addEventListener('click', () => {
+    // If there is text, treat click as submit regardless of visibility state
+    if (searchInput.value.trim() !== '') {
+      performSearch();
+      return;
+    }
+    // No text yet → toggle visibility & focus
+    searchInput.classList.toggle('hidden');
+    searchInput.classList.toggle('visible');
+    searchInput.focus();
+  });
+
+  // Submit on Enter key
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performSearch();
+    }
+  });
+
+  // Hide if empty on blur
+  searchInput.addEventListener('blur', () => {
+    if (searchInput.value.trim() === '') {
+      searchInput.classList.remove('visible');
+      searchInput.classList.add('hidden');
+    }
+  });
+}
 
 // outer carousel
 const whySwiper = new Swiper('.why-carousel', {

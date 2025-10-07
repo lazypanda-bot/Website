@@ -10,40 +10,56 @@ $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 
 // List orders with joined product & customer
 if ($action === 'list') {
-    $sql = "SELECT o.order_id, o.product_id, o.customer_id, o.size, o.quantity, o.OrderStatus, o.TotalAmount, o.isPartialPayment, o.created_at, 
-                   c.".ACCOUNT_NAME_COL." AS customer_name, c.".ACCOUNT_PHONE_COL." AS phone, c.".ACCOUNT_ADDRESS_COL." AS address,
-                   p.product_name, p.price
-            FROM orders o
-            LEFT JOIN ".ACCOUNT_TABLE." c ON c.".ACCOUNT_ID_COL." = o.customer_id
-            LEFT JOIN products p ON p.product_id = o.product_id
-            ORDER BY o.created_at DESC";
+    $hasCompletedAt = false;
+    if($chk = $conn->query("SHOW COLUMNS FROM orders LIKE 'CompletedAt'")) { if($chk->num_rows>0) $hasCompletedAt=true; $chk->close(); }
+    $completedFrag = $hasCompletedAt ? ', o.CompletedAt' : '';
+    // AmountPaid: sum of payments for order (Paid or Partial) for display. If payments table large, consider separate endpoint / LIMIT.
+    $sql = "SELECT o.order_id, o.product_id, o.customer_id, o.size, o.quantity, o.OrderStatus, o.DeliveryStatus, o.TotalAmount, o.isPartialPayment, o.created_at".$completedFrag.
+        ", c.".ACCOUNT_NAME_COL." AS customer_name, c.".ACCOUNT_PHONE_COL." AS phone, c.".ACCOUNT_ADDRESS_COL." AS address, p.product_name, p.price,
+         (SELECT COALESCE(SUM(py.payment_amount),0) FROM payments py WHERE py.order_id = o.order_id AND py.payment_status IN ('Paid','Partial')) AS AmountPaid
+         FROM orders o
+         LEFT JOIN ".ACCOUNT_TABLE." c ON c.".ACCOUNT_ID_COL." = o.customer_id
+         LEFT JOIN products p ON p.product_id = o.product_id
+         ORDER BY o.created_at DESC";
     $rows = [];
-    if($res = $conn->query($sql)) {
-        while($r=$res->fetch_assoc()) { $rows[]=$r; }
-    }
+    $res = $conn->query($sql);
+    if(!$res){ fail('Query failed: '.$conn->error,500); }
+    while($r=$res->fetch_assoc()) { $rows[]=$r; }
+    $res->free();
     echo json_encode(['status'=>'ok','orders'=>$rows]);
     exit;
 }
 
-// Update status
+// Update order status only
 if ($action === 'update_status') {
     $id = (int)($_POST['order_id'] ?? 0);
     $status = trim($_POST['OrderStatus'] ?? '');
     if ($id<=0) fail('Invalid id');
     if ($status==='') fail('Status required');
-    if ($status === 'Delivered') {
-        // Map to DeliveryStatus column instead of OrderStatus
-        $stmt = $conn->prepare("UPDATE orders SET DeliveryStatus='Delivered' WHERE order_id=?");
-        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
-        $stmt->bind_param('i',$id);
-    } else {
-        $stmt = $conn->prepare("UPDATE orders SET OrderStatus=? WHERE order_id=?");
-        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
-        $stmt->bind_param('si',$status,$id);
-    }
+    if (strcasecmp($status,'Completed')===0) fail('Completed can only be set via delivery confirmation');
+    $stmt = $conn->prepare("UPDATE orders SET OrderStatus=? WHERE order_id=?");
+    if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+    $stmt->bind_param('si',$status,$id);
     if(!$stmt->execute()) fail('Update failed: '.$stmt->error,500);
     $stmt->close();
-    echo json_encode(['status'=>'ok','action'=>'updated']);
+    echo json_encode(['status'=>'ok','action'=>'order_status_updated']);
+    exit;
+}
+
+// Delivery status update (still allowed, independent from OrderStatus). Prevent setting Delivered if OrderStatus already Completed? We allow; customer confirmation will finalize.
+if ($action === 'update_delivery_status') {
+    $id = (int)($_POST['order_id'] ?? 0);
+    $status = trim($_POST['DeliveryStatus'] ?? '');
+    if ($id<=0) fail('Invalid id');
+    if ($status==='') fail('Delivery status required');
+    $allowed = ['Pending','Dispatched','Delivered','Failed'];
+    if(!in_array($status,$allowed,true)) fail('Invalid delivery status');
+    $stmt = $conn->prepare("UPDATE orders SET DeliveryStatus=? WHERE order_id=?");
+    if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+    $stmt->bind_param('si',$status,$id);
+    if(!$stmt->execute()) fail('Update failed: '.$stmt->error,500);
+    $stmt->close();
+    echo json_encode(['status'=>'ok','action'=>'delivery_status_updated']);
     exit;
 }
 

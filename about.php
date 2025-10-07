@@ -18,10 +18,10 @@
     session_start();
     $isAuthenticated = isset($_SESSION['user_id']);
     ?>
+
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
-<script src="login.js?v=<?= time() ?>"></script>
 
 </head>
 <body class="about-page">

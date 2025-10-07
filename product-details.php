@@ -154,6 +154,15 @@ function pd_first_image($imagesField) {
   window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
 <body>
+<?php if(!empty($_SESSION['flash_order_success'])): unset($_SESSION['flash_order_success']); ?>
+    <div class="flash-message success" style="position:fixed;top:70px;right:20px;background:#136b1d;color:#fff;padding:12px 18px;border-radius:8px;font-size:.9rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.18);z-index:9999;display:flex;align-items:center;gap:10px;">
+        <span>Order placed successfully.</span>
+        <button type="button" aria-label="Dismiss" onclick="this.parentElement.remove();" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:.75rem;">✕</button>
+    </div>
+    <script> // auto dismiss after 4s
+        setTimeout(()=>{ const fm=document.querySelector('.flash-message.success'); if(fm) fm.remove(); },4000);
+    </script>
+<?php endif; ?>
     <section id="header">
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
@@ -423,43 +432,6 @@ function pd_first_image($imagesField) {
     <script src="OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="sim.js"></script>
-        <style>
-            /* Modal base (reuse-able) */
-            .quick-order-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.55); z-index:11000; padding:30px; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
-            .quick-order-overlay[hidden] { display:none !important; }
-            .quick-order-content { width:100%; max-width:480px; background:#ffffff; border-radius:18px; box-shadow:0 10px 36px -8px rgba(0,0,0,.5),0 2px 12px rgba(0,0,0,.25); overflow:hidden; animation:qoPop .38s cubic-bezier(.16,.8,.3,1); display:flex; flex-direction:column; }
-            @keyframes qoPop { from { opacity:0; transform:translateY(18px) scale(.96);} to { opacity:1; transform:translateY(0) scale(1);} }
-            .quick-order-content .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; }
-            .quick-order-content .modal-title { font-size:1.05rem; font-weight:600; letter-spacing:.5px; }
-            .quick-order-content .modal-close-btn { background:none; border:none; font-size:1.35rem; line-height:1; cursor:pointer; padding:4px 8px; color:#333; }
-            .quick-order-content .modal-close-btn:hover { color:#b30000; }
-            .quick-order-content .modal-body { padding:4px 20px 22px; }
-            #quickOrderSummary { font-size:.85rem; line-height:1.45; margin-bottom:16px; background:#fafafa; padding:12px 14px; border:1px solid #eee; border-radius:12px; }
-            #quickOrderProfileWarn { display:none; color:#b30000; font-weight:600; margin:-4px 0 14px; font-size:.78rem; }
-            .quick-order-content .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
-            .quick-order-content .design-btn { border:none; cursor:pointer; padding:10px 18px; font-size:.8rem; font-weight:600; letter-spacing:.5px; border-radius:30px; background:#752525; color:#fff; transition:background .3s ease, transform .25s ease; }
-            .quick-order-content .design-btn:hover { background:#c90606; transform:translateY(-2px); }
-            .quick-order-content .design-btn.alt-btn { background:#666; }
-            .quick-order-content .design-btn.alt-btn:hover { background:#333; }
-            .quick-order-content .design-btn.primary-btn { background:#7c1b1b; }
-            .quick-order-content .design-btn.primary-btn:hover { background:#b91e1e; }
-            @media (max-width:560px){ .quick-order-overlay { padding:16px; } .quick-order-content { border-radius:16px; } }
-            body.modal-open { overflow:hidden; }
-        </style>
-        <script src="forproductbtns.js"></script>
-        <script>
-            // Accessibility & body scroll lock helpers
-            (function(){
-                const modal = document.getElementById('quickOrderModal');
-                if(!modal) return;
-                function openModal(){ modal.hidden=false; modal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); }
-                function closeModal(){ modal.hidden=true; modal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); }
-                // Patch existing openQuickOrderModal / closeQuickOrderModal if defined later by product JS
-                window.openQuickOrderModal = openModal;
-                window.closeQuickOrderModal = closeModal;
-                document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !modal.hidden) closeModal(); });
-                modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
-            })();
-        </script>
+
 </body>
 </html>

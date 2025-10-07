@@ -1,3 +1,14 @@
+// Quick Order Modal accessibility & body scroll lock helpers (moved from inline script in product-details.php)
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('quickOrderModal');
+  if(!modal) return;
+  function openModal(){ modal.hidden=false; modal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); }
+  function closeModal(){ modal.hidden=true; modal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); }
+  window.openQuickOrderModal = openModal;
+  window.closeQuickOrderModal = closeModal;
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !modal.hidden) closeModal(); });
+  modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+});
 document.addEventListener('DOMContentLoaded', () => {
 
   const buyNowBtn = document.querySelector('.buy-btn');

@@ -224,8 +224,8 @@
 .checkout-form .form-group input[type=radio]{display:none;}
 .checkout-form .form-group input[type=radio]:checked+label{background:#7c1b1b;color:#fff;border-color:#7c1b1b;box-shadow:0 6px 16px -6px rgba(117,37,37,.4);} 
 .checkout-form #order-summary{background:#fff;border:1px solid #e6d5d5;box-shadow:0 6px 16px -8px rgba(117,37,37,.2),0 2px 6px -4px rgba(0,0,0,.08);border-radius:20px;padding:26px 30px;font-size:1.05rem;line-height:1.45;}
-.checkout-form #order-summary .order-summary-header{display:flex;flex-direction:column;align-items:center;text-align:center;margin:-6px 0 14px;padding-bottom:14px;border-bottom:2px solid #e7d2d2;}
-.checkout-form #order-summary .order-summary-logo img{width:86px;height:86px;object-fit:cover;border-radius:14px;box-shadow:0 6px 14px -6px rgba(117,37,37,.35);margin-bottom:8px;}
+.checkout-form #order-summary .order-summary-header{display:flex;flex-direction:column;align-items:center;text-align:center;margin:-6px 0 14px;padding-bottom:20px;border-bottom:2px solid #e7d2d2;}
+.checkout-form #order-summary .order-summary-logo img{width:86px;height:86px;object-fit:cover;border-radius:50px;box-shadow:0 6px 14px -6px rgba(117,37,37,.35);margin-bottom:8px;}
 .checkout-form #order-summary .os-user-name{font-weight:700;font-size:clamp(1.2rem,1.4rem,1.45rem);letter-spacing:.75px;color:#7c1b1b;margin-bottom:6px;}
 .checkout-form #order-summary .os-user-address,.checkout-form #order-summary .os-user-phone{font-size:.9rem;opacity:.85;letter-spacing:.5px;}
 .checkout-form #order-summary .os-user-phone{margin-top:2px;}
@@ -254,3 +254,9 @@
 .profile-missing-info button{background:#7c1b1b !important;border-radius:30px;padding:4px 12px;font-size:.65rem;letter-spacing:.5px;}
 .cart-progress-bar{position:absolute;left:0;top:0;height:5px;width:0;background:linear-gradient(90deg,#c90606,#ff7d7d);border-radius:0 4px 4px 0;transition:width .6s cubic-bezier(.16,.8,.3,1);}
 body.loaded .cart-progress-bar{width:100%;}
+/* Utility classes introduced during inline cleanup */
+.is-hidden{display:none !important;}
+.mt-0{margin-top:0 !important;}
+.mt-8{margin-top:8px !important;}
+.mt-auto{margin-top:auto !important;}
+.fw-600{font-weight:600 !important;}

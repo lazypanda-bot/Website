@@ -1,9 +1,34 @@
+// Bootstrap fallback (was previously in cart-init.js) – ensures window.cartBootstrap exists
+(function(){ if(!window.cartBootstrap){ window.cartBootstrap = {}; } })();
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Merge any pre-bootstrap object (pattern originally supported an external cart-init.js; now we only keep inline script)
+  if(window.cartBootstrap){
+    Object.assign(window, window.cartBootstrap);
+  }
+
+  // Back button action (previously inline onclick)
+  document.querySelectorAll('[data-action="go-back"]').forEach(btn=>{
+    btn.addEventListener('click', e=>{ e.preventDefault(); history.back(); });
+  });
+
+  // Show checkout form when clicking checkout button (removing inline onclick / style)
+  const checkoutBtnEl = document.querySelector('.checkout-btn');
+  const checkoutFormEl = document.getElementById('checkout-form');
+  if(checkoutBtnEl && checkoutFormEl){
+    checkoutBtnEl.addEventListener('click', ()=>{
+      checkoutFormEl.classList.remove('is-hidden');
+    });
+  }
+
+  // Load animation class moved from inline script
+  window.addEventListener('load', ()=> document.body.classList.add('loaded'));
   // Profile shortcut button
   const updateProfileBtn = document.getElementById('update-profile-btn');
   if (updateProfileBtn) updateProfileBtn.addEventListener('click', () => window.location.href='profile.php');
 
-  const shippingFeeDiv       = document.getElementById('shipping-fee');
+  // Removed standalone shipping fee display; fee now shown only inside order summary box
+  const shippingFeeDiv       = null; // document.getElementById('shipping-fee');
   const cartItemsContainer   = document.getElementById('cart-items');
   const cartSummary          = document.getElementById('cart-summary');
   const checkoutBtn          = document.querySelector('.checkout-btn');
@@ -97,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(cartSummary && cartSummary.querySelector('h3')) cartSummary.querySelector('h3').textContent = `Total: ₱${subtotal.toFixed(2)}`;
     if(orderSummaryDiv) orderSummaryDiv.innerHTML = grouped.map(g=>`<div style='margin-bottom:8px;'><strong>${g.name}</strong> (${g.size}) x${g.quantity} - ₱${(parseFloat(g.price||0)*g.quantity).toFixed(2)}</div>`).join('') + `<div style='margin-top:10px;font-weight:bold;'>Subtotal: ₱${subtotal.toFixed(2)}</div>`;
     if(checkoutBtn) checkoutBtn.disabled=false;
-    if(shippingFeeDiv) shippingFeeDiv.textContent='';
+  // standalone shipping fee removed
 
     attachItemEvents();
     attachDeleteEvents();
@@ -171,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(orderSummaryDiv) orderSummaryDiv.innerHTML='';
       if(cartSummary && cartSummary.querySelector('h3')) cartSummary.querySelector('h3').textContent='Total: ₱0.00';
       if(checkoutBtn) checkoutBtn.disabled=true;
-      if(shippingFeeDiv) shippingFeeDiv.textContent='';
+  // standalone shipping fee removed
       return;
     }
     if(orderSummaryDiv) {
@@ -187,10 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateShippingFee(){
     if(!checkoutForm) return;
     const {count, subtotal, html} = getSelectedSummaryData();
-    if(count===0){ if(shippingFeeDiv) shippingFeeDiv.textContent=''; return; }
+  if(count===0){ /* standalone shipping fee removed */ return; }
     const dm = checkoutForm.querySelector('input[name="delivery_method"]:checked');
     let fee = 0; if(dm && dm.value==='standard') fee=25; // adjust if more methods later
-    if(shippingFeeDiv) shippingFeeDiv.textContent = fee?`Shipping Fee: ₱${fee}`:'';
+  // standalone shipping fee removed
     if(orderSummaryDiv){
       const info = buildUserMetaBlock();
       const meta = buildChoiceMetaLines();
@@ -210,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addr = (deliveryAddressInput?.value||'').trim();
     const phone = (deliveryPhoneInput?.value||'').trim();
     let out = '<div class="order-summary-header">';
-    out += '<div class="order-summary-logo"><img src="img/iloveprintshoppe.jpg" alt="iLovePrintShoppe" /></div>';
+  out += '<div class="order-summary-logo"><img src="img/logo.png" alt="Logo" /></div>';
     out += '<div class="order-summary-userinfo">';
     if(name) out += `<div class='os-user-name'>${escapeHtml(name)}</div>`;
     if(addr) out += `<div class='os-user-address'>${escapeHtml(addr)}</div>`;

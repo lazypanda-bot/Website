@@ -12,7 +12,7 @@
   <link href="login.css" rel="stylesheet" />
   <link rel="stylesheet" href="about.css">
   <link rel="stylesheet" href="message.css">
-  <link rel="stylesheet" href="cart.css">
+        <link rel="stylesheet" href="cart.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
 
@@ -36,6 +36,7 @@ if ($isAuthenticated && !$conn->connect_error) {
 }
 ?>
 <script>
+    // Inline bootstrap (allowed) for page-specific user data
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
     window.userAddress = <?= json_encode($userAddress) ?>;
     window.userPhone = <?= json_encode($userPhone) ?>;
@@ -68,7 +69,7 @@ if ($isAuthenticated && !$conn->connect_error) {
     </section>
 
     <div class="back-container">
-        <button onclick="history.back()" class="back-btn">← Back</button>
+    <button class="back-btn" data-action="go-back">← Back</button>
     </div>
     <div class="cart-container">
         <div class="cart-progress-bar" id="cart-progress"></div>
@@ -80,7 +81,7 @@ if ($isAuthenticated && !$conn->connect_error) {
             <h3>Total: ₱0.00</h3>
             <button class="checkout-btn" disabled onclick="document.getElementById('checkout-form').style.display='block'">Proceed to Checkout</button>
         </div>
-    <form id="checkout-form" class="checkout-form" style="display:none;" onsubmit="return false;">
+    <form id="checkout-form" class="checkout-form is-hidden" novalidate>
         <h3>Checkout</h3>
         <div id="profile-missing-info" class="profile-missing-info">
             <strong>Missing address or phone number.</strong><br>
@@ -114,11 +115,10 @@ if ($isAuthenticated && !$conn->connect_error) {
             </div>
             <div class="checkout-right-col">
                 <div class="form-group order-summary-group">
-                    <h4 style="margin-top:0;">Order Summary</h4>
+                    <h4 class="order-summary-heading mt-0">Order Summary</h4>
                     <div id="order-summary"></div>
-                    <div id="shipping-fee" style="margin-top:8px;font-weight:600;"></div>
                 </div>
-                <button type="submit" class="place-order-btn" style="margin-top:auto;">Place Order</button>
+                <button type="submit" class="place-order-btn mt-auto">Place Order</button>
             </div>
         </div>
     </form>
@@ -136,13 +136,9 @@ if ($isAuthenticated && !$conn->connect_error) {
     <div id="login-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-    <script src="app.js"></script>
-    <script src="login.js"></script>
-    <script src="message.js"></script>
-        <script src="cart.js"></script>
-        <script>
-            // trigger subtle progress bar animation once DOM ready
-            window.addEventListener('load', ()=> document.body.classList.add('loaded'));
-        </script>
+    <script src="app.js" defer></script>
+    <script src="login.js" defer></script>
+    <script src="message.js" defer></script>
+    <script src="cart.js" defer></script>
 </body>
 </html>

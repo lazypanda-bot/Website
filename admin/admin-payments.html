@@ -60,27 +60,18 @@
                         <tr>
                             <th>ID</th>
                             <th>Customer</th>
-                            <th>Contact No.</th>
-                            <th>Address</th>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th>Order Status</th>
+                            <th>Date</th>
+                            <th>Total Amount</th>
+                            <th>Amount Paid</th>
+                            <th>Balance</th>
+                            <th>Payment Method</th>
                             <th>Payment Status</th>
-                            <th>Total</th>
                         </tr>
                     </thead>
                     <tbody id="paymentsTbody"></tbody>
                 </table>
 
         <style>
-            /* Order status badge (unchanged) */
-            .badge-status { padding:2px 8px; border-radius:12px; font-size:.6rem; font-weight:600; letter-spacing:.4px; text-transform:uppercase; display:inline-block; }
-            .st-Pending { background:#ffe8c5; color:#8a5200; }
-            .st-Shipped { background:#e0dcff; color:#3c278a; }
-            .st-Delivered { background:#d4f4ff; color:#054861; }
-            .st-Completed { background:#d4ffd8; color:#136b1d; }
-            .st-Cancelled { background:#ffd4d4; color:#7d0e0e; }
-
             /* Payment status as a styled select (pill) */
             .payment-cell { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
             .payment-select-wrap { position:relative; display:inline-block; }

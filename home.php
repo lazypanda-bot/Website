@@ -278,15 +278,6 @@
         <script src="login.js"></script>
         <script src="message.js"></script>
         <script src="services.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var orderBtn = document.getElementById('order-now-btn');
-                if (orderBtn) {
-                    orderBtn.addEventListener('click', function() {
-                        window.location.href = 'products.php';
-                    });
-                }
-            });
-        </script>
+
 </body>
 </html>

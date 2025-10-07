@@ -38,4 +38,20 @@ window.addEventListener('DOMContentLoaded', () => {
     navLinks[0].classList.add('active');
     contentBoxes[0].classList.add('active');
   }
+
+  // Inline JS logic from products-inline-cleanup.js
+  // Back button
+  var backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      history.back();
+    });
+  }
+  // Prevent default search form submit
+  var searchForm = document.getElementById('productSearchForm');
+  if (searchForm) {
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+    });
+  }
 });

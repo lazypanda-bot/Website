@@ -190,23 +190,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterBar = document.querySelector('.orders-filter-bar');
     if (filterBar) {
         const buttons = filterBar.querySelectorAll('.orders-filter-btn');
-        const cards = document.querySelectorAll('.order-card[data-delivery-status]');
+        const cards = document.querySelectorAll('.order-card[data-order-status]');
         function applyFilter(filter){
             const synonymMap = {
-                shipped:['dispatched','shipped'],
-                cancelled:['failed','cancelled']
+                pending:['processing','pending'],
+                shipped:['shipped'],
+                delivered:['delivered'],
+                cancelled:['cancelled']
             };
             cards.forEach(card => {
-                const status = card.getAttribute('data-delivery-status');
+                const status = card.getAttribute('data-order-status'); // already normalized like 'completed','cancelled','shipped'
                 let show=false;
                 if(filter==='all') show=true; else if(status){
-                    if(status.indexOf(filter)!==-1) show=true; else {
-                        // check synonyms
-                        for(const key in synonymMap){
-                            if(key===filter){
-                                if(synonymMap[key].some(s=>status.indexOf(s)!==-1)) { show=true; break; }
-                            }
-                        }
+                    if(status===filter) show=true; else {
+                        const syns = synonymMap[filter];
+                        if(syns && syns.includes(status)) show=true;
                     }
                 }
                 card.style.display = show ? '' : 'none';
