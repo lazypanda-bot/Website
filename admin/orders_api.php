@@ -31,10 +31,18 @@ if ($action === 'update_status') {
     $status = trim($_POST['OrderStatus'] ?? '');
     if ($id<=0) fail('Invalid id');
     if ($status==='') fail('Status required');
-    $stmt = $conn->prepare("UPDATE orders SET OrderStatus=? WHERE order_id=?");
-    if(!$stmt) fail('Prepare failed: '.$conn->error,500);
-    $stmt->bind_param('si',$status,$id);
+    if ($status === 'Delivered') {
+        // Map to DeliveryStatus column instead of OrderStatus
+        $stmt = $conn->prepare("UPDATE orders SET DeliveryStatus='Delivered' WHERE order_id=?");
+        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+        $stmt->bind_param('i',$id);
+    } else {
+        $stmt = $conn->prepare("UPDATE orders SET OrderStatus=? WHERE order_id=?");
+        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+        $stmt->bind_param('si',$status,$id);
+    }
     if(!$stmt->execute()) fail('Update failed: '.$stmt->error,500);
+    $stmt->close();
     echo json_encode(['status'=>'ok','action'=>'updated']);
     exit;
 }

@@ -79,12 +79,14 @@ $check->close();
 
 try {
     if ($existingId) {
-        $newQty = $existingQty + $quantity;
+        // Previous behavior: cumulative addition ($existingQty + $quantity) caused user confusion (appearing as 'adding two').
+        // New behavior: treat Add to Cart as setting the desired quantity (replace mode).
+        $newQty = max(1, $quantity);
         $upd = $conn->prepare("UPDATE " . CART_TABLE . " SET " . CART_QTY_COL . "=? WHERE " . CART_PK_COL . "=?");
         if (!$upd) json_error('Failed to prepare update: ' . $conn->error, 500);
         $upd->bind_param("ii", $newQty, $existingId);
         if ($upd->execute()) {
-            echo json_encode(['status'=>'ok','action'=>'updated','quantity'=>$newQty]);
+            echo json_encode(['status'=>'ok','action'=>'replaced','quantity'=>$newQty]);
         } else {
             json_error('DB update error: ' . $upd->error, 500);
         }

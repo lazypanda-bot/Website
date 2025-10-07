@@ -1,0 +1,26 @@
+<?php
+// User confirms receipt -> set OrderStatus=Completed if delivery delivered & belongs to user
+session_start();
+header('Content-Type: application/json');
+require_once __DIR__ . '/database.php';
+if(!isset($_SESSION['user_id'])) { echo json_encode(['status'=>'auth']); exit; }
+$userId = (int)$_SESSION['user_id'];
+$orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
+if($orderId<=0){ echo json_encode(['status'=>'error','message'=>'Invalid order id']); exit; }
+// Ensure order belongs to user and delivery is delivered
+$stmt = $conn->prepare('SELECT OrderStatus, DeliveryStatus FROM orders WHERE order_id=? AND customer_id=? LIMIT 1');
+if(!$stmt){ echo json_encode(['status'=>'error','message'=>'Prepare failed']); exit; }
+$stmt->bind_param('ii',$orderId,$userId);
+$stmt->execute();
+$stmt->bind_result($oStatus,$dStatus);
+if(!$stmt->fetch()){ $stmt->close(); echo json_encode(['status'=>'error','message'=>'Not found']); exit; }
+$stmt->close();
+if(strtolower($dStatus) !== 'delivered'){ echo json_encode(['status'=>'error','message'=>'Delivery not marked delivered yet']); exit; }
+if(strtolower($oStatus)==='completed'){ echo json_encode(['status'=>'ok','message'=>'Already completed']); exit; }
+$up = $conn->prepare("UPDATE orders SET OrderStatus='Completed' WHERE order_id=?");
+if(!$up){ echo json_encode(['status'=>'error','message'=>'Prepare failed']); exit; }
+$up->bind_param('i',$orderId);
+if(!$up->execute()){ echo json_encode(['status'=>'error','message'=>'Update failed']); $up->close(); exit; }
+$up->close();
+echo json_encode(['status'=>'ok','message'=>'Order confirmed']);
+?>

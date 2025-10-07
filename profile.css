@@ -5,17 +5,29 @@ body {
     color: #2f2b2b;
 }
 .settings-container {
-    max-width: 1100px;
-    margin: 40px auto 60px;
-    background: #ffffffcc;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-radius: 28px;
-    padding: 3.5rem 3rem 3rem;
-    box-shadow: 0 20px 40px -15px rgba(117,37,37,0.25), 0 2px 6px rgba(0,0,0,0.08);
-    position: relative;
-    overflow: hidden;
+        /* Responsive container without forced oversized min width */
+        width: min(95%, 1900px);
+        max-width: 1900px;
+        margin: 40px auto 60px;
+        background: #ffffffcc;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-radius: 28px;
+        padding: 3.5rem 3.25rem 4.5rem; /* extra bottom padding to avoid crop */
+        box-shadow: 0 20px 40px -15px rgba(117,37,37,0.25), 0 2px 6px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: visible; /* let inner shadows and final row show fully */
+        transition: width .4s ease, max-width .4s ease;
 }
+/* On very narrow screens use full width minus small gutter */
+@media (max-width: 820px){
+    .settings-container { width: 100%; padding-left: 1.4rem; padding-right: 1.4rem; }
+}
+@media (max-width: 560px){
+    .settings-container { width: 100%; padding-left: 1.1rem; padding-right: 1.1rem; }
+}
+/* Prevent accidental horizontal scroll gap */
+body.profile-page { overflow-x:hidden; }
 .settings-container:before {
     content: "";
     position: absolute;
@@ -62,6 +74,7 @@ section {
     gap: 3.5rem;
     align-items: flex-start;
 }
+.account-flex .orders-panel { grid-column: 1 / -1; }
 .profile-side {
     position: relative;
     display: flex;
@@ -403,6 +416,13 @@ section {
 @keyframes fadeOutDown {
     to { opacity: 0; transform: translateY(30px); }
 }
+@media (max-width: 1200px) {
+    /* Slightly tighten gap on mid screens now that container is wider */
+    .account-flex { gap: 2.8rem; }
+}
+@media (max-width: 1050px) {
+    .account-flex { gap: 2.2rem; }
+}
 @media (max-width: 930px) {
     .account-flex { grid-template-columns: 1fr; }
     .profile-side { flex-direction: column; }
@@ -414,4 +434,15 @@ section {
     .profile-avatar-ring img.profile-avatar { width:150px; height:150px; }
     .quick-badges { justify-content: center; }
     .btn { width: 100%; justify-content: center; }
+}
+
+/* Wider order cards grid scaling */
+@media (min-width:1400px){
+    .orders-cards-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(320px,1fr)); gap:32px 30px; }
+}
+@media (min-width:1700px){
+    .orders-cards-grid { grid-template-columns: repeat(auto-fill,minmax(340px,1fr)); gap:36px 34px; }
+}
+@media (min-width:1850px){
+    .orders-cards-grid { grid-template-columns: repeat(auto-fill,minmax(360px,1fr)); gap:38px 36px; }
 }

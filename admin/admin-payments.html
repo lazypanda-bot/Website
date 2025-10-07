@@ -64,13 +64,42 @@
                             <th>Address</th>
                             <th>Product</th>
                             <th>Quantity</th>
-                            <th>Status</th>
+                            <th>Order Status</th>
+                            <th>Payment Status</th>
                             <th>Total</th>
                         </tr>
                     </thead>
                     <tbody id="paymentsTbody"></tbody>
                 </table>
 
-    <script src="admin-payments.js?v=<?php echo time(); ?>"></script>
+        <style>
+            /* Order status badge (unchanged) */
+            .badge-status { padding:2px 8px; border-radius:12px; font-size:.6rem; font-weight:600; letter-spacing:.4px; text-transform:uppercase; display:inline-block; }
+            .st-Pending { background:#ffe8c5; color:#8a5200; }
+            .st-Shipped { background:#e0dcff; color:#3c278a; }
+            .st-Delivered { background:#d4f4ff; color:#054861; }
+            .st-Completed { background:#d4ffd8; color:#136b1d; }
+            .st-Cancelled { background:#ffd4d4; color:#7d0e0e; }
+
+            /* Payment status as a styled select (pill) */
+            .payment-cell { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+            .payment-select-wrap { position:relative; display:inline-block; }
+            .payment-select-wrap:after { content:'\25BE'; /* down arrow */ position:absolute; top:50%; right:10px; transform:translateY(-52%); font-size:.7rem; color:rgba(0,0,0,.55); pointer-events:none; transition:.25s color; }
+            .payment-select-wrap:hover:after { color:rgba(0,0,0,.75); }
+            .payment-status-select { 
+                appearance:none; -webkit-appearance:none; -moz-appearance:none;
+                padding:4px 26px 5px 14px; border:1px solid transparent; border-radius:999px;
+                font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; cursor:pointer;
+                background:#f3f3f3; color:#333; line-height:1.1; position:relative; outline:none; transition:.25s background,.25s color,.25s box-shadow,.25s transform; 
+            }
+            .payment-status-select:focus { box-shadow:0 0 0 3px rgba(112,99,255,0.25); }
+            .payment-status-select:hover { transform:translateY(-1px); }
+            .payment-status-select.ps-Paid { background:#c8f7d0; color:#1b6e2a; }
+            .payment-status-select.ps-Unpaid { background:#ffe0e0; color:#8f1b1b; }
+            .payment-status-select.ps-Partial { background:#fff7c2; color:#7a5a00; }
+            .payment-status-select::-ms-expand { display:none; }
+            .saving-text { font-size:.55rem; color:#666; font-weight:500; }
+        </style>
+        <script src="admin-payments.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

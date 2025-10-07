@@ -47,6 +47,30 @@ nextBtn.addEventListener("click", () => {
 
 renderCalendar(currentDate);
 
+// Fetch order stats for dashboard boxes
+function fetchOrderStats(){
+  fetch('orders_stats_api.php').then(r=>r.json()).then(d=>{
+    if(d.status==='ok'){
+      const c = d.counts || {}; 
+      const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+      set('countPending', c.Pending||0);
+      set('countDelivered', c.Delivered||0);
+      set('countCompleted', c.Completed||0);
+      set('countCancelled', c.Cancelled||0);
+    }
+  }).catch(console.error);
+}
+fetchOrderStats();
+// refresh every 30s
+setInterval(fetchOrderStats,30000);
+
+// Click boxes to go to orders with (future) filtering
+['boxPending','boxDelivered','boxCompleted','boxCancelled'].forEach(id=>{
+  const el=document.getElementById(id); if(!el) return;
+  el.style.cursor='pointer';
+  el.addEventListener('click',()=>{ window.location.href='admin-orders.html'; });
+});
+
 const links = document.querySelectorAll('.nav-links a');
 const currentPage = window.location.pathname.split('/').pop();
 

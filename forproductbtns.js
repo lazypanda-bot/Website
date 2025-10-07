@@ -26,14 +26,34 @@ document.addEventListener('DOMContentLoaded', () => {
       size,
       quantity,
       design,
-      price
+      price,
+      total: price * quantity
     };
   }
 
-  function addToCart(product) {
+  async function addToCart(product, { serverPreferred=false } = {}) {
+    // If user authenticated try server cart first
+    if (serverPreferred && window.isAuthenticated && product && product.id) {
+      try {
+        const formData = new FormData();
+        formData.append('product_id', product.id);
+        formData.append('size', product.size || 'Default');
+        formData.append('color', product.color || 'Standard');
+        formData.append('quantity', product.quantity || 1);
+        const res = await fetch('add_to_cart.php', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.status !== 'ok') throw new Error(data.message || 'Cart error');
+        return { server:true, data };
+      } catch (e) {
+        console.warn('Server cart add failed, falling back to local storage:', e.message);
+      }
+    }
+    // local storage fallback
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart.push(product);
     localStorage.setItem('cart', JSON.stringify(cart));
+    return { server:false };
   }
 
   function showLoginModal() {
@@ -65,41 +85,119 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (addToCartBtn) {
-    addToCartBtn.addEventListener('click', (e) => {
+    addToCartBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       const qtyInput = document.getElementById('quantity');
       const cartQtyInput = document.getElementById('cart_quantity');
       if (qtyInput && cartQtyInput) {
         cartQtyInput.value = qtyInput.value;
       }
-      if (window.isAuthenticated) {
-        const product = getSelectedProduct();
-        if (!product.quantity || product.quantity < 1) {
-          alert('Quantity must be at least 1 to add to cart.');
-          return;
-        }
-        addToCart(product);
-        if (cartIcon) cartIcon.classList.add('active');
-        showCartNotification();
-      } else {
+      const product = getSelectedProduct();
+      if (!product.quantity || product.quantity < 1) {
+        alert('Quantity must be at least 1 to add to cart.');
+        return;
+      }
+      // Attach product id from hidden form field
+      const prodIdInput = document.querySelector('input[name="product_id"]');
+      if (prodIdInput && prodIdInput.value) product.id = parseInt(prodIdInput.value,10);
+      await addToCart(product, { serverPreferred:true });
+      if (cartIcon) cartIcon.classList.add('active');
+      showCartNotification();
+      if (!window.isAuthenticated) {
         showLoginModal();
       }
     });
   }
 
+  // Quick Order Modal Logic
+  const quickOrderModal = document.getElementById('quickOrderModal');
+  const quickOrderSummary = document.getElementById('quickOrderSummary');
+  const quickOrderCancelBtn = document.getElementById('quickOrderCancelBtn');
+  const quickOrderConfirmBtn = document.getElementById('quickOrderConfirmBtn');
+  const closeQuickOrderModalBtn = document.getElementById('closeQuickOrderModalBtn');
+  const profileWarn = document.getElementById('quickOrderProfileWarn');
+
+  function openQuickOrderModal() { if(quickOrderModal) { quickOrderModal.hidden = false; quickOrderModal.style.display='flex'; } }
+  function closeQuickOrderModal() { if(quickOrderModal) { quickOrderModal.hidden = true; quickOrderModal.style.display='none'; } }
+
   if (buyNowBtn) {
     buyNowBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      if (window.isAuthenticated) {
-        const product = getSelectedProduct();
-        if (!product.quantity || product.quantity < 1) {
-          alert('Quantity must be at least 1 to order.');
-          return;
-        }
-        addToCart(product);
-        window.location.href = 'cart.php';
-      } else {
-        showLoginModal();
+      const product = getSelectedProduct();
+      const errors = [];
+      if (!product.quantity || product.quantity < 1) errors.push('Quantity must be at least 1.');
+      if (!product.size || /select/i.test(product.size)) errors.push('Please choose a size.');
+      const colorInputEl = document.getElementById('color');
+      if (colorInputEl && !colorInputEl.value.trim()) errors.push('Please choose a color.');
+      if (errors.length) { alert(errors.join('\n')); return; }
+      const prodIdInput = document.querySelector('input[name="product_id"]');
+      if (prodIdInput && prodIdInput.value) product.id = parseInt(prodIdInput.value,10);
+      // Build summary
+      if (quickOrderSummary) {
+        quickOrderSummary.innerHTML = `
+          <strong>Product:</strong> ${product.name || 'Item'}<br>
+          <strong>Size:</strong> ${product.size}<br>
+          <strong>Quantity:</strong> ${product.quantity}<br>
+          <strong>Unit Price:</strong> ₱${product.price.toFixed(2)}<br>
+          <strong>Total:</strong> ₱${product.total.toFixed(2)}
+        `;
+      }
+      buyNowBtn.dataset.pendingProduct = JSON.stringify(product);
+      if (!window.isAuthenticated) {
+        // If not logged in, keep behavior: add locally & login modal
+        addToCart(product, { serverPreferred:false }).then(()=>{ showLoginModal(); });
+        return;
+      }
+      openQuickOrderModal();
+    });
+  }
+
+  [quickOrderCancelBtn, closeQuickOrderModalBtn].forEach(btn=>{ if(btn){ btn.addEventListener('click', ()=>{ closeQuickOrderModal(); }); }});
+
+  if (quickOrderConfirmBtn) {
+    quickOrderConfirmBtn.addEventListener('click', async () => {
+      if (!buyNowBtn || !buyNowBtn.dataset.pendingProduct) return;
+      let product;
+      try { product = JSON.parse(buyNowBtn.dataset.pendingProduct); } catch { return; }
+      if (quickOrderConfirmBtn.disabled) return;
+      quickOrderConfirmBtn.disabled = true;
+      quickOrderConfirmBtn.textContent = 'Placing...';
+      // Call quick_order.php
+      try {
+        const fd = new FormData();
+  fd.append('product_id', product.id);
+  fd.append('product_name', product.name || '');
+  fd.append('size', product.size || 'Default');
+  fd.append('quantity', product.quantity);
+    const res = await fetch('quick_order.php', { method:'POST', body: fd });
+    let dataText = await res.text();
+    let data;
+    try { data = JSON.parse(dataText); } catch { console.warn('Non-JSON response:', dataText); data = { status:'error', message:'Invalid server response', raw:dataText }; }
+    console.log('[QuickOrder] response', data);
+    if (data.status === 'need_profile') {
+      profileWarn.style.display='block';
+      quickOrderConfirmBtn.disabled = false;
+      quickOrderConfirmBtn.textContent = 'Place Order';
+      return;
+    }
+    if (data.status === 'duplicate') {
+      alert(data.message || 'Duplicate pending order detected. Please wait then try again.');
+      quickOrderConfirmBtn.disabled = false;
+      quickOrderConfirmBtn.textContent = 'Place Order';
+      return;
+    }
+    if (data.status !== 'ok') {
+      alert((data.message || 'Order failed') + '\n(Enable debug by opening quick_order.php?debug=1 in a new tab)');
+      quickOrderConfirmBtn.disabled = false;
+      quickOrderConfirmBtn.textContent = 'Place Order';
+      return;
+    }
+        // Success: redirect to profile orders panel
+        window.location.href = data.redirect || 'profile.php?order=1#ordersPanel';
+      } catch (e) {
+        alert('Network error placing order.');
+        quickOrderConfirmBtn.disabled = false;
+        quickOrderConfirmBtn.textContent = 'Place Order';
       }
     });
   }

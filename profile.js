@@ -148,4 +148,76 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 2200);
     }
+    // Delivery confirmation buttons (card layout)
+    document.querySelectorAll('.confirm-delivery-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            const card = btn.closest('.order-card'); if(!card) return; const orderId = card.getAttribute('data-order-id');
+            if(!orderId) return;
+            if(!confirm('Confirm you received order #' + orderId + '?')) return;
+            const fd = new FormData(); fd.append('order_id', orderId);
+            fetch('confirm_delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
+                if(d.status==='ok') { 
+                    const statusBadge = card.querySelector('.badge');
+                    if(statusBadge){
+                        statusBadge.textContent='Completed';
+                        statusBadge.className = 'badge status-completed';
+                    }
+                    const dash = document.createElement('span');
+                    dash.className='oc-dash';
+                    dash.textContent='—';
+                    btn.replaceWith(dash);
+                    // Auto refresh after short delay so admin/orders pages & other aggregates reflect completion
+                    setTimeout(()=>{ window.location.reload(); }, 800);
+                } else alert(d.message||'Confirmation failed');
+            }).catch(()=>alert('Network error'));
+        });
+    });
+    // Expand / collapse order details
+    document.querySelectorAll('.order-expand-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            const row = btn.closest('.order-summary-row'); if(!row) return;
+            const id = row.getAttribute('data-order-id');
+            const details = document.querySelector('.order-details-row[data-details-for="'+CSS.escape(id)+'"]');
+            if(!details) return;
+            const isOpen = row.classList.toggle('open');
+            btn.setAttribute('data-expand', isOpen? '1':'0');
+            btn.textContent = isOpen ? '▾' : '▸';
+            details.style.display = isOpen ? 'table-row':'none';
+        });
+    });
+
+    // Delivery status filtering for order cards
+    const filterBar = document.querySelector('.orders-filter-bar');
+    if (filterBar) {
+        const buttons = filterBar.querySelectorAll('.orders-filter-btn');
+        const cards = document.querySelectorAll('.order-card[data-delivery-status]');
+        function applyFilter(filter){
+            const synonymMap = {
+                shipped:['dispatched','shipped'],
+                cancelled:['failed','cancelled']
+            };
+            cards.forEach(card => {
+                const status = card.getAttribute('data-delivery-status');
+                let show=false;
+                if(filter==='all') show=true; else if(status){
+                    if(status.indexOf(filter)!==-1) show=true; else {
+                        // check synonyms
+                        for(const key in synonymMap){
+                            if(key===filter){
+                                if(synonymMap[key].some(s=>status.indexOf(s)!==-1)) { show=true; break; }
+                            }
+                        }
+                    }
+                }
+                card.style.display = show ? '' : 'none';
+            });
+        }
+        buttons.forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+                buttons.forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                applyFilter(btn.getAttribute('data-filter'));
+            });
+        });
+    }
 });

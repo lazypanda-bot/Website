@@ -24,12 +24,13 @@ require_once __DIR__ . '/database.php';
 $isAuthenticated = isset($_SESSION['user_id']);
 $userAddress = '';
 $userPhone = '';
+$userName = '';
 if ($isAuthenticated && !$conn->connect_error) {
     $userId = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?"); // adaptive mapping from database.php already applied
+    $stmt = $conn->prepare("SELECT " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . ", " . ACCOUNT_NAME_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?"); // adaptive mapping from database.php already applied
     $stmt->bind_param("i", $userId);
     $stmt->execute();
-    $stmt->bind_result($userAddress, $userPhone);
+    $stmt->bind_result($userAddress, $userPhone, $userName);
     $stmt->fetch();
     $stmt->close();
 }
@@ -38,6 +39,7 @@ if ($isAuthenticated && !$conn->connect_error) {
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
     window.userAddress = <?= json_encode($userAddress) ?>;
     window.userPhone = <?= json_encode($userPhone) ?>;
+    window.userName = <?= json_encode($userName) ?>;
 </script>
 <script src="login.js?v=<?= time() ?>"></script>
 
@@ -69,6 +71,7 @@ if ($isAuthenticated && !$conn->connect_error) {
         <button onclick="history.back()" class="back-btn">← Back</button>
     </div>
     <div class="cart-container">
+        <div class="cart-progress-bar" id="cart-progress"></div>
         <h2>Your Cart</h2>
         <div class="cart-items" id="cart-items" data-source="db">
             <p class="empty-cart-msg">Loading cart...</p>
@@ -83,35 +86,41 @@ if ($isAuthenticated && !$conn->connect_error) {
             <strong>Missing address or phone number.</strong><br>
             Please <button type="button" id="update-profile-btn">update your profile</button> to proceed with checkout.
         </div>
-        <div class="form-group">
-            <span>Payment Type:</span><br>
-            <input type="radio" name="isPartialPayment" id="payment_partial" value="1" required> <label for="payment_partial">Partial</label>
-            <input type="radio" name="isPartialPayment" id="payment_full" value="0"> <label for="payment_full">Full</label>
+        <div class="checkout-columns">
+            <div class="checkout-left-col">
+                <div class="form-group">
+                    <span>Payment Type:</span><br>
+                    <input type="radio" name="isPartialPayment" id="payment_partial" value="1" required> <label for="payment_partial">Partial</label>
+                    <input type="radio" name="isPartialPayment" id="payment_full" value="0"> <label for="payment_full">Full</label>
+                </div>
+                <div class="form-group">
+                    <span>Delivery Method:</span><br>
+                    <input type="radio" name="delivery_method" id="delivery_pickup" value="pickup" required> <label for="delivery_pickup">Pick up</label>
+                    <input type="radio" name="delivery_method" id="delivery_standard" value="standard"> <label for="delivery_standard">Standard Delivery</label>
+                </div>
+                <div class="form-group">
+                    <span>Payment Method:</span><br>
+                    <input type="radio" name="payment_method" id="payment_cash" value="cash" required> <label for="payment_cash">Cash</label>
+                    <input type="radio" name="payment_method" id="payment_gcash" value="gcash"> <label for="payment_gcash">GCash</label>
+                </div>
+                <div class="form-group">
+                    <label for="delivery_address">Delivery Address:</label><br>
+                    <input type="text" id="delivery_address" name="delivery_address" required>
+                </div>
+                <div class="form-group">
+                    <label for="delivery_phone">Phone Number:</label><br>
+                    <input type="text" id="delivery_phone" name="delivery_phone" required>
+                </div>
+            </div>
+            <div class="checkout-right-col">
+                <div class="form-group order-summary-group">
+                    <h4 style="margin-top:0;">Order Summary</h4>
+                    <div id="order-summary"></div>
+                    <div id="shipping-fee" style="margin-top:8px;font-weight:600;"></div>
+                </div>
+                <button type="submit" class="place-order-btn" style="margin-top:auto;">Place Order</button>
+            </div>
         </div>
-        <div class="form-group">
-            <span>Delivery Method:</span><br>
-            <input type="radio" name="delivery_method" id="delivery_pickup" value="pickup" required> <label for="delivery_pickup">Pick up</label>
-            <input type="radio" name="delivery_method" id="delivery_standard" value="standard"> <label for="delivery_standard">Standard Delivery</label>
-        </div>
-        <div class="form-group">
-            <span>Payment Method:</span><br>
-            <input type="radio" name="payment_method" id="payment_cash" value="cash" required> <label for="payment_cash">Cash</label>
-            <input type="radio" name="payment_method" id="payment_gcash" value="gcash"> <label for="payment_gcash">GCash</label>
-        </div>
-        <div class="form-group">
-            <label for="delivery_address">Delivery Address:</label><br>
-            <input type="text" id="delivery_address" name="delivery_address" required>
-        </div>
-        <div class="form-group">
-            <label for="delivery_phone">Phone Number:</label><br>
-            <input type="text" id="delivery_phone" name="delivery_phone" required>
-        </div>
-        <div class="form-group">
-            <h4>Order Summary</h4>
-            <div id="order-summary"></div>
-            <div id="shipping-fee"></div>
-        </div>
-        <button type="submit" class="place-order-btn">Place Order</button>
     </form>
     </div>
 
@@ -130,6 +139,10 @@ if ($isAuthenticated && !$conn->connect_error) {
     <script src="app.js"></script>
     <script src="login.js"></script>
     <script src="message.js"></script>
-    <script src="cart.js"></script>
+        <script src="cart.js"></script>
+        <script>
+            // trigger subtle progress bar animation once DOM ready
+            window.addEventListener('load', ()=> document.body.classList.add('loaded'));
+        </script>
 </body>
 </html>

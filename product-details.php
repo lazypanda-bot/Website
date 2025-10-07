@@ -286,7 +286,7 @@ function pd_first_image($imagesField) {
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
                                     <button type="button" onclick="adjustQuantity(-1)">−</button>
-                                    <input type="number" id="quantity" name="quantity" value="0" min="0" />
+                                    <input type="number" id="quantity" name="quantity" value="1" min="1" />
                                     <button type="button" onclick="adjustQuantity(1)">+</button>
                                 </div>
                             </div>
@@ -332,11 +332,11 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="color" id="form_color" value="" />
                     <input type="hidden" name="quantity" id="form_quantity" value="1" />
                     <input type="hidden" name="isPartialPayment" value="0" />
-                    <input type="hidden" name="TotalAmount" id="form_totalAmount" value="" />
+                    <input type="hidden" name="TotalAmount" id="form_totalAmount" value="<?php echo htmlspecialchars($productPrice); ?>" />
                     <input type="hidden" name="OrderStatus" value="Pending" />
                     <input type="hidden" name="DeliveryAddress" id="form_DeliveryAddress" value="" />
-                    <input type="hidden" name="DeliveryStatus" value="Not Shipped" />
-                    <button type="submit" class="buy-btn" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Buy Now</button>
+                    <input type="hidden" name="DeliveryStatus" value="Pending" />
+                    <button type="button" class="buy-btn" id="buyNowBtn" data-price="<?php echo htmlspecialchars($productPrice); ?>" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Buy Now</button>
                 </form>
                 <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
@@ -350,6 +350,23 @@ function pd_first_image($imagesField) {
     </section>
 
     <?php include 'footer.php'; ?>
+    <!-- Quick Order Confirmation Modal (portal overlay) -->
+    <div id="quickOrderModal" class="custom-modal quick-order-overlay" hidden aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-content quick-order-content" role="document">
+            <div class="modal-header">
+                <span class="modal-title">Confirm Order</span>
+                <button type="button" class="modal-close-btn" id="closeQuickOrderModalBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary-block" id="quickOrderSummary"></div>
+                <div class="profile-warning" id="quickOrderProfileWarn">You must complete your address & phone in profile before ordering.</div>
+                <div class="modal-actions">
+                    <button type="button" class="design-btn alt-btn" id="quickOrderCancelBtn">Cancel</button>
+                    <button type="button" class="design-btn primary-btn" id="quickOrderConfirmBtn">Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="login-container"></div>
     <?php include 'login.php'; ?>
 
@@ -406,9 +423,43 @@ function pd_first_image($imagesField) {
     <script src="OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="sim.js"></script>
-    <script src="forproductbtns.js"></script>
-</body>
-</html>
-</body>
+        <style>
+            /* Modal base (reuse-able) */
+            .quick-order-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.55); z-index:11000; padding:30px; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+            .quick-order-overlay[hidden] { display:none !important; }
+            .quick-order-content { width:100%; max-width:480px; background:#ffffff; border-radius:18px; box-shadow:0 10px 36px -8px rgba(0,0,0,.5),0 2px 12px rgba(0,0,0,.25); overflow:hidden; animation:qoPop .38s cubic-bezier(.16,.8,.3,1); display:flex; flex-direction:column; }
+            @keyframes qoPop { from { opacity:0; transform:translateY(18px) scale(.96);} to { opacity:1; transform:translateY(0) scale(1);} }
+            .quick-order-content .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; }
+            .quick-order-content .modal-title { font-size:1.05rem; font-weight:600; letter-spacing:.5px; }
+            .quick-order-content .modal-close-btn { background:none; border:none; font-size:1.35rem; line-height:1; cursor:pointer; padding:4px 8px; color:#333; }
+            .quick-order-content .modal-close-btn:hover { color:#b30000; }
+            .quick-order-content .modal-body { padding:4px 20px 22px; }
+            #quickOrderSummary { font-size:.85rem; line-height:1.45; margin-bottom:16px; background:#fafafa; padding:12px 14px; border:1px solid #eee; border-radius:12px; }
+            #quickOrderProfileWarn { display:none; color:#b30000; font-weight:600; margin:-4px 0 14px; font-size:.78rem; }
+            .quick-order-content .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
+            .quick-order-content .design-btn { border:none; cursor:pointer; padding:10px 18px; font-size:.8rem; font-weight:600; letter-spacing:.5px; border-radius:30px; background:#752525; color:#fff; transition:background .3s ease, transform .25s ease; }
+            .quick-order-content .design-btn:hover { background:#c90606; transform:translateY(-2px); }
+            .quick-order-content .design-btn.alt-btn { background:#666; }
+            .quick-order-content .design-btn.alt-btn:hover { background:#333; }
+            .quick-order-content .design-btn.primary-btn { background:#7c1b1b; }
+            .quick-order-content .design-btn.primary-btn:hover { background:#b91e1e; }
+            @media (max-width:560px){ .quick-order-overlay { padding:16px; } .quick-order-content { border-radius:16px; } }
+            body.modal-open { overflow:hidden; }
+        </style>
+        <script src="forproductbtns.js"></script>
+        <script>
+            // Accessibility & body scroll lock helpers
+            (function(){
+                const modal = document.getElementById('quickOrderModal');
+                if(!modal) return;
+                function openModal(){ modal.hidden=false; modal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); }
+                function closeModal(){ modal.hidden=true; modal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); }
+                // Patch existing openQuickOrderModal / closeQuickOrderModal if defined later by product JS
+                window.openQuickOrderModal = openModal;
+                window.closeQuickOrderModal = closeModal;
+                document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !modal.hidden) closeModal(); });
+                modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+            })();
+        </script>
 </body>
 </html>

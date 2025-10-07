@@ -66,54 +66,34 @@
                             <th>Quantity</th>
                             <th>Status</th>
                             <th>Total</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTbody"></tbody>
                 </table>
-
-    <div class="modal" id="orderStatusModal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Update Order Status</h2>
-                <button type="button" data-close class="close-modal">&times;</button>
-            </div>
-            <form id="orderStatusForm">
-                <input type="hidden" name="order_id" id="status_order_id" />
-                <div class="form-row">
-                    <label>Status</label>
-                    <select name="OrderStatus" id="status_OrderStatus" required>
-                        <option value="Pending">Pending</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Paid">Paid</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="add-btn">Save</button>
-                    <button type="button" data-close class="filter-btn">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <style>
-    .modal { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:2000; }
-    .modal-content { background:#fff; padding:20px 24px; border-radius:12px; width:360px; max-width:90%; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-    .close-modal { background:none; border:none; font-size:1.4rem; cursor:pointer; }
-    .form-row { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
-    .form-row select { padding:8px 10px; border:1px solid #ccc; border-radius:8px; }
-    .badge-status { padding:2px 8px; border-radius:12px; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-    .st-Pending { background:#ffe8c5; color:#8a5200; }
-    .st-Processing { background:#cfe5ff; color:#003e73; }
-    .st-Paid { background:#c8f7d0; color:#1b6e2a; }
-    .st-Shipped { background:#e0dcff; color:#3c278a; }
-    .st-Completed { background:#d4ffd8; color:#136b1d; }
-    .st-Cancelled { background:#ffd4d4; color:#7d0e0e; }
-    </style>
+        <style>
+            .badge-status { padding:2px 8px; border-radius:12px; font-size:.6rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; display:inline-block; }
+            .st-Pending { background:#ffe8c5; color:#8a5200; }
+            .st-Shipped { background:#e0dcff; color:#3c278a; }
+            .st-Delivered { background:#d4f4ff; color:#054861; }
+            .st-Completed { background:#d4ffd8; color:#136b1d; }
+            .st-Cancelled { background:#ffd4d4; color:#7d0e0e; }
+            .status-cell { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+            .status-cell:not(.completed-readonly) .status-badge-wrapper { display:none; }
+            .status-saving { font-size:.55rem; color:#666; font-weight:500; }
+            .status-select-wrap { position:relative; display:inline-block; }
+            .status-select-wrap:after { content:'\25BE'; position:absolute; top:50%; right:10px; transform:translateY(-52%); font-size:.7rem; color:rgba(0,0,0,.55); pointer-events:none; transition:.25s color; }
+            .status-select-wrap:hover:after { color:rgba(0,0,0,.75); }
+            .order-status-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; padding:4px 26px 5px 14px; border:1px solid transparent; border-radius:999px; font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; background:#f3f3f3; color:#333; line-height:1.1; outline:none; transition:.25s background,.25s color,.25s box-shadow,.25s transform; }
+            .order-status-select:hover { transform:translateY(-1px); }
+            .order-status-select:focus { box-shadow:0 0 0 3px rgba(112,99,255,0.25); }
+            .order-status-select.os-Pending { background:#ffe8c5; color:#8a5200; }
+            .order-status-select.os-Shipped { background:#e0dcff; color:#3c278a; }
+            .order-status-select.os-Delivered { background:#d4f4ff; color:#054861; }
+            .order-status-select.os-Cancelled { background:#ffd4d4; color:#7d0e0e; }
+            .order-status-select::-ms-expand { display:none; }
+                    .completed-readonly { pointer-events:none; }
+                    .completed-readonly .status-select-wrap { display:none !important; }
+        </style>
 
     <script src="admin-orders.js?v=<?php echo time(); ?>"></script>
 </body>
