@@ -105,9 +105,9 @@ if ($conn && !$conn->connect_error) {
 $isAuthenticated = isset($_SESSION['user_id']);
 // Helper to derive first image path
 function firstImage($imagesField) {
-    if (!$imagesField) return 'img/snorlax.png';
+    if (!$imagesField) return 'img/logo.png';
     $trim = trim($imagesField);
-    if ($trim === '') return 'img/snorlax.png';
+    if ($trim === '') return 'img/logo.png';
     if (str_starts_with($trim, '[')) {
         $decoded = json_decode($trim, true);
         if (is_array($decoded) && count($decoded)>0) return $decoded[0];
@@ -256,7 +256,8 @@ function firstImage($imagesField) {
                             $id = (int)$p['product_id'];
                             echo '<div class="service-card">';
                             echo '<a href="product-details.php?id=' . $id . '">';
-                            echo '<img src="' . $img . '" alt="' . strip_tags($nameEsc) . '" class="service-img">';
+                            // If an image fails to load (missing file or bad path), use the site logo as fallback
+                            echo '<img src="' . $img . '" alt="' . strip_tags($nameEsc) . '" class="service-img" onerror="this.onerror=null;this.src=\'img/logo.png\';">';
                             echo '</a>';
                             echo '<h4>' . $nameEsc . '</h4>';
                             echo '<div class="service-price">₱' . $priceEsc . '</div>';

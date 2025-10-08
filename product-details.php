@@ -1,9 +1,11 @@
 <?php
 session_start();
 $isAuthenticated = isset($_SESSION['user_id']);
-
-// Include DB for product lookup
+// Ensure DB connection is available
 require_once 'database.php';
+// Compute base path (handles when app is served from a subdirectory, e.g. /Website)
+$basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+if ($basePath === '/') $basePath = '';
 
 // Adaptive detection of product columns (id, name, price, images) once
 $productIdCol = 'product_id';
@@ -28,6 +30,8 @@ if ($conn && !$conn->connect_error) {
 $productId = null; // will resolve below
 $productRow = null;
 $debugMessages = [];
+// Ensure rawImages is always defined to avoid undefined variable warnings
+$rawImages = '';
 
 // Prefer explicit id param (?id=) for reliability; fallback to name when only name is provided
 if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
@@ -69,23 +73,27 @@ if (!$productNotFound) {
     $productName = $productRow[$productNameCol] ?? ($_GET['name'] ?? 'Product');
     $productPrice = $productPriceCol && isset($productRow[$productPriceCol]) ? $productRow[$productPriceCol] : ($_GET['price'] ?? '0');
     $rawImages = ($productImagesCol && isset($productRow[$productImagesCol])) ? $productRow[$productImagesCol] : '';
-    // Basic first image extraction if images stored as JSON or comma-separated; fallback to provided img param
-    $productImg = $_GET['img'] ?? 'img/snorlax.png';
-    if ($rawImages) {
-        if (str_starts_with(trim($rawImages), '[')) { // JSON array
-            $decoded = json_decode($rawImages, true);
-            if (is_array($decoded) && count($decoded) > 0) { $productImg = $decoded[0]; }
-        } elseif (strpos($rawImages, ',') !== false) {
-            $parts = array_map('trim', explode(',', $rawImages));
-            if ($parts[0] !== '') $productImg = $parts[0];
-        } elseif (trim($rawImages) !== '') {
-            $productImg = trim($rawImages);
+    // Use helper to pick the first image
+    $productImg = pd_first_image($rawImages);
+    // Normalize $productImg to include $basePath if needed (handles subdirectory installs)
+    if ($productImg) {
+        $t = trim($productImg);
+        if (str_starts_with($t, 'uploads/')) {
+            $productImg = $basePath . '/' . $t;
+        } elseif (preg_match('#^(https?:)?//#i', $t)) {
+            $productImg = $t; // absolute or protocol-relative
+        } elseif (str_starts_with($t, '/')) {
+            $productImg = $basePath . $t;
+        } else {
+            $productImg = $basePath . '/' . $t;
         }
     }
+    // Ensure a fallback logo if productImg ended up empty
+    if (!$productImg) $productImg = $basePath . '/img/logo.png';
 } else {
     $productName = 'Product Not Found';
     $productPrice = '0.00';
-    $productImg = 'img/snorlax.png';
+    $productImg = $basePath . '/img/logo.png';
 }
 
 // Optional debug view (?debug_products=1)
@@ -119,18 +127,25 @@ if (!$productNotFound && isset($productRow['service_type']) && $productRow['serv
 }
 
 function pd_first_image($imagesField) {
-    if (!$imagesField) return 'img/snorlax.png';
+    if (!$imagesField) return 'img/logo.png';
     $trim = trim($imagesField);
-    if ($trim === '') return 'img/snorlax.png';
+    if ($trim === '') return 'img/logo.png';
+    $candidate = null;
     if (str_starts_with($trim, '[')) {
         $decoded = json_decode($trim, true);
-        if (is_array($decoded) && count($decoded) > 0) return $decoded[0];
-    }
-    if (strpos($trim, ',') !== false) {
+        if (is_array($decoded) && count($decoded) > 0) $candidate = $decoded[0];
+    } elseif (strpos($trim, ',') !== false) {
         $parts = array_map('trim', explode(',', $trim));
-        if ($parts[0] !== '') return $parts[0];
+        if ($parts[0] !== '') $candidate = $parts[0];
+    } else {
+        $candidate = $trim;
     }
-    return $trim;
+    if (!$candidate) return 'img/logo.png';
+    $candidate = trim($candidate);
+    // If candidate is an uploads path without leading slash, make it root-relative so the browser resolves correctly
+    if (str_starts_with($candidate, 'uploads/')) return '/' . $candidate;
+    // If it's already root-relative or an absolute URL, return as-is
+    return $candidate;
 }
 ?>
 <!DOCTYPE html>
@@ -152,6 +167,7 @@ function pd_first_image($imagesField) {
 </head>
 <script>
   window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+    window.isAdmin = <?= (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) ? 'true' : 'false' ?>;
 </script>
 <body>
 <?php if(!empty($_SESSION['flash_order_success'])): unset($_SESSION['flash_order_success']); ?>
@@ -205,21 +221,75 @@ function pd_first_image($imagesField) {
             <div class="image-column">
                 <img src="<?php echo htmlspecialchars($productImg); ?>" alt="<?php echo htmlspecialchars($productName); ?>" class="product-image" id="mainImage" />
                 <div class="thumbnail-row">
-                    <div class="thumbnail-wrapper">
-                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 1" class="thumbnail" />
-                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
-                    </div>
-                    <div class="thumbnail-wrapper">
-                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 2" class="thumbnail" />
-                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
-                    </div>
-                    <div class="thumbnail-wrapper">
-                        <img src="<?php echo htmlspecialchars($productImg); ?>" alt="Mug 3" class="thumbnail" />
-                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
-                    </div>
-                    <button type="button" id="add-thumbnail-btn">
-                        <span>+</span>
-                    </button>
+<?php
+    // Helper: parse images field into normalized array (root-relative for uploads/)
+    function pd_images_array($imagesField) {
+        $out = [];
+        if (!$imagesField) return $out;
+        $trim = trim($imagesField);
+        if ($trim === '') return $out;
+        if (str_starts_with($trim, '[')) {
+            $decoded = json_decode($trim, true);
+            if (is_array($decoded)) $out = $decoded;
+        } elseif (strpos($trim, ',') !== false) {
+            $parts = array_map('trim', explode(',', $trim));
+            $out = array_filter($parts, function($v){ return $v !== ''; });
+        } else {
+            $out = [$trim];
+        }
+        // Normalize each path: trim only; final URL normalization happens below (so we can prefix base path)
+        $out = array_values(array_map(function($c){ return trim($c); }, $out));
+        return $out;
+    }
+
+    $imagesList = pd_images_array($rawImages);
+    // Only show thumbnails when the DB actually has images (rawImages non-empty)
+    $hasThumbnails = (trim((string)$rawImages) !== '') && count($imagesList) > 0;
+    // Normalize URLs by prefixing basePath when needed (only if thumbnails exist)
+    if ($hasThumbnails) {
+        $imagesList = array_map(function($u) use ($basePath) {
+        if (!$u) return $u;
+        $trim = trim($u);
+        // If it's an uploads path without leading slash or without protocol, prefix basePath
+        if (str_starts_with($trim, 'uploads/')) return $basePath . '/' . $trim;
+        if (preg_match('#^(https?:)?//#i', $trim)) return $trim; // already absolute or protocol-relative
+        if (str_starts_with($trim, '/')) return $basePath . $trim;
+        return $basePath . '/' . $trim;
+        }, $imagesList);
+    } else {
+        $imagesList = [];
+    }
+    $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
+    if ($hasThumbnails) {
+        foreach ($imagesList as $idx => $imgSrc) {
+    $safeSrc = htmlspecialchars($imgSrc);
+        echo "<div class=\"thumbnail-wrapper\">";
+        echo "<img src=\"$safeSrc\" alt=\"Thumbnail {$idx}\" class=\"thumbnail\" data-action=\"change-image\" />";
+        if ($isAdmin) echo "<button class=\"delete-thumbnail-btn\" type=\"button\" title=\"Delete thumbnail\">-</button>";
+        echo "</div>";
+        }
+        if ($isAdmin) {
+            echo "<button type=\"button\" id=\"add-thumbnail-btn\"><span>+</span></button>";
+        }
+    }
+    // Temporary debug: show image src and server file existence when ?debug_images=1 is present
+    if (isset($_GET['debug_images'])) {
+        echo '<div class="image-debug" style="margin-top:18px;padding:12px;background:#fff6f6;border:1px solid #f2dede;border-radius:8px;color:#5a1d1d;">';
+        echo '<strong>Image debug</strong><ul style="margin:8px 0;padding-left:18px;">';
+        // show rawImages and whether thumbnails exist
+        echo '<li>rawImages: ' . htmlspecialchars($rawImages) . '</li>';
+        echo '<li>hasThumbnails: ' . ($hasThumbnails ? 'yes' : 'no') . '</li>';
+        foreach ($imagesList as $ii => $isrc) {
+            $url = $isrc;
+            // Resolve a filesystem path for checking existence
+            $rel = ltrim($url, '/');
+            $fs = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . $rel;
+            $exists = file_exists($fs) ? 'exists' : 'missing';
+            echo '<li style="margin-bottom:6px;">src: ' . htmlspecialchars($url) . ' — file: ' . htmlspecialchars($fs) . ' — <strong>' . $exists . '</strong></li>';
+        }
+        echo '</ul></div>';
+    }
+?>
                 </div>
             </div>
         <div class="product-text">

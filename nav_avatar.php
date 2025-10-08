@@ -3,7 +3,7 @@
 // Provides: $navAvatar (path or default), $NAV_AVATAR_HTML (final markup), $navAvatarInitials
 if (session_status() === PHP_SESSION_NONE) { @session_start(); }
 if (!isset($navAvatar) || !isset($NAV_AVATAR_HTML)) {
-    $navAvatar = 'img/snorlax.png';
+    $navAvatar = 'img/logo.png';
     $navAvatarInitials = '';
     $hasImage = false;
     $usernameSession = isset($_SESSION['username']) ? trim($_SESSION['username']) : '';

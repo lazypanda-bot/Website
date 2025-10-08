@@ -8,7 +8,7 @@ function addThumbnail() {
   var newImg = document.createElement('img');
   // Use the main image as the default for new thumbnails
   var mainImage = document.getElementById('mainImage');
-  newImg.src = mainImage ? mainImage.src : 'img/snorlax.png';
+  newImg.src = mainImage ? mainImage.src : 'img/logo.png';
   newImg.alt = 'New Mug';
   newImg.className = 'thumbnail';
   newImg.onclick = function() { changeImage(newImg); };
@@ -193,20 +193,34 @@ document.addEventListener('DOMContentLoaded', function() {
   if (backBtn) {
     backBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
+      // Prefer returning to products.php. If the referrer is the products listing, go there; otherwise navigate to products.php.
+      try {
+        const ref = document.referrer || '';
+        if (ref.indexOf('products.php') !== -1) {
+          window.location.href = ref;
+        } else {
+          window.location.href = 'products.php';
+        }
+      } catch (err) {
         window.location.href = 'products.php';
       }
     });
   }
 
   // Thumbnails
-  document.querySelectorAll('.thumbnail[data-action="change-image"]').forEach(img => {
+  // Thumbnails - only admin can add/delete thumbnails
+  const isAdmin = !!window.isAdmin;
+  // Support thumbnails rendered either server-side or client-side: bind to any .thumbnail
+  document.querySelectorAll('.thumbnail').forEach(img => {
     img.addEventListener('click', function() { changeImage(img); });
   });
-  const addThumbBtn = document.getElementById('add-thumbnail-btn');
-  if (addThumbBtn) addThumbBtn.addEventListener('click', addThumbnail);
+  if (isAdmin) {
+    const addThumbBtn = document.getElementById('add-thumbnail-btn');
+    if (addThumbBtn) addThumbBtn.addEventListener('click', addThumbnail);
+    document.querySelectorAll('.delete-thumbnail-btn').forEach(btn => {
+      btn.addEventListener('click', function() { deleteThumbnail(btn); });
+    });
+  }
 
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {

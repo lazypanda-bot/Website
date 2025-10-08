@@ -68,18 +68,18 @@ $isAuthenticated = isset($_SESSION['user_id']);
                 <button type="button" class="back-btn" id="backBtn">← Back</button>
             </div>
             <div class="image-column">
-                <img src="img/snorlax.png" alt="Custom Mug" class="product-image" id="mainImage" />
+                <img src="img/logo.png" alt="Custom Mug" class="product-image" id="mainImage" />
                 <div class="thumbnail-row">
                     <div class="thumbnail-wrapper">
-                        <img src="img/snorlax.png" alt="Mug 1" class="thumbnail" data-action="change-image" />
+                        <img src="img/logo.png" alt="Mug 1" class="thumbnail" data-action="change-image" />
                         <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
                     </div>
                     <div class="thumbnail-wrapper">
-                        <img src="img/snorlax.png" alt="Mug 2" class="thumbnail" data-action="change-image" />
+                        <img src="img/logo.png" alt="Mug 2" class="thumbnail" data-action="change-image" />
                         <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
                     </div>
                     <div class="thumbnail-wrapper">
-                        <img src="img/snorlax.png" alt="Mug 3" class="thumbnail" data-action="change-image" />
+                        <img src="img/logo.png" alt="Mug 3" class="thumbnail" data-action="change-image" />
                         <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
                     </div>
                     <button type="button" id="add-thumbnail-btn"><span>+</span></button>

@@ -211,7 +211,7 @@ if ($isAuthenticated) {
             <div class="profile-side" style="position:relative;">
                 <div class="profile-image-wrapper">
                     <div class="profile-avatar-ring">
-                        <?php $avatarSafe = ($avatarPath && file_exists(__DIR__ . '/' . $avatarPath)) ? htmlspecialchars($avatarPath) : 'img/snorlax.png'; ?>
+                        <?php $avatarSafe = ($avatarPath && file_exists(__DIR__ . '/' . $avatarPath)) ? htmlspecialchars($avatarPath) : 'img/logo.png'; ?>
                         <img src="<?= $avatarSafe ?>" alt="Profile Image" class="profile-avatar" id="profileAvatarImg" />
                         <button type="button" class="avatar-edit-btn" id="avatarEditBtn" aria-label="Change avatar"><i class="fa fa-camera"></i></button>
                         <form id="avatarUploadForm" action="profile.php" method="post" enctype="multipart/form-data" style="display:none;">

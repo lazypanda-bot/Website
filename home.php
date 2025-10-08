@@ -38,9 +38,9 @@
     }
 
     function firstImageHome($imagesField) {
-        if (!$imagesField) return 'img/snorlax.png';
-        $trim = trim($imagesField);
-        if ($trim === '') return 'img/snorlax.png';
+    if (!$imagesField) return 'img/logo.png';
+    $trim = trim($imagesField);
+    if ($trim === '') return 'img/logo.png';
         if (str_starts_with($trim, '[')) {
             $decoded = json_decode($trim, true);
             if (is_array($decoded) && count($decoded) > 0 && $decoded[0] !== '') return $decoded[0];
@@ -158,12 +158,12 @@
                                     <p>Professional design service tailored to your wants</p>
                                 </div>
                                 <div class="swiper-slide reason">
-                                    <img src="img/snorlax.png" alt="">
+                                    <img src="img/logo.png" alt="">
                                     <h3>Fast Turnaround</h3>
                                     <p>Quick delivery without compromising quality</p>
                                 </div>
                                 <div class="swiper-slide reason">
-                                    <img src="img/snorlax.png" alt="">
+                                    <img src="img/logo.png" alt="">
                                     <h3>Eco-Friendly</h3>
                                     <p>Sustainable materials and printing practices</p>
                                 </div>

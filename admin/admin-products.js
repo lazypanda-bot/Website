@@ -69,9 +69,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function firstImage(imagesField){
-    if(!imagesField) return '../img/snorlax.png';
+    if(!imagesField) return '../img/logo.png';
     const t = imagesField.trim();
-    if(!t) return '../img/snorlax.png';
+    if(!t) return '../img/logo.png';
     if(t.startsWith('[')) {
       try { const arr = JSON.parse(t); if(Array.isArray(arr)&&arr.length>0) return arr[0]; } catch(e){}
     }

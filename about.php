@@ -104,34 +104,34 @@
         <h3>Every Print Has a Purpose. Every Idea Deserves a Voice.</h3>
         <div class="scrolling-carousel carousel-top">
             <div class="carousel-track">
-                <img src="img/snorlax.png" alt="Custom printed t-shirts and hoodies" loading="lazy">
-                <img src="img/snorlax.png" alt="Collection of custom printed mugs and shirts" loading="lazy">
-                <img src="img/snorlax.png" alt="Close-up of printed t-shirt designs" loading="lazy">
-                <img src="img/snorlax.png" alt="Various custom printed tote bags and accessories" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom printed caps and headwear" loading="lazy">
-                <img src="img/snorlax.png" alt="More custom printed apparel" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom printed t-shirts and hoodies (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Collection of custom printed mugs and shirts (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Close-up of printed t-shirt designs (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Various custom printed tote bags and accessories (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom printed caps and headwear (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="More custom printed apparel (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed t-shirts and hoodies" loading="lazy">
+                <img src="img/logo.png" alt="Collection of custom printed mugs and shirts" loading="lazy">
+                <img src="img/logo.png" alt="Close-up of printed t-shirt designs" loading="lazy">
+                <img src="img/logo.png" alt="Various custom printed tote bags and accessories" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed caps and headwear" loading="lazy">
+                <img src="img/logo.png" alt="More custom printed apparel" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed t-shirts and hoodies (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Collection of custom printed mugs and shirts (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Close-up of printed t-shirt designs (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Various custom printed tote bags and accessories (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed caps and headwear (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="More custom printed apparel (duplicate)" loading="lazy">
             </div>
         </div>
         <div class="scrolling-carousel carousel-bottom">
             <div class="carousel-track">
-                <img src="img/snorlax.png" alt="Custom printed pet apparel" loading="lazy">
-                <img src="img/snorlax.png" alt="Happy birthday custom mug" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom designed canvas tote bag" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom phone cases and accessories" loading="lazy">
-                <img src="img/snorlax.png" alt="Personalized clothing item with initial" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom printed face masks or fabric" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom printed pet apparel (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Happy birthday custom mug (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom designed canvas tote bag (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom phone cases and accessories (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Personalized clothing item with initial (duplicate)" loading="lazy">
-                <img src="img/snorlax.png" alt="Custom printed face masks or fabric (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed pet apparel" loading="lazy">
+                <img src="img/logo.png" alt="Happy birthday custom mug" loading="lazy">
+                <img src="img/logo.png" alt="Custom designed canvas tote bag" loading="lazy">
+                <img src="img/logo.png" alt="Custom phone cases and accessories" loading="lazy">
+                <img src="img/logo.png" alt="Personalized clothing item with initial" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed face masks or fabric" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed pet apparel (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Happy birthday custom mug (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Custom designed canvas tote bag (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Custom phone cases and accessories (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Personalized clothing item with initial (duplicate)" loading="lazy">
+                <img src="img/logo.png" alt="Custom printed face masks or fabric (duplicate)" loading="lazy">
             </div>
         </div>
     </section>

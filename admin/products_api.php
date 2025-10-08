@@ -23,30 +23,101 @@ if ($method === 'GET' && $action === 'list') {
     exit;
 }
 
-// Create / Update product
+// Create / Update product (supports current images + uploaded files for admin UI)
 if ($method === 'POST' && $action === 'save') {
     $id = isset($_POST['product_id']) && ctype_digit($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
     $name = trim($_POST['product_name'] ?? '');
     $service = trim($_POST['service_type'] ?? '');
     $price = isset($_POST['price']) ? (float)$_POST['price'] : 0.0;
     $details = trim($_POST['product_details'] ?? '');
-    $images = trim($_POST['images'] ?? '');
+    // images_current is JSON list of kept images (paths)
+    $images_current = [];
+    if (!empty($_POST['images_current'])) {
+        $decoded = json_decode($_POST['images_current'], true);
+        if (is_array($decoded)) $images_current = $decoded;
+    }
+
     if ($name === '') fail('Product name required');
     if ($price < 0) fail('Price invalid');
+
+    // Handle uploaded files (images_files[]). We'll collect errors and moved paths.
+    $upload_errors = [];
+    $uploaded_paths = [];
+    $targetDirBase = __DIR__ . '/../uploads/products';
+    if (!is_dir($targetDirBase)) mkdir($targetDirBase, 0755, true);
+
+    // Helper to process files into a given folder name (relativeName is e.g. '1' or 'tmp')
+    $processFilesToFolder = function($folderName) use (&$upload_errors, &$uploaded_paths, $targetDirBase) {
+        if (empty($_FILES['images_files'])) return;
+        $files = $_FILES['images_files'];
+        $folder = $targetDirBase . '/' . $folderName;
+        if (!is_dir($folder)) mkdir($folder, 0755, true);
+        for ($i=0;$i<count($files['name']);$i++) {
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) { $upload_errors[] = "upload_error_{$i}:" . $files['error'][$i]; continue; }
+            $tmp = $files['tmp_name'][$i];
+            $orig = basename($files['name'][$i]);
+            $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg','jpeg','png','gif','webp'])) { $upload_errors[] = "invalid_type_{$i}:{$orig}"; continue; }
+            $uniq = time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+            $dest = $folder . '/' . $uniq;
+            if (@move_uploaded_file($tmp, $dest)) {
+                $rel = 'uploads/products/' . $folderName . '/' . $uniq;
+                $uploaded_paths[] = $rel;
+            } else {
+                $upload_errors[] = "move_failed_{$i}:{$orig}";
+            }
+        }
+    };
+
     if ($id > 0) {
+        // Existing product: move files directly into its folder
+        $processFilesToFolder((string)$id);
+        $final_images = array_values(array_merge($images_current, $uploaded_paths));
+        $images_json = json_encode($final_images);
         $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=? WHERE product_id=?");
         if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-        $stmt->bind_param('ssdssi', $name,$service,$price,$details,$images,$id);
+        $stmt->bind_param('ssdssi', $name,$service,$price,$details,$images_json,$id);
         if(!$stmt->execute()) fail('Update failed: ' . $stmt->error,500);
-        echo json_encode(['status'=>'ok','action'=>'updated','id'=>$id]);
         $stmt->close();
+        echo json_encode(['status'=>'ok','action'=>'updated','id'=>$id,'images'=>$final_images,'upload_errors'=>$upload_errors]);
     } else {
+        // New product: if files uploaded, save to tmp first, then insert product to get id, then move tmp files to final folder
+        $processFilesToFolder('tmp');
+        // Insert product with empty images placeholder for now
+        $initial_images_json = json_encode($images_current);
         $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images) VALUES (?,?,?,?,?)");
         if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-        $stmt->bind_param('ssdss', $name,$service,$price,$details,$images);
+        $stmt->bind_param('ssdss', $name,$service,$price,$details,$initial_images_json);
         if(!$stmt->execute()) fail('Insert failed: ' . $stmt->error,500);
-        echo json_encode(['status'=>'ok','action'=>'inserted','id'=>$stmt->insert_id]);
+        $newId = $stmt->insert_id;
         $stmt->close();
+        // If we have uploaded tmp files, move them to newId folder
+        $moved_paths = [];
+        if (count($uploaded_paths) > 0) {
+            $tmpFolder = $targetDirBase . '/tmp';
+            $finalFolder = $targetDirBase . '/' . $newId;
+            if (!is_dir($finalFolder)) mkdir($finalFolder, 0755, true);
+            foreach ($uploaded_paths as $rel) {
+                $filename = basename($rel);
+                $srcPath = $tmpFolder . '/' . $filename;
+                $dstPath = $finalFolder . '/' . $filename;
+                if (@rename($srcPath, $dstPath)) {
+                    $moved_paths[] = 'uploads/products/' . $newId . '/' . $filename;
+                } else {
+                    $upload_errors[] = 'move_tmp_failed:' . $filename;
+                }
+            }
+        }
+        $final_images = array_values(array_merge($images_current, $moved_paths));
+        $images_json = json_encode($final_images);
+        // Update product with final image list
+        $stmt2 = $conn->prepare("UPDATE products SET images=? WHERE product_id=?");
+        if($stmt2) {
+            $stmt2->bind_param('si', $images_json, $newId);
+            $stmt2->execute();
+            $stmt2->close();
+        }
+        echo json_encode(['status'=>'ok','action'=>'inserted','id'=>$newId,'images'=>$final_images,'upload_errors'=>$upload_errors]);
     }
     exit;
 }
