@@ -292,8 +292,13 @@ if ($isAuthenticated) {
                             // Normalize order status to limited set
                             $rawStatus = trim($o['OrderStatus']);
                             $norm = strtolower($rawStatus);
+                            // Prefer to show explicit 'Pending' for newly placed orders
                             $displayStatus = 'Processing';
-                            if (in_array($norm,['processing','pending','in-progress','inprocess'])) { $displayStatus='Processing'; }
+                            if ($norm === 'pending') {
+                                $displayStatus = 'Pending';
+                            } elseif (in_array($norm,['processing','in-progress','inprocess'])) {
+                                $displayStatus = 'Processing';
+                            }
                             elseif ($norm==='ready') { $displayStatus='Ready'; }
                             elseif (in_array($norm,['shipped','dispatched','in-transit','out-for-delivery'])) { $displayStatus='Shipped'; }
                             elseif ($norm==='delivered') { $displayStatus='Delivered'; }
@@ -308,7 +313,7 @@ if ($isAuthenticated) {
                                     <div class="oc-line"><span class="oc-label">Order #</span><strong><?= htmlspecialchars($o['order_id']) ?></strong></div>
                                     <div class="oc-line"><span class="oc-label">Date</span><span><?= htmlspecialchars($o['created_col']) ?></span></div>
                                     <div class="oc-line"><span class="oc-label">Total</span><span>₱<?= htmlspecialchars(number_format((float)$o['TotalAmount'],2)) ?></span></div>
-                                    <div class="oc-line"><span class="oc-label">Status</span><span class="badge status-<?= htmlspecialchars($displayStatusClass) ?>"><?= htmlspecialchars($displayStatus) ?></span></div>
+                                    <div class="oc-line"><span class="oc-label">Order Status</span><span class="badge status-<?= htmlspecialchars($displayStatusClass) ?>"><?= htmlspecialchars($displayStatus) ?></span></div>
                                     <?php 
                                         $rawDelivery = isset($o['DeliveryStatus']) ? $o['DeliveryStatus'] : $o['OrderStatus'];
                                         $deliveredFlag = (strcasecmp($rawDelivery,'Delivered')===0) || (strcasecmp($o['OrderStatus'],'Delivered')===0);
@@ -316,10 +321,10 @@ if ($isAuthenticated) {
                                     ?>
                                     <?php if(strcasecmp($displayStatus,'Cancelled')===0): ?>
                                         <!-- Delivery suppressed for cancelled orders -->
-                                    <?php elseif(!$deliveredFlag && strcasecmp($displayStatus,'Completed')!==0 && !empty($o['DeliveryStatus'])): ?>
-                                        <div class="oc-line"><span class="oc-label">Delivery</span><span class="badge delivery-<?= strtolower(preg_replace('/\s+/','-', $o['DeliveryStatus'])) ?>"><?= htmlspecialchars($o['DeliveryStatus']) ?></span></div>
-                                    <?php elseif($needConfirm): ?>
-                                        <div class="oc-line"><span class="oc-label">Delivery</span><button type="button" class="confirm-delivery-btn inline">Confirm Delivery</button></div>
+                                        <?php elseif(!$deliveredFlag && strcasecmp($displayStatus,'Completed')!==0 && !empty($o['DeliveryStatus'])): ?>
+                                        <div class="oc-line"><span class="oc-label">Delivery Status</span><span class="badge delivery-<?= strtolower(preg_replace('/\s+/','-', $o['DeliveryStatus'])) ?>"><?= htmlspecialchars($o['DeliveryStatus']) ?></span></div>
+                                        <?php elseif($needConfirm): ?>
+                                        <div class="oc-line"><span class="oc-label">Delivery Status</span><button type="button" class="confirm-delivery-btn inline">Confirm Delivery</button></div>
                                     <?php endif; ?>
                                 </div>
                             </div>

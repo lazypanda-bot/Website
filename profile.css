@@ -61,6 +61,8 @@
 .status-delivered { background:#00897b; }
 .status-cancelled { background:#b71c1c; }
 .status-completed { background:#2e7d32; }
+/* Pending: distinct neutral-amber to indicate awaiting admin action */
+.status-pending { background:#ffb74d; color:#2b1a00; }
 .delivery-pending { background:#757575; }
 .delivery-dispatched { background:#1976d2; }
 .delivery-delivered { background:#2e7d32; }

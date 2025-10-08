@@ -32,9 +32,9 @@ $color = $_POST['color'];
 $quantity = $_POST['quantity'];
 $isPartialPayment = $_POST['isPartialPayment'];
 $TotalAmount = $_POST['TotalAmount'];
-$OrderStatus = $_POST['OrderStatus'];
-$DeliveryAddress = $_POST['DeliveryAddress'];
-$DeliveryStatus = $_POST['DeliveryStatus'];
+$OrderStatus = isset($_POST['OrderStatus']) && trim($_POST['OrderStatus']) !== '' ? trim($_POST['OrderStatus']) : 'Pending';
+$DeliveryAddress = isset($_POST['DeliveryAddress']) ? trim($_POST['DeliveryAddress']) : '';
+$DeliveryStatus = isset($_POST['DeliveryStatus']) && trim($_POST['DeliveryStatus']) !== '' ? trim($_POST['DeliveryStatus']) : 'Pending';
 $created_at = date('Y-m-d H:i:s');
 // Fetch phone_number from users table
 $phone_number = '';
