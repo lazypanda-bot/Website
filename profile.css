@@ -1,3 +1,7 @@
+.status-ready {
+    background: #4a90e2;
+    color: #fff;
+}
 /* Orders panel, order card, filter bar, and toast styles moved from profile.php */
 .orders-panel { margin-top:28px; background:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; border-radius:0; padding:18px 0 30px; box-shadow:none; width:100%; grid-column:1 / -1; border-top:2px solid #e7d2d2; box-sizing:border-box; --orders-side-gutter:42px; overflow:visible; }
 .orders-panel.orders-collapsed { min-height:0 !important; padding:0 0 4px; margin-top:12px; border-top:none; }

@@ -264,7 +264,7 @@ function pd_first_image($imagesField) {
             </div>
             <?php endif; ?>
         </div>
-    <section class="tab-content" id="order" hidden>
+    <div class="tab-content" id="order" hidden>
             <section class="product-detail-section">
                 <div class="order-step product-detail">
                     <h3>1. Product Detail</h3>
@@ -355,7 +355,7 @@ function pd_first_image($imagesField) {
                     <button type="button" class="addcart-btn" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Add to Cart</button>
                 </form>
             </div>
-        </section>
+    </div>
     </section>
 
     <?php include 'footer.php'; ?>
@@ -422,11 +422,13 @@ function pd_first_image($imagesField) {
                 </div>
             </div>
             
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
     <script src="app.js"></script>
     <script src="about.js"></script>
     <script src="login.js"></script>
     <script src="message.js"></script>
     <script src="details.js"></script>
+    <script src="forproductbtns.js"></script>
     <script src="three.min.js"></script>
     <script src="GLTFLoader.js"></script>
     <script src="OrbitControls.js"></script>

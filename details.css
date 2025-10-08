@@ -91,6 +91,15 @@ body.modal-open { overflow:hidden; }
     max-height: 0;
     padding: 0;
 }
+/* Make sure hidden modals/overlays don't block clicks when using the `hidden` attribute */
+.custom-modal[hidden],
+.quick-order-overlay[hidden],
+.quick-order-overlay[aria-hidden="true"] {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
 #uploadModal.custom-modal .modal-header,
 #designModal.custom-modal .modal-header {
     display: flex;

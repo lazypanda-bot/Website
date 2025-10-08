@@ -69,14 +69,20 @@ $isAuthenticated = isset($_SESSION['user_id']);
             </div>
             <div class="image-column">
                 <img src="img/snorlax.png" alt="Custom Mug" class="product-image" id="mainImage" />
-
                 <div class="thumbnail-row">
-                    <img src="img/snorlax.png" alt="Mug 1" class="thumbnail" data-action="change-image" />
-                    <img src="img/snorlax.png" alt="Mug 2" class="thumbnail" data-action="change-image" />
-                    <img src="img/snorlax.png" alt="Mug 3" class="thumbnail" data-action="change-image" />
-                    <button type="button" id="add-thumbnail-btn"> <span>+</span> </button>
-                        <span>+</span>
-                    </button>
+                    <div class="thumbnail-wrapper">
+                        <img src="img/snorlax.png" alt="Mug 1" class="thumbnail" data-action="change-image" />
+                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
+                    </div>
+                    <div class="thumbnail-wrapper">
+                        <img src="img/snorlax.png" alt="Mug 2" class="thumbnail" data-action="change-image" />
+                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
+                    </div>
+                    <div class="thumbnail-wrapper">
+                        <img src="img/snorlax.png" alt="Mug 3" class="thumbnail" data-action="change-image" />
+                        <button class="delete-thumbnail-btn" type="button" title="Delete thumbnail">-</button>
+                    </div>
+                    <button type="button" id="add-thumbnail-btn"><span>+</span></button>
                 </div>
             </div>
         <div class="product-text">
@@ -85,21 +91,18 @@ $isAuthenticated = isset($_SESSION['user_id']);
                 <button class="tab-btn active" data-tab="description">Description</button>
                 <button class="tab-btn" data-tab="order">Start Your Order</button>
             </div>
-        <div class="tab-content" id="description">
-            <p class="product-description">
-                Classic, sturdy, and endlessly sippable—this mug earns its spot at the top. Whether you're powering through a morning meeting or winding down with a cozy evening brew, its clean silhouette and thoughtful details make it a daily essential.
-            </p>
-            <ul class="product-features">
-                <li>Heat-retaining, cool-touch ceramic</li>
-                <li>Long-lasting, fade-proof print</li>
-            </ul>
-            <h4>Product Details</h4>
-            <ul class="product-details">
-                
-            </ul>
-        </div>
-
-    <section class="tab-content" id="order" hidden>
+            <div class="tab-content" id="description">
+                <p class="product-description">
+                    Classic, sturdy, and endlessly sippable—this mug earns its spot at the top. Whether you're powering through a morning meeting or winding down with a cozy evening brew, its clean silhouette and thoughtful details make it a daily essential.
+                </p>
+                <ul class="product-features">
+                    <li>Heat-retaining, cool-touch ceramic</li>
+                    <li>Long-lasting, fade-proof print</li>
+                </ul>
+                <h4>Product Details</h4>
+                <ul class="product-details"></ul>
+            </div>
+            <section class="tab-content" id="order" hidden>
             <section class="product-detail-section">
                 <div class="order-step product-detail">
                     <h3>1. Product Detail</h3>
@@ -109,42 +112,34 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     <p class="step-note">Follow the steps below to place your order.</p>
                     <div class="details-container">
                         <form class="product-options-row">
-                            <div class="form-group" data-col="1">
+                            <div class="form-group grid-col-1">
                                 <label for="product-name">Product Name</label>
-                                <div class="custom-dropdown" id="productDropdown">
-                                    <button type="button" class="dropdown-toggle" id="productDropdownToggle">One Piece Mug</button>
-                                    <ul class="dropdown-menu">
-                                        <li data-action="select-option">One Piece Mug</li>
-                                        <li data-action="select-option">Snorlax Mug</li>
-                                        <li data-action="select-option">Custom Text Mug</li>
-                                    </ul>
-                                    <input type="hidden" name="product-name" id="product-name" value="One Piece Mug" />
-                                </div>
+                                <div class="product-static-box auto-width-box">One Piece Mug</div>
                             </div>
-                            <div class="form-group" data-col="2">
+                            <div class="form-group grid-col-2">
                                 <label for="size">Size</label>
                                 <div class="custom-dropdown" id="sizeDropdown">
                                     <button type="button" class="dropdown-toggle" id="sizeDropdownToggle">12oz</button>
                                     <ul class="dropdown-menu">
-                                        <li data-action="select-size">12oz</li>
-                                        <li data-action="select-size">15oz</li>
+                                        <li class="size-option">12oz</li>
+                                        <li class="size-option">15oz</li>
                                     </ul>
                                     <input type="hidden" name="size" id="size" value="12oz" />
                                 </div>
                             </div>
-                            <div class="form-group" data-col="1">
+                            <div class="form-group grid-col-1">
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
                                     <button type="button" id="qtyMinus">−</button>
-                                    <input type="number" id="quantity" name="quantity" value="0" min="0" />
+                                    <input type="number" id="quantity" name="quantity" value="1" min="1" />
                                     <button type="button" id="qtyPlus">+</button>
                                 </div>
                             </div>
-                            <div class="form-group price-group" data-col="2">
+                            <div class="form-group price-group grid-col-2">
                                 <label for="product-price">Price</label>
-                                <div style="display:flex;align-items:center;gap:6px;">
+                                <div class="product-static-box price-box">
                                     <span class="peso-sign">₱</span>
-                                    <input type="number" id="product-price" name="product-price" value="150" min="0" step="0.01" class="price-input">
+                                    150
                                 </div>
                             </div>
                         </form>
@@ -157,12 +152,9 @@ $isAuthenticated = isset($_SESSION['user_id']);
                     Choose how you'd like to personalize your mug. You can upload your own artwork or use our customization tools to create something unique.
                 </p>
                 <div class="design-buttons">
-                    <button type="button" class="design-btn" id="uploadDesignBtn">
-                        Upload Your Design
-                    </button>
-                    <button type="button" class="design-btn" id="requestDesignBtn">
-                        Request Design
-                    </button>
+                    <button type="button" class="design-btn" id="uploadDesignBtn">Upload Your Design</button>
+                    <a href="sim.html" class="design-btn">Customize Design</a>
+                    <button type="button" class="design-btn" id="requestDesignBtn">Request Design</button>
                 </div>
                 <p class="design-note">
                     <strong>Note:</strong> A digital proof of your design will be sent to your registered account. Please review and approve it to proceed with printing.
@@ -170,8 +162,25 @@ $isAuthenticated = isset($_SESSION['user_id']);
                 <input type="hidden" name="design-option" id="design-option" value="" />
             </section>
             <div class="action-buttons">
-                <button class="buy-btn">Buy Now</button>
-                <button class="addcart-btn">Add to Cart</button>
+                <form action="#" method="POST" id="orderForm" class="order-form">
+                    <input type="hidden" name="product_id" value="1" />
+                    <input type="hidden" name="size" id="form_size" value="12oz" />
+                    <input type="hidden" name="color" id="form_color" value="" />
+                    <input type="hidden" name="quantity" id="form_quantity" value="1" />
+                    <input type="hidden" name="isPartialPayment" value="0" />
+                    <input type="hidden" name="TotalAmount" id="form_totalAmount" value="150" />
+                    <input type="hidden" name="OrderStatus" value="Pending" />
+                    <input type="hidden" name="DeliveryAddress" id="form_DeliveryAddress" value="" />
+                    <input type="hidden" name="DeliveryStatus" value="Pending" />
+                    <button type="button" class="buy-btn" id="buyNowBtn">Buy Now</button>
+                </form>
+                <form action="#" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
+                    <input type="hidden" name="product_id" value="1" />
+                    <input type="hidden" name="size" id="cart_size" value="12oz" />
+                    <input type="hidden" name="color" id="cart_color" value="" />
+                    <input type="hidden" name="quantity" id="cart_quantity" value="1" />
+                    <button type="button" class="addcart-btn">Add to Cart</button>
+                </form>
             </div>
         </section>
     </section>

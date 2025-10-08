@@ -9,7 +9,9 @@
   <link rel="stylesheet" href="navbar-footer.css" />
   <link rel="stylesheet" href="sim.css" />
   <link rel="stylesheet" href="details.css" />
+</head>
   <link rel="stylesheet" href="login.css" />
+  <!-- 3D dependencies -->
 </head>
 <body>
   <section id="header">
@@ -54,6 +56,7 @@
       <div class="sim-viewer-left">
         <div id="shirt3d-wrapper">
           <div id="viewerCanvas"></div>
+  <!-- 3D viewer will be rendered here -->
         </div>
       </div>
       <div class="sim-viewer-right">
@@ -114,4 +117,10 @@
   <script src="login.js"></script>
   <script src="sim.js"></script>
 </body>
+  <!-- 3D dependencies: must be after viewerCanvas -->
+  <script src="three.min.js"></script>
+  <script src="OrbitControls.js"></script>
+  <script src="GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+  <script src="sim.js"></script>
 </html>

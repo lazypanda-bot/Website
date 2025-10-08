@@ -189,6 +189,23 @@ window.addEventListener('DOMContentLoaded', () => {
         fetchOrders(true); return;
       }
       updateOrderStatus(id,newVal,cell,sel);
+      // If order status is set to Cancelled or Failed, set delivery status to Failed automatically
+      if(newVal==='Cancelled'||newVal==='Failed'){
+        // Find the delivery status cell in the same row
+        const row = cell.parentElement;
+        if(row){
+          const deliveryCell = row.querySelector('td.status-cell[data-type="delivery"]');
+          if(deliveryCell && !deliveryCell.classList.contains('completed-readonly')){
+            // Set the select value and trigger change
+            const deliverySel = deliveryCell.querySelector('select[data-status-select]');
+            if(deliverySel && deliverySel.value!=='Failed'){
+              deliverySel.value = 'Failed';
+              // Manually trigger change event for delivery status
+              deliverySel.dispatchEvent(new Event('change', {bubbles:true}));
+            }
+          }
+        }
+      }
     } else if(kind==='delivery') {
       updateDeliveryStatus(id,newVal,cell,sel);
     }

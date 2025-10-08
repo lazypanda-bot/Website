@@ -71,15 +71,15 @@ function toggleSizeDropdown() {
   const productMenu = document.querySelector("#productDropdown .dropdown-menu");
   const sizeMenu = document.querySelector("#sizeDropdown .dropdown-menu");
   productMenu && (productMenu.style.display = "none");
-  if (sizeMenu) {
-    const isOpen = sizeMenu.style.display === "block";
-    sizeMenu.style.display = isOpen ? "none" : "block";
-    if (!isOpen) {
-      document.addEventListener('mousedown', handleClickOutsideSizeDropdown);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutsideSizeDropdown);
-    }
-  }
+	if (sizeMenu) {
+	  const isOpen = sizeMenu.style.display === "block";
+	  sizeMenu.style.display = isOpen ? "none" : "block";
+	  if (!isOpen) {
+	    document.addEventListener('mousedown', handleClickOutsideSizeDropdown);
+	  } else {
+	    document.removeEventListener('mousedown', handleClickOutsideSizeDropdown);
+	  }
+	}
 }
 
 function handleClickOutsideSizeDropdown(event) {
@@ -210,8 +210,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+      console.log('[TabBtn] Clicked:', btn, 'Event:', e);
       const tabId = btn.getAttribute('data-tab');
+      const tabContent = document.getElementById(tabId);
+      if (!tabContent) {
+        console.warn('[TabBtn] Tab content not found for id:', tabId);
+        return;
+      }
+      // Remove hidden attribute if present
+      if (tabContent.hasAttribute('hidden')) {
+        tabContent.removeAttribute('hidden');
+        console.log('[TabBtn] Removed hidden attribute from:', tabContent);
+      }
       showTab(tabId, btn);
     });
   });
@@ -304,7 +315,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }, 100);
   }
-}
 
 
 function closeViewerModal() {
