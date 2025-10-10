@@ -1,7 +1,7 @@
 .service-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 4px;
   padding: 30px 60px;
   background-color: transparent;
 }
@@ -50,4 +50,46 @@
 
 .service-item h3:hover {
   background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Styles for home.php service cards (.serv) */
+.serv {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 22px -10px rgba(0,0,0,0.12);
+  transition: transform .18s ease, box-shadow .18s ease;
+  margin-top: 20px; /* reduce top offset so grid rows align */
+}
+.serv:hover { transform: translateY(-4px); box-shadow: 0 14px 40px -16px rgba(0,0,0,0.18); }
+.serv img { width: 100%; height: 160px; object-fit: cover; display:block; }
+.serv img { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+.serv-body { padding: 22px 36px; text-align:center; } /* increased left/right padding */
+.serv-body h3 { margin:8px 0 0; color:#752525; font-weight:600; }
+
+/* add breathing room between cards */
+.serv { margin-bottom: 28px; }
+
+/* Ensure all service card headings and body text are centered */
+.serv, .serv h3, .serv p, .serv .serv-body { text-align: center; }
+
+@media (max-width: 920px){
+  .service-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .serv { max-width: 100%; }
+}
+@media (max-width: 560px){
+  .service-grid { grid-template-columns: 1fr; }
+  .serv { max-width: 100%; }
+}
+
+/* Align the featured section: use fixed column width so items pack left */
+#featured {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 260px));
+  gap: 28px;
+  align-items: start;
+  justify-items: start;
+  justify-content: start; /* pack columns to the left */
 }

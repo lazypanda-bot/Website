@@ -41,7 +41,7 @@ require_once '../database.php';
 						</div>
 					</div>
 					<div class="user-profile">
-						<a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
+						<a href="settings.html" class="auth-link1" title="Admin settings"><i class="fa-solid fa-user"></i></a>
 					</div>
 				</div>
 			</header>
@@ -98,12 +98,17 @@ require_once '../database.php';
 					<textarea name="product_details" id="product_details" rows="3"></textarea>
 				</div>
 				<div class="form-row">
-					<label>Images (comma or JSON array)</label>
-					<input type="text" name="images" id="images" placeholder="img/a.jpg, img/b.jpg" />
+					<label>Upload Image</label>
+					<div class="file-chooser">
+						<label class="file-btn">Choose File
+							<input type="file" name="images_files[]" id="images_files" accept="image/*" multiple />
+						</label>
+						<div class="file-info" id="fileInfo" aria-live="polite"></div>
+					</div>
+					<div id="imagePreview" class="image-preview" style="margin-top:8px;"></div>
 				</div>
 				<div class="form-actions">
 					<button type="submit" class="add-btn" id="saveProductBtn">Save</button>
-					<button type="button" class="filter-btn" data-close>Cancel</button>
 				</div>
 			</form>
 		</div>
@@ -117,14 +122,21 @@ require_once '../database.php';
 				<button type="button" class="close-modal" data-close>&times;</button>
 			</div>
 			<form id="serviceForm" style="margin-bottom:14px;">
+				<input type="hidden" name="service_id" id="service_id" />
 				<div class="form-row" style="flex-direction:row; gap:10px; align-items:flex-end;">
 					<div style="flex:1;">
 						<label>Service Name</label>
 						<input type="text" name="service_name" id="service_name" required />
 					</div>
 					<div style="flex:1;">
-						<label>Description <span style="font-weight:400;color:#777;">(optional)</span></label>
-						<input type="text" name="service_description" id="service_description" />
+						<label>Image <span style="font-weight:400;color:#777;">(optional)</span></label>
+						<div class="file-chooser">
+							<label class="file-btn">Choose File
+								<input type="file" name="service_image" id="service_image" accept="image/*" />
+							</label>
+							<div class="file-info" id="serviceFileInfo" aria-live="polite"></div>
+						</div>
+						<div id="serviceImagePreview" class="image-preview" style="margin-top:8px;"></div>
 					</div>
 					<div>
 						<button type="submit" class="add-btn" style="margin-top:2px;">Add</button>
@@ -134,11 +146,11 @@ require_once '../database.php';
 			<div style="max-height:260px; overflow:auto; border:1px solid #eee; border-radius:8px;">
 				<table style="width:100%; border-collapse:collapse; font-size:.8rem;">
 					<thead>
-						<tr style="background:#faf8f8;">
-							<th style="text-align:left;padding:6px 10px;">Name</th>
-							<th style="text-align:left;padding:6px 10px;">Description</th>
-							<th style="padding:6px 10px;">Actions</th>
-						</tr>
+							<tr style="background:#faf8f8;">
+								<th style="text-align:left;padding:6px 10px;">Image</th>
+								<th style="text-align:left;padding:6px 10px;">Name</th>
+								<th style="padding:6px 10px;">Actions</th>
+							</tr>
 					</thead>
 					<tbody id="servicesTbody"></tbody>
 				</table>

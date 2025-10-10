@@ -8,6 +8,15 @@
 .form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
 .form-row label { font-size:.85rem; font-weight:600; color:#752525; }
 .form-row input[type=text], .form-row input[type=number], .form-row textarea { padding:8px 10px; font-size:.9rem; border:1px solid #ccc; border-radius:8px; resize:vertical; font-family:inherit; }
+.file-chooser { display:flex; align-items:center; gap:10px; }
+.file-btn { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #d9d9d9; padding:8px 12px; border-radius:8px; cursor:pointer; color:#752525; font-weight:600; }
+.file-btn input[type=file] { position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+.file-info { font-size:.85rem; color:#666; }
+.image-preview img { max-width:120px; max-height:120px; margin-right:8px; border-radius:6px; border:1px solid #eee; }
+.preview-wrap { display:inline-block; position:relative; }
+.preview-wrap img { border-radius:6px; }
+.img-remove { position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.6); color:#fff; border:none; width:22px; height:22px; border-radius:50%; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; }
+.img-remove:hover { background:rgba(0,0,0,0.85); }
 .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
 .action-icon-btn { background:none; border:none; cursor:pointer; font-size:1.1rem; margin-right:6px; }
 .action-icon-btn.edit { color:#2e7d32; }
@@ -80,11 +89,12 @@ body {
     font-size: 15px;
 }
 .product-table th, .product-table td {
-    padding: 5px;
+    padding: 12px 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     vertical-align: middle;
 }
+.product-table td:nth-child(2) { text-align:center; }
 .product-table th {
     background-color: #f2f2f2;
     color: #752525;
@@ -94,9 +104,12 @@ body {
     width: 60px;
     height: 60px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #ccc;
 }
+.product-thumb.broken { opacity:0.3; filter:grayscale(1); }
+/* remove any leftover caption spacing */
+.thumb-caption{ display:none; }
 .edit-btn, .delete-btn {
     background: none;
     border: none;

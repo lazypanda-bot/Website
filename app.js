@@ -228,3 +228,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.cookie = 'welcome_toast=; Max-Age=0; path=/';
   }
 });
+// end of app.js

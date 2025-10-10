@@ -36,6 +36,11 @@ if ($method === 'POST' && $action === 'save') {
         $decoded = json_decode($_POST['images_current'], true);
         if (is_array($decoded)) $images_current = $decoded;
     }
+    // images_removed[] contains paths (relative) admin wants to remove
+    $images_removed = [];
+    if (!empty($_POST['images_removed']) && is_array($_POST['images_removed'])) {
+        $images_removed = $_POST['images_removed'];
+    }
 
     if ($name === '') fail('Product name required');
     if ($price < 0) fail('Price invalid');
@@ -72,7 +77,29 @@ if ($method === 'POST' && $action === 'save') {
     if ($id > 0) {
         // Existing product: move files directly into its folder
         $processFilesToFolder((string)$id);
-        $final_images = array_values(array_merge($images_current, $uploaded_paths));
+        // Remove any marked images from images_current and attempt to move them to trash
+        $targetTrash = __DIR__ . '/../uploads/trash';
+        if (!is_dir($targetTrash)) mkdir($targetTrash, 0755, true);
+        $sanitized_current = [];
+        foreach ($images_current as $im) {
+            // Only remove if explicitly requested; otherwise keep
+            if (in_array($im, $images_removed, true)) {
+                // move file to trash if it's local (uploads/products/...)
+                if (preg_match('#^uploads/products/#', $im)) {
+                    $full = __DIR__ . '/../' . $im;
+                    if (file_exists($full)) {
+                        $dst = $targetTrash . '/' . basename($im);
+                        // ensure unique filename in trash
+                        $dst = $targetTrash . '/' . time() . '_' . bin2hex(random_bytes(4)) . '_' . basename($im);
+                        @rename($full, $dst);
+                    }
+                }
+                // do not add to sanitized_current
+                continue;
+            }
+            $sanitized_current[] = $im;
+        }
+        $final_images = array_values(array_merge($sanitized_current, $uploaded_paths));
         $images_json = json_encode($final_images);
         $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=? WHERE product_id=?");
         if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
@@ -108,7 +135,16 @@ if ($method === 'POST' && $action === 'save') {
                 }
             }
         }
-        $final_images = array_values(array_merge($images_current, $moved_paths));
+        // For new product, removed list shouldn't normally apply, but sanitize anyway
+        $sanitized_current = [];
+        foreach ($images_current as $im) {
+            if (in_array($im, $images_removed, true)) {
+                // don't add
+                continue;
+            }
+            $sanitized_current[] = $im;
+        }
+        $final_images = array_values(array_merge($sanitized_current, $moved_paths));
         $images_json = json_encode($final_images);
         // Update product with final image list
         $stmt2 = $conn->prepare("UPDATE products SET images=? WHERE product_id=?");

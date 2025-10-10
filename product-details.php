@@ -167,7 +167,6 @@ function pd_first_image($imagesField) {
 </head>
 <script>
   window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
-    window.isAdmin = <?= (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) ? 'true' : 'false' ?>;
 </script>
 <body>
 <?php if(!empty($_SESSION['flash_order_success'])): unset($_SESSION['flash_order_success']); ?>
@@ -259,17 +258,12 @@ function pd_first_image($imagesField) {
     } else {
         $imagesList = [];
     }
-    $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
     if ($hasThumbnails) {
         foreach ($imagesList as $idx => $imgSrc) {
-    $safeSrc = htmlspecialchars($imgSrc);
-        echo "<div class=\"thumbnail-wrapper\">";
-        echo "<img src=\"$safeSrc\" alt=\"Thumbnail {$idx}\" class=\"thumbnail\" data-action=\"change-image\" />";
-        if ($isAdmin) echo "<button class=\"delete-thumbnail-btn\" type=\"button\" title=\"Delete thumbnail\">-</button>";
-        echo "</div>";
-        }
-        if ($isAdmin) {
-            echo "<button type=\"button\" id=\"add-thumbnail-btn\"><span>+</span></button>";
+            $safeSrc = htmlspecialchars($imgSrc);
+            echo "<div class=\"thumbnail-wrapper\">";
+            echo "<img src=\"$safeSrc\" alt=\"Thumbnail {$idx}\" class=\"thumbnail\" data-action=\"change-image\" />";
+            echo "</div>";
         }
     }
     // Temporary debug: show image src and server file existence when ?debug_images=1 is present

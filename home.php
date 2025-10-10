@@ -27,7 +27,7 @@
         // Ensure services table exists before querying (non-fatal if missing)
         if ($chk = $conn->query("SHOW TABLES LIKE 'services'")) {
             if ($chk->num_rows > 0) {
-                $sql = "SELECT s.name, (SELECT images FROM products p WHERE p.service_type = s.name ORDER BY p.created_at DESC LIMIT 1) AS sample_images FROM services s ORDER BY s.name ASC";
+                $sql = "SELECT s.name, s.image AS service_image, (SELECT images FROM products p WHERE p.service_type = s.name ORDER BY p.created_at DESC LIMIT 1) AS sample_images FROM services s ORDER BY s.name ASC";
                 if ($res = $conn->query($sql)) {
                     while ($row = $res->fetch_assoc()) { $servicesHome[] = $row; }
                     $res->free();
@@ -195,12 +195,26 @@
             <?php foreach ($servicesHome as $srv): 
                 $name = $srv['name'];
                 $slug = strtolower(preg_replace('/\s+/', '-', $name));
-                $img = htmlspecialchars(firstImageHome($srv['sample_images'] ?? ''));
+                // Prefer the explicit service image (admin-uploaded). If it's not present or file missing, fall back to product sample images.
+                $svcImg = isset($srv['service_image']) ? trim($srv['service_image']) : '';
+                $img = '';
+                if ($svcImg !== '') {
+                    // If stored path is relative, check file exists on server
+                    $serverPath = __DIR__ . '/' . $svcImg;
+                    if (is_file($serverPath)) {
+                        $img = htmlspecialchars($svcImg);
+                    } else {
+                        // if file not present, fall back
+                        $img = htmlspecialchars(firstImageHome($srv['sample_images'] ?? ''));
+                    }
+                } else {
+                    $img = htmlspecialchars(firstImageHome($srv['sample_images'] ?? ''));
+                }
             ?>
             <a href="products.php#<?= htmlspecialchars($slug) ?>" class="serv-link">
                 <div class="serv">
-                    <img src="<?= $img ?>" alt="<?= htmlspecialchars($name) ?>">
-                    <div class="title-price">
+                    <img src="<?= $img ?>" alt="<?= htmlspecialchars($name) ?>" loading="lazy" onerror="this.onerror=null;this.src='img/logo.png'">
+                    <div class="serv-body">
                         <h3><?= htmlspecialchars($name) ?></h3>
                     </div>
                 </div>

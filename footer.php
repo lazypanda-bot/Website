@@ -52,3 +52,33 @@ if (!isset($servicesFooter)) {
         </div>
     </div>
 </footer>
+<script>
+    // Global image fallback: replace any broken image with site logo
+    (function(){
+        function setFallback(img){
+            try{ if(!img) return; if(img.dataset._fallbackApplied) return; img.dataset._fallbackApplied = '1'; img.src = 'img/logo.png'; }
+            catch(e){ /* noop */ }
+        }
+        // Attach to existing images
+        document.addEventListener('DOMContentLoaded', ()=>{
+            document.querySelectorAll('img').forEach(img=>{
+                if(img.complete && img.naturalWidth===0) setFallback(img);
+                img.addEventListener('error', ()=> setFallback(img));
+            });
+        });
+        // Also catch dynamically added images
+        const mo = new MutationObserver(muts=>{
+            muts.forEach(m=>{
+                m.addedNodes && m.addedNodes.forEach(n=>{
+                    if(n && n.tagName==='IMG'){
+                        n.addEventListener('error', ()=> setFallback(n));
+                        if(n.complete && n.naturalWidth===0) setFallback(n);
+                    } else if(n && n.querySelectorAll){
+                        n.querySelectorAll('img').forEach(img=>{ img.addEventListener('error', ()=> setFallback(img)); if(img.complete && img.naturalWidth===0) setFallback(img); });
+                    }
+                });
+            });
+        });
+        try{ mo.observe(document.body, {childList:true, subtree:true}); } catch(e){ /* ignore if body not yet present */ }
+    })();
+</script>
