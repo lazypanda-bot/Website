@@ -21,7 +21,7 @@ session_start();
 $isAuthenticated = isset($_SESSION['user_id']);
 ?>
 <script>
-  window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
+    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
 <script src="login.js"></script>
 
@@ -92,15 +92,7 @@ $isAuthenticated = isset($_SESSION['user_id']);
                 <button class="tab-btn" data-tab="order">Start Your Order</button>
             </div>
             <div class="tab-content" id="description">
-                <p class="product-description">
-                    Classic, sturdy, and endlessly sippable—this mug earns its spot at the top. Whether you're powering through a morning meeting or winding down with a cozy evening brew, its clean silhouette and thoughtful details make it a daily essential.
-                </p>
-                <ul class="product-features">
-                    <li>Heat-retaining, cool-touch ceramic</li>
-                    <li>Long-lasting, fade-proof print</li>
-                </ul>
-                <h4>Product Details</h4>
-                <ul class="product-details"></ul>
+                <div class="product-details"></div>
             </div>
             <section class="tab-content" id="order" hidden>
             <section class="product-detail-section">

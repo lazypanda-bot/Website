@@ -15,9 +15,6 @@
         <link rel="stylesheet" href="cart.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
-
-
-
 <?php
 session_start();
 require_once __DIR__ . '/database.php';
@@ -79,7 +76,7 @@ if ($isAuthenticated && !$conn->connect_error) {
         </div>
         <div class="cart-summary" id="cart-summary">
             <h3>Total: ₱0.00</h3>
-            <button class="checkout-btn" disabled onclick="document.getElementById('checkout-form').style.display='block'">Proceed to Checkout</button>
+            <button class="checkout-btn" disabled data-action="open-checkout">Proceed to Checkout</button>
         </div>
     <form id="checkout-form" class="checkout-form is-hidden" novalidate>
         <h3>Checkout</h3>

@@ -43,7 +43,20 @@ if ($action === 'list') {
     $services = [];
     $res = $conn->query("SELECT service_id, name, description, image, created_at FROM services ORDER BY name ASC");
     if ($res instanceof mysqli_result) {
-        while($r=$res->fetch_assoc()) { $services[]=$r; }
+        while($r=$res->fetch_assoc()) {
+            // compute dependency count
+            $cnt = 0;
+            $cstmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM products WHERE TRIM(service_type) = ?");
+            if ($cstmt) {
+                $cstmt->bind_param('s', $r['name']);
+                if ($cstmt->execute()) {
+                    $cres = $cstmt->get_result(); $crow = $cres ? $cres->fetch_assoc() : null; $cnt = (int)($crow['cnt'] ?? 0);
+                }
+                $cstmt->close();
+            }
+            $r['product_count'] = $cnt;
+            $services[]=$r;
+        }
     }
     // Auto-seed from existing products if empty
     if (count($services) === 0) {

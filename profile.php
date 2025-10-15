@@ -186,11 +186,9 @@ if ($isAuthenticated) {
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <ul style="display: flex; align-items: center; gap: 10px; list-style: none; margin: 0; padding: 0;">
-                <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
-                <?php include_once 'nav_avatar.php'; ?>
-                <li><a href="profile.php" id="profile-icon" class="auth-link"><?= $NAV_AVATAR_HTML ?></a></li>
-            </ul>
+            <?php include_once 'nav_avatar.php'; ?>
+            <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
+            <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
                 <div class="menu-user">
@@ -208,13 +206,13 @@ if ($isAuthenticated) {
     </section>
     <div class="settings-container">
         <section class="account-flex">
-            <div class="profile-side" style="position:relative;">
+            <div class="profile-side">
                 <div class="profile-image-wrapper">
                     <div class="profile-avatar-ring">
                         <?php $avatarSafe = ($avatarPath && file_exists(__DIR__ . '/' . $avatarPath)) ? htmlspecialchars($avatarPath) : 'img/logo.png'; ?>
                         <img src="<?= $avatarSafe ?>" alt="Profile Image" class="profile-avatar" id="profileAvatarImg" />
                         <button type="button" class="avatar-edit-btn" id="avatarEditBtn" aria-label="Change avatar"><i class="fa fa-camera"></i></button>
-                        <form id="avatarUploadForm" action="profile.php" method="post" enctype="multipart/form-data" style="display:none;">
+                        <form id="avatarUploadForm" action="profile.php" method="post" enctype="multipart/form-data" class="visually-hidden">
                             <input type="hidden" name="upload_avatar" value="1" />
                             <input type="file" name="avatar_file" id="avatarFileInput" accept="image/*" />
                         </form>
@@ -299,7 +297,9 @@ if ($isAuthenticated) {
                             } elseif (in_array($norm,['processing','in-progress','inprocess'])) {
                                 $displayStatus = 'Processing';
                             }
-                            elseif ($norm==='ready') { $displayStatus='Ready'; }
+                            // Support new 'ready' variants
+                            elseif (in_array($norm, ['ready','ready for pickup','ready-for-pickup'])) { $displayStatus = 'Ready for Pickup'; }
+                            elseif (in_array($norm, ['ready to ship','ready-to-ship','readytoship'])) { $displayStatus = 'Ready to Ship'; }
                             elseif (in_array($norm,['shipped','dispatched','in-transit','out-for-delivery'])) { $displayStatus='Shipped'; }
                             elseif ($norm==='delivered') { $displayStatus='Delivered'; }
                             elseif (in_array($norm,['cancelled','canceled'])) { $displayStatus='Cancelled'; }
@@ -313,18 +313,25 @@ if ($isAuthenticated) {
                                     <div class="oc-line"><span class="oc-label">Order #</span><strong><?= htmlspecialchars($o['order_id']) ?></strong></div>
                                     <div class="oc-line"><span class="oc-label">Date</span><span><?= htmlspecialchars($o['created_col']) ?></span></div>
                                     <div class="oc-line"><span class="oc-label">Total</span><span>₱<?= htmlspecialchars(number_format((float)$o['TotalAmount'],2)) ?></span></div>
-                                    <div class="oc-line"><span class="oc-label">Order Status</span><span class="badge status-<?= htmlspecialchars($displayStatusClass) ?>"><?= htmlspecialchars($displayStatus) ?></span></div>
+                                    <div class="oc-line"><span class="oc-label">Order Status</span><span class="badge status-<?= htmlspecialchars($displayStatusClass) ?> order-status-badge" data-order-status="<?= htmlspecialchars($o['OrderStatus'] ?? '') ?>"><?= htmlspecialchars($displayStatus) ?></span></div>
                                     <?php 
+                                        // Use raw DeliveryStatus if present, otherwise fallback to OrderStatus
                                         $rawDelivery = isset($o['DeliveryStatus']) ? $o['DeliveryStatus'] : $o['OrderStatus'];
-                                        $deliveredFlag = (strcasecmp($rawDelivery,'Delivered')===0) || (strcasecmp($o['OrderStatus'],'Delivered')===0);
+                                        $deliveryNorm = strtolower(trim($rawDelivery));
+                                        // Show a delivery badge when DeliveryStatus exists (except for cancelled orders)
+                                        $showDeliveryBadge = !empty($o['DeliveryStatus']) && strcasecmp($displayStatus,'Cancelled')!==0;
+                                        // Show confirm button only when delivery is 'Delivered' and order not yet Completed
+                                        $showConfirmButton = (strcasecmp($rawDelivery,'Delivered')===0) && strcasecmp($displayStatus,'Completed')!==0;
+                                        // Maintain legacy flags used later in template
+                                        $deliveredFlag = (strcasecmp($rawDelivery,'Delivered')===0) || (strcasecmp($o['OrderStatus'] ?? '','Delivered')===0);
                                         $needConfirm = $deliveredFlag && strcasecmp($displayStatus,'Completed')!==0;
                                     ?>
                                     <?php if(strcasecmp($displayStatus,'Cancelled')===0): ?>
                                         <!-- Delivery suppressed for cancelled orders -->
-                                        <?php elseif(!$deliveredFlag && strcasecmp($displayStatus,'Completed')!==0 && !empty($o['DeliveryStatus'])): ?>
-                                        <div class="oc-line"><span class="oc-label">Delivery Status</span><span class="badge delivery-<?= strtolower(preg_replace('/\s+/','-', $o['DeliveryStatus'])) ?>"><?= htmlspecialchars($o['DeliveryStatus']) ?></span></div>
-                                        <?php elseif($needConfirm): ?>
+                                    <?php elseif($showConfirmButton): ?>
                                         <div class="oc-line"><span class="oc-label">Delivery Status</span><button type="button" class="confirm-delivery-btn inline">Confirm Delivery</button></div>
+                                    <?php elseif($showDeliveryBadge): ?>
+                                        <div class="oc-line"><span class="oc-label">Delivery Status</span><span class="badge delivery-<?= strtolower(preg_replace('/\s+/','-', $o['DeliveryStatus'])) ?> delivery-status-badge" data-delivery-status="<?= htmlspecialchars($o['DeliveryStatus']) ?>"><?= htmlspecialchars($o['DeliveryStatus']) ?></span></div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -363,7 +370,7 @@ if ($isAuthenticated) {
                 $orderedName = isset($flash['name']) ? htmlspecialchars($flash['name']) : null;
                 $orderedQty = isset($flash['qty']) ? (int)$flash['qty'] : null;
             ?>
-                <div id="order-toast" class="profile-toast-success bottom-right" style="background:linear-gradient(135deg,#215c21,#357d35);">
+                <div id="order-toast" class="profile-toast-success bottom-right toast-success-custom">
                     <?php if ($multiCount): ?>
                         Placed <?= $multiCount ?> items successfully!
                     <?php else: ?>
@@ -372,7 +379,7 @@ if ($isAuthenticated) {
                 </div>
             <?php endif; ?>
             <?php if (isset($_GET['complete_profile']) && $isAuthenticated): ?>
-                <div id="complete-profile-toast" class="profile-toast-error bottom-right" style="background:linear-gradient(135deg,#6d1e1e,#8e2b2b);">Please complete your address & phone number to place an order.</div>
+                <div id="complete-profile-toast" class="profile-toast-error bottom-right toast-error-custom">Please complete your address & phone number to place an order.</div>
             <?php endif; ?>
         </section>
     </div>

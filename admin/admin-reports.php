@@ -1,4 +1,8 @@
-<?php session_start(); require_once '../database.php'; ?>
+<?php 
+session_start(); 
+require_once '../database.php'; 
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,9 +25,9 @@
                 <ul class="nav-links">
                     <li><a href="admin.html">Dashboard</a></li>
                     <li><a href="admin-products.php">Products</a></li>
-                    <li><a href="admin-orders.html">Orders</a></li>
-                    <li><a href="admin-payments.html">Payments</a></li>
-                    <li><a href="admin-reports.html">Reports</a></li>
+                    <li><a href="admin-orders.php">Orders</a></li>
+                    <li><a href="admin-payments.php">Payments</a></li>
+                    <li><a href="admin-reports.php">Reports</a></li>
                     <li><a href="settings.html">Settings</a></li>
                 </ul>
             </nav>
@@ -74,11 +78,8 @@
                     <tbody id="reportsTbody"></tbody>
                 </table>
             </section>
-
-    <style>
-    .rev-positive { color:#1b6e2a; font-weight:600; }
-    .rev-zero { color:#777; }
-    </style>
+        </div>
+    </div>
 
     <script src="admin-reports.js?v=<?php echo time(); ?>"></script>
 </body>

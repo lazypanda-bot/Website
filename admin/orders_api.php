@@ -1,7 +1,8 @@
 <?php
 session_start();
 header('Content-Type: application/json');
-require_once '../database.php';
+// admin scripts live in /admin/, database.php is one level up in project root
+require_once __DIR__ . '/../database.php';
 // if(!isset($_SESSION['is_admin'])) { http_response_code(403); echo json_encode(['status'=>'error','message'=>'Forbidden']); exit; }
 
 function fail($m,$c=400){ http_response_code($c); echo json_encode(['status'=>'error','message'=>$m]); exit; }
@@ -36,6 +37,7 @@ if ($action === 'update_status') {
     $status = trim($_POST['OrderStatus'] ?? '');
     if ($id<=0) fail('Invalid id');
     if ($status==='') fail('Status required');
+    // Prevent direct setting to Completed from the admin order dropdown; only delivery confirmation or pickup should complete
     if (strcasecmp($status,'Completed')===0) fail('Completed can only be set via delivery confirmation');
     $stmt = $conn->prepare("UPDATE orders SET OrderStatus=? WHERE order_id=?");
     if(!$stmt) fail('Prepare failed: '.$conn->error,500);
@@ -52,11 +54,19 @@ if ($action === 'update_delivery_status') {
     $status = trim($_POST['DeliveryStatus'] ?? '');
     if ($id<=0) fail('Invalid id');
     if ($status==='') fail('Delivery status required');
-    $allowed = ['Pending','Dispatched','Delivered','Failed'];
+    // Accept new delivery statuses: Pending, Shipped, Delivered, Completed, Picked up, Failed
+    $allowed = ['Pending','Shipped','Delivered','Completed','Picked up','Failed'];
     if(!in_array($status,$allowed,true)) fail('Invalid delivery status');
-    $stmt = $conn->prepare("UPDATE orders SET DeliveryStatus=? WHERE order_id=?");
-    if(!$stmt) fail('Prepare failed: '.$conn->error,500);
-    $stmt->bind_param('si',$status,$id);
+    // If picked up, set DeliveryStatus='Picked up' and also mark OrderStatus='Completed'
+    if (strcasecmp($status,'Picked up')===0) {
+        $stmt = $conn->prepare("UPDATE orders SET DeliveryStatus=?, OrderStatus='Completed' WHERE order_id=?");
+        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+        $stmt->bind_param('si',$status,$id);
+    } else {
+        $stmt = $conn->prepare("UPDATE orders SET DeliveryStatus=? WHERE order_id=?");
+        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+        $stmt->bind_param('si',$status,$id);
+    }
     if(!$stmt->execute()) fail('Update failed: '.$stmt->error,500);
     $stmt->close();
     echo json_encode(['status'=>'ok','action'=>'delivery_status_updated']);

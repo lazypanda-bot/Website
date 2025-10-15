@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../database.php';
+// Basic (optional) admin check placeholder - extend later
+// if(!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) { header('Location: ../home.php'); exit; }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,7 +10,7 @@ require_once '../database.php';
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Products</title>
+	<title>Admin - Products</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="nav&side.css">
@@ -24,9 +26,9 @@ require_once '../database.php';
 				<ul class="nav-links">
 					<li><a href="admin.html">Dashboard</a></li>
 					<li><a href="admin-products.php">Products</a></li>
-					<li><a href="admin-orders.html">Orders</a></li>
-					<li><a href="admin-payments.html">Payments</a></li>
-					<li><a href="admin-reports.html">Reports</a></li>
+					<li><a href="admin-orders.php">Orders</a></li>
+					<li><a href="admin-payments.php">Payments</a></li>
+					<li><a href="admin-reports.php">Reports</a></li>
 					<li><a href="settings.html">Settings</a></li>
 				</ul>
 			</nav>
@@ -35,13 +37,17 @@ require_once '../database.php';
 		<div class="main-panel">
 			<header class="admin-header">
 				<div class="right-header">
+					<!-- <div class="search-box">
+						<input type="text" placeholder="Search" />
+						<a href="#" class="auth-link"><i class="fas fa-search"></i></a>
+					</div> -->
 					<div class="notifications">
 						<div class="icon-wrapper">
 							<a href="#" class="auth-link"><i class="fas fa-bell"></i></a>
 						</div>
 					</div>
 					<div class="user-profile">
-						<a href="settings.html" class="auth-link1" title="Admin settings"><i class="fa-solid fa-user"></i></a>
+						<a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
 					</div>
 				</div>
 			</header>
@@ -63,16 +69,18 @@ require_once '../database.php';
 						<th>Image</th>
 						<th>Product Name</th>
 						<th>Price</th>
-						<th>Product Details</th>
+						<th>Description</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
 			<tbody id="productsTbody"></tbody>
 		</table>
+
+
 	</section>
 
 	<!-- Product Modal -->
-	<div class="modal" id="productModal" style="display:none;">
+	<div class="modal" id="productModal">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="productModalTitle">Add Product</h2>
@@ -91,10 +99,10 @@ require_once '../database.php';
 				</div>
 				<div class="form-row">
 					<label>Price (₱)</label>
-					<input type="number" name="price" id="price" min="" step="0.01" required />
+					<input type="number" name="price" id="price" min="0" step="0.01" required />
 				</div>
 				<div class="form-row">
-					<label>Details</label>
+					<label>Description</label>
 					<textarea name="product_details" id="product_details" rows="3"></textarea>
 				</div>
 				<div class="form-row">
@@ -105,7 +113,7 @@ require_once '../database.php';
 						</label>
 						<div class="file-info" id="fileInfo" aria-live="polite"></div>
 					</div>
-					<div id="imagePreview" class="image-preview" style="margin-top:8px;"></div>
+					<div id="imagePreview" class="image-preview"></div>
 				</div>
 				<div class="form-actions">
 					<button type="submit" class="add-btn" id="saveProductBtn">Save</button>
@@ -115,51 +123,37 @@ require_once '../database.php';
 	</div>
 
 	<!-- Service Modal -->
-	<div class="modal" id="serviceModal" style="display:none;">
-		<div class="modal-content" style="width:520px;">
+	<div class="modal" id="serviceModal">
+		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Services</h2>
+				<h2>Add Service</h2>
 				<button type="button" class="close-modal" data-close>&times;</button>
 			</div>
-			<form id="serviceForm" style="margin-bottom:14px;">
+			<form id="serviceForm">
 				<input type="hidden" name="service_id" id="service_id" />
-				<div class="form-row" style="flex-direction:row; gap:10px; align-items:flex-end;">
-					<div style="flex:1;">
-						<label>Service Name</label>
-						<input type="text" name="service_name" id="service_name" required />
-					</div>
-					<div style="flex:1;">
-						<label>Image <span style="font-weight:400;color:#777;">(optional)</span></label>
-						<div class="file-chooser">
-							<label class="file-btn">Choose File
-								<input type="file" name="service_image" id="service_image" accept="image/*" />
-							</label>
-							<div class="file-info" id="serviceFileInfo" aria-live="polite"></div>
-						</div>
-						<div id="serviceImagePreview" class="image-preview" style="margin-top:8px;"></div>
-					</div>
-					<div>
-						<button type="submit" class="add-btn" style="margin-top:2px;">Add</button>
-					</div>
+				<div class="form-row">
+					<label>Service Name</label>
+					<input type="text" name="service_name" id="service_name" required />
 				</div>
+							<div class="form-row">
+								<label>Upload Image</label>
+								<div class="file-chooser">
+									<label class="file-btn">Choose File
+										<input type="file" name="service_image" id="service_image" accept="image/*" />
+									</label>
+									<div class="file-info" id="serviceFileInfo" aria-live="polite"></div>
+								</div>
+								<div id="serviceImagePreview" class="image-preview"></div>
+							</div>
+							<div class="form-actions">
+								<button type="submit" class="add-btn">Add</button>
+							</div>
+							<hr />
+							<div id="servicesList" class="services-list">
+								<!-- service cards rendered here by admin-products.js -->
+							</div>
 			</form>
-			<div style="max-height:260px; overflow:auto; border:1px solid #eee; border-radius:8px;">
-				<table style="width:100%; border-collapse:collapse; font-size:.8rem;">
-					<thead>
-							<tr style="background:#faf8f8;">
-								<th style="text-align:left;padding:6px 10px;">Image</th>
-								<th style="text-align:left;padding:6px 10px;">Name</th>
-								<th style="padding:6px 10px;">Actions</th>
-							</tr>
-					</thead>
-					<tbody id="servicesTbody"></tbody>
-				</table>
-			</div>
 		</div>
-	</div>
-
-
-	</div>
 	</div>
 
 	<script src="admin.js"></script>

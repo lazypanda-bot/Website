@@ -82,3 +82,10 @@ body {
 .report-table td {
     color: #555;
 }
+.rev-positive { 
+    color:#1b6e2a; 
+    font-weight:600; 
+}
+.rev-zero { 
+    color:#777; 
+}

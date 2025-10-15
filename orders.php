@@ -72,13 +72,13 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
     <div class="orders-page-container">
     <h2>Your Orders</h2>
     <div class="orders-table-wrapper">
-    <table class="orders-table-class" border="1" cellpadding="8" style="border-collapse:collapse; width:100%;">
+    <table class="orders-table-class orders-table" border="1" cellpadding="8">
         <thead>
             <tr>
-                <th style="width:70px;">Order ID</th>
-                <th style="width:120px;">Total (₱)</th>
-                <th style="width:120px;">Status</th>
-                <th style="width:120px;">Delivery</th>
+                <th class="order-id-th">Order ID</th>
+                <th class="order-total-th">Total (₱)</th>
+                <th class="order-status-th">Status</th>
+                <th class="order-delivery-th">Delivery</th>
                 <th style="width:160px;">Date</th>
                 <th>Items</th>
             </tr>
@@ -99,7 +99,7 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
                     <?php else: ?>
                         <ul class="order-lines" style="list-style:none;margin:0;padding:0;display:grid;gap:6px;">
                             <?php foreach($lines as $li): ?>
-                                <li style="background:rgba(255,255,255,.7);border:1px solid #eadbdb;padding:8px 10px;border-radius:10px;display:grid;grid-template-columns: minmax(160px,240px) repeat(4,auto);gap:12px;align-items:center;font-size:.7rem;">
+                        <li class="order-line-item">
                                     <span style="font-weight:600;color:#752525;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                         <?php echo htmlspecialchars($li['product_name'] ?? ('#'.$li['product_id'])); ?>
                                     </span>

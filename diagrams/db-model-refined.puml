@@ -1,0 +1,108 @@
+@startuml
+title Website — Refined DB Domain Model
+skinparam classAttributeIconSize 0
+hide circle
+
+package "Domain" {
+  class Admin {
+    +id : int  <<PK>>
+    +name : string
+    +email : string
+  }
+
+  class Customer {
+    +id : int  <<PK>>
+    +name : string
+    +email : string
+  }
+
+  class Product {
+    +id : int  <<PK>>
+    +name : string
+    +price : decimal
+    +serviceType : string
+  }
+
+  class ProductImage {
+    +id : int  <<PK>>
+    +productId : int <<FK>>
+    +path : string
+  }
+
+  class CartItem {
+    +id : int <<PK>>
+    +customerId : int <<FK>>
+    +productId : int <<FK>>
+    +quantity : int
+  }
+
+  class Order {
+    +id : int <<PK>>
+    +customerId : int <<FK>>
+    +total : decimal
+    +orderStatus : enum
+    +deliveryStatus : enum
+  }
+
+  class OrderItem {
+    +id : int <<PK>>
+    +orderId : int <<FK>>
+    +productId : int <<FK>>
+    +quantity : int
+    +linePrice : decimal
+  }
+
+  class Payment {
+    +id : int <<PK>>
+    +orderId : int <<FK>>
+    +amount : decimal
+    +status : enum
+  }
+
+  class Service {
+    +id : int <<PK>>
+    +name : string
+  }
+
+  class DesignOption {
+    +id : int <<PK>>
+  }
+
+  class Review {
+    +id : int <<PK>>
+    +productId : int <<FK>>
+    +customerId : int <<FK>>
+    +rating : int
+  }
+
+  class Message {
+    +id : int <<PK>>
+  }
+
+  class Report {
+    +id : int <<PK>>
+  }
+}
+
+' Relationships
+Customer "1" -- "0..*" CartItem : owns
+Customer "1" -- "0..*" Order : places
+Customer "1" -- "0..*" Review : writes
+
+Product "1" -- "0..*" ProductImage : has
+Product "1" -- "0..*" OrderItem : included_in
+
+Order "1" -- "0..*" OrderItem : contains
+Order "1" o-- "0..1" Payment : paid_by
+
+Service "1" -- "0..*" Product : provides
+DesignOption "0..*" -- "0..1" Order : referenced_by
+
+note right
+  This refined model was created from database_schema.sql
+  - Primary keys abbreviated to "id"
+  - Non-essential audit columns (created_at, updated_at) hidden
+  - Types simplified for readability
+end note
+
+@enduml

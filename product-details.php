@@ -170,9 +170,9 @@ function pd_first_image($imagesField) {
 </script>
 <body>
 <?php if(!empty($_SESSION['flash_order_success'])): unset($_SESSION['flash_order_success']); ?>
-    <div class="flash-message success" style="position:fixed;top:70px;right:20px;background:#136b1d;color:#fff;padding:12px 18px;border-radius:8px;font-size:.9rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.18);z-index:9999;display:flex;align-items:center;gap:10px;">
+    <div class="flash-message success flash-order-success">
         <span>Order placed successfully.</span>
-        <button type="button" aria-label="Dismiss" onclick="this.parentElement.remove();" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:.75rem;">✕</button>
+        <button type="button" aria-label="Dismiss" class="flash-dismiss-btn">✕</button>
     </div>
     <script> // auto dismiss after 4s
         setTimeout(()=>{ const fm=document.querySelector('.flash-message.success'); if(fm) fm.remove(); },4000);
@@ -183,7 +183,7 @@ function pd_first_image($imagesField) {
             <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
             <ul class="desktop-nav">
                 <li><a href="home.php" class="nav-link">Home</a></li>
-                <li><a href="products.php" class="nav-link">Products</a></li>
+                <li><a href="products.php" class="nav-link active">Products</a></li>
                 <li><a href="about.php" class="nav-link">About</a></li>
                 <li><a href="contact.php" class="nav-link">Contact</a></li>
             </ul>
@@ -203,7 +203,7 @@ function pd_first_image($imagesField) {
                 </div>      
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <li><a href="products.php" class="nav-link">Products</a></li>
+                    <li><a href="products.php" class="nav-link active">Products</a></li>
                     <li><a href="about.php" class="nav-link">About</a></li>
                     <li><a href="contact.php" class="nav-link">Contact</a></li>
                 </ul>
@@ -293,15 +293,9 @@ function pd_first_image($imagesField) {
                 <button class="tab-btn" data-tab="order">Start Your Order</button>
             </div>
         <div class="tab-content" id="description">
-            <p class="product-description">
-                High quality custom printing for your needs.
-            </p>
-            <ul class="product-features">
-                <li>Premium materials</li>
-                <li>Customizable design</li>
-            </ul>
-            <h4>Product Details</h4>
-            <ul class="product-details"></ul>
+            <div class="product-details">
+                <p class="product-description"><?php echo nl2br(htmlspecialchars($productRow['product_details'] ?? '')); ?></p>
+            </div>
             <div class="review-container">
                 <h4 class="review-title">Reviews</h4>
                 <div class="no-reviews">No reviews yet</div>
@@ -332,9 +326,7 @@ function pd_first_image($imagesField) {
             <section class="product-detail-section">
                 <div class="order-step product-detail">
                     <h3>1. Product Detail</h3>
-                    <p class="step-description">
-                        Start your order in just a few clicks — whether you're uploading your own artwork or consulting with our team, we'll make sure every order feels personal.
-                    </p>
+                    <p class="step-description"><?php echo nl2br(htmlspecialchars($productRow['product_details'] ?? 'Start your order in just a few clicks — whether you\'re uploading your own artwork or consulting with our team, we\'ll make sure every order feels personal.')); ?></p>
                     <p class="step-note">Follow the steps below to place your order.</p>
                     <div class="details-container">
                         <form class="product-options-row">
@@ -358,9 +350,9 @@ function pd_first_image($imagesField) {
                             <div class="form-group grid-col-1">
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
-                                    <button type="button" onclick="adjustQuantity(-1)">−</button>
-                                    <input type="number" id="quantity" name="quantity" value="1" min="1" />
-                                    <button type="button" onclick="adjustQuantity(1)">+</button>
+                                        <button type="button" id="qtyMinus">−</button>
+                                        <input type="number" id="quantity" name="quantity" value="1" min="1" />
+                                        <button type="button" id="qtyPlus">+</button>
                                 </div>
                             </div>
                             <div class="form-group price-group grid-col-2">
@@ -412,12 +404,51 @@ function pd_first_image($imagesField) {
                     <button type="button" class="buy-btn" id="buyNowBtn" data-price="<?php echo htmlspecialchars($productPrice); ?>" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Buy Now</button>
                 </form>
                 <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
+                    <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="cart_size" value="12oz" />
                     <input type="hidden" name="color" id="cart_color" value="" />
                     <input type="hidden" name="quantity" id="cart_quantity" value="1" />
                     <button type="button" class="addcart-btn" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Add to Cart</button>
                 </form>
+                                <script>
+                                // Inline fallback: attach only if the external buy-now handler never registered.
+                                (function(){
+                                    try{
+                                        var buy = document.querySelector('.buy-btn');
+                                        if (!buy) return;
+                                        // Give external scripts a short window to register their handler.
+                                        setTimeout(function(){
+                                            if (window.__buyNowHandled) return; // external script active
+                                            buy.addEventListener('click', function(e){
+                                                e.preventDefault();
+                                                try{
+                                                    var nameEl = document.getElementById('product-name');
+                                                    var name = (nameEl && nameEl.value) || (document.querySelector('.product-text h2') && document.querySelector('.product-text h2').textContent) || (document.querySelector('h2') && document.querySelector('h2').textContent) || 'Item';
+                                                    var size = document.getElementById('size')?.value || 'Default';
+                                                    var qty = parseInt(document.getElementById('quantity')?.value||'1',10) || 1;
+                                                    var priceText = document.querySelector('.price-box')?.textContent || '0';
+                                                    var match = priceText.match(/([\d,.]+)/);
+                                                    var price = match ? parseFloat(match[1].replace(/,/g,'')) : 0;
+                                                    var prodId = document.querySelector('input[name="product_id"]')?.value || '';
+                                                    var product = { id: prodId, name: name.trim(), size: size, quantity: qty, price: price, total: price*qty };
+                                                    // if not authenticated, open login modal instead of redirecting immediately
+                                                    if (!window.isAuthenticated) {
+                                                        if (typeof window.openLoginModal === 'function') {
+                                                            window.openLoginModal('cart.php#checkout');
+                                                            return;
+                                                        }
+                                                    }
+                                                    var cart = JSON.parse(localStorage.getItem('cart')||'[]');
+                                                    cart.push(product);
+                                                    localStorage.setItem('cart', JSON.stringify(cart));
+                                                    window.location.href = 'cart.php#checkout';
+                                                }catch(err){ console.error('Buy fallback error', err); window.location.href = 'cart.php#checkout'; }
+                                            });
+                                        }, 120);
+                                    }catch(e){ console.error(e); }
+                                })();
+                                </script>
             </div>
     </div>
     </section>

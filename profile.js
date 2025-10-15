@@ -156,18 +156,34 @@ document.addEventListener('DOMContentLoaded', function() {
             if(!confirm('Confirm you received order #' + orderId + '?')) return;
             const fd = new FormData(); fd.append('order_id', orderId);
             fetch('confirm_delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
-                if(d.status==='ok') { 
-                    const statusBadge = card.querySelector('.badge');
-                    if(statusBadge){
-                        statusBadge.textContent='Completed';
-                        statusBadge.className = 'badge status-completed';
+                if(d.status==='ok') {
+                    // update order and delivery badges if server returned them
+                    const orderData = d.order || null;
+                    if(orderData){
+                        const statusBadge = card.querySelector('.order-status-badge, .badge');
+                        if(statusBadge){
+                            statusBadge.textContent = orderData.OrderStatus || 'Completed';
+                            statusBadge.className = 'badge status-'+(orderData.OrderStatus ? orderData.OrderStatus.toString().toLowerCase().replace(/\s+/g,'-') : 'completed')+' order-status-badge';
+                        }
+                        const deliveryBadge = card.querySelector('.delivery-status-badge');
+                        if(deliveryBadge){
+                            deliveryBadge.textContent = orderData.DeliveryStatus || 'Completed';
+                            deliveryBadge.className = 'badge delivery-'+(orderData.DeliveryStatus ? orderData.DeliveryStatus.toString().toLowerCase().replace(/\s+/g,'-') : 'completed')+' delivery-status-badge';
+                        } else {
+                            // insert a delivery badge if none exists
+                            const meta = card.querySelector('.order-card-meta');
+                            if(meta){
+                                const div = document.createElement('div'); div.className='oc-line';
+                                const dv = orderData.DeliveryStatus || 'Completed';
+                                div.innerHTML = '<span class="oc-label">Delivery Status</span><span class="badge delivery-'+dv.toString().toLowerCase().replace(/\s+/g,'-')+' delivery-status-badge">'+dv+'</span>';
+                                meta.insertBefore(div, meta.querySelector('.order-card-separator'));
+                            }
+                        }
                     }
                     const dash = document.createElement('span');
                     dash.className='oc-dash';
                     dash.textContent='—';
                     btn.replaceWith(dash);
-                    // Auto refresh after short delay so admin/orders pages & other aggregates reflect completion
-                    setTimeout(()=>{ window.location.reload(); }, 800);
                 } else alert(d.message||'Confirmation failed');
             }).catch(()=>alert('Network error'));
         });
@@ -225,10 +241,91 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.visibilityState === 'visible') {
             const now = Date.now();
             if(now - lastVisibilityTs > 30000) { // >30s away
-                window.location.reload();
+                // fetch latest order statuses instead of full reload
+                fetchAndUpdateOrderStatuses();
             }
         } else {
             lastVisibilityTs = Date.now();
         }
     });
+
+    // Polling for live order status updates (every 20s)
+    const POLL_ORDERS_INTERVAL = 20000;
+    let pollOrdersTimer = setInterval(fetchAndUpdateOrderStatuses, POLL_ORDERS_INTERVAL);
+
+    function fetchAndUpdateOrderStatuses(){
+        if(!window.isAuthenticated) return;
+        fetch('orders_user_api.php', { cache: 'no-store' }).then(r=>r.json()).then(d=>{
+            if(d.status !== 'ok' || !Array.isArray(d.orders)) return;
+            d.orders.forEach(o => {
+                const card = document.querySelector('.order-card[data-order-id="'+CSS.escape(String(o.order_id))+'"]');
+                if(!card) return;
+                const orderBadge = card.querySelector('.order-status-badge');
+                const deliveryBadge = card.querySelector('.delivery-status-badge');
+                const currentOrder = (o.OrderStatus || '').toString();
+                const currentDelivery = (o.DeliveryStatus || '').toString();
+                // Update order badge text/class if changed
+                if(orderBadge && orderBadge.getAttribute('data-order-status') !== currentOrder){
+                    orderBadge.textContent = prettifyStatus(currentOrder);
+                    orderBadge.setAttribute('data-order-status', currentOrder);
+                    orderBadge.className = 'badge status-'+prettifyClass(currentOrder)+' order-status-badge';
+                }
+                // Update delivery badge or insert one
+                if(currentDelivery){
+                    if(deliveryBadge){
+                        if(deliveryBadge.getAttribute('data-delivery-status') !== currentDelivery){
+                            deliveryBadge.textContent = prettifyStatus(currentDelivery);
+                            deliveryBadge.setAttribute('data-delivery-status', currentDelivery);
+                            deliveryBadge.className = 'badge delivery-'+prettifyClass(currentDelivery)+' delivery-status-badge';
+                        }
+                    } else {
+                        // add a delivery badge element in the card meta
+                        const meta = card.querySelector('.order-card-meta');
+                        if(meta){
+                            const div = document.createElement('div');
+                            div.className = 'oc-line';
+                            div.innerHTML = '<span class="oc-label">Delivery Status</span><span class="badge delivery-'+prettifyClass(currentDelivery)+' delivery-status-badge" data-delivery-status="'+escapeHtml(currentDelivery)+'">'+escapeHtml(prettifyStatus(currentDelivery))+'</span>';
+                            meta.insertBefore(div, meta.querySelector('.order-card-separator'));
+                        }
+                    }
+                }
+                // Manage confirm button visibility: show only when DeliveryStatus == 'Delivered' and OrderStatus != 'Completed'
+                const showConfirm = (currentDelivery.toLowerCase() === 'delivered') && (currentOrder.toLowerCase() !== 'completed');
+                const existingConfirm = card.querySelector('.confirm-delivery-btn');
+                if(showConfirm && !existingConfirm){
+                    const meta = card.querySelector('.order-card-meta');
+                    if(meta){
+                        const div = document.createElement('div'); div.className='oc-line';
+                        div.innerHTML = '<span class="oc-label">Delivery Status</span><button type="button" class="confirm-delivery-btn inline">Confirm Delivery</button>';
+                        // insert near delivery area (before separator)
+                        meta.insertBefore(div, meta.querySelector('.order-card-separator'));
+                        // attach handler
+                        div.querySelector('.confirm-delivery-btn').addEventListener('click', ()=>{
+                            const orderId = card.getAttribute('data-order-id');
+                            if(!confirm('Confirm you received order #' + orderId + '?')) return;
+                            const fd = new FormData(); fd.append('order_id', orderId);
+                            fetch('confirm_delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
+                                if(d.status==='ok') window.location.reload(); else alert(d.message||'Confirmation failed');
+                            }).catch(()=>alert('Network error'));
+                        });
+                    }
+                } else if(!showConfirm && existingConfirm){
+                    const dash = document.createElement('span'); dash.className='oc-dash'; dash.textContent='—';
+                    existingConfirm.replaceWith(dash);
+                }
+            });
+        }).catch(()=>{});
+    }
+
+    function prettifyStatus(s){
+        if(!s) return '';
+        // Convert internal values to friendly text
+        const map = { 'processing':'Processing','pending':'Pending','shipped':'Shipped','delivered':'Delivered','cancelled':'Cancelled','completed':'Completed','picked up':'Picked up','ready for pickup':'Ready for Pickup','ready to ship':'Ready to Ship' };
+        const key = s.toString().toLowerCase();
+        return map[key] || s;
+    }
+
+    function prettifyClass(s){ return (s||'').toString().toLowerCase().replace(/\s+/g,'-'); }
+
+    function escapeHtml(s){ return (s||'').toString().replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 });
