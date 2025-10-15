@@ -41,18 +41,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
         list.forEach(p=>{
         const tr = document.createElement('tr');
-        const rawImg = firstImage(p.images);
-        const imgSrc = normalizeImagePath(rawImg);
+        const imgs = parseImages(p.images);
+        const hasReal = imgs && imgs.length>0;
+        const imgSrc = hasReal ? normalizeImagePath(imgs[0]) : '';
         tr.innerHTML = `
             <td>${escapeHtml(p.service_type||'')}</td>
-            <td><img src="${escapeAttr(imgSrc)}" alt="thumb" class="product-thumb" onerror="this.classList.add('broken'); this.src='/img/logo.png'" /></td>
+            <td>${imgSrc?`<img src="${escapeAttr(imgSrc)}" alt="thumb" class="product-thumb" onerror="this.classList.add('broken'); this.src='../img/logo.png'" />`:`<div class="no-thumb" aria-hidden="true"></div>`}</td>
             <td>${escapeHtml(p.product_name)}</td>
             <td>₱${Number(p.price).toFixed(2)}</td>
             <td class="td-ellipsis">${escapeHtml(p.product_details||'')}</td>
             <td>
                 <button class="action-icon-btn edit" title="Edit" data-edit="${p.product_id}"><i class="fas fa-edit"></i></button>
                 <button class="action-icon-btn delete" title="Delete" data-del="${p.product_id}"><i class="fas fa-trash"></i></button>
-                <a href="/product-details.php?id=${p.product_id}" target="_blank" class="action-icon-btn" title="View"><i class="fas fa-external-link-alt"></i></a>
+                <a href="../product-details.php?id=${p.product_id}" target="_blank" class="action-icon-btn" title="View"><i class="fas fa-external-link-alt"></i></a>
             </td>`;
             tbody.appendChild(tr);
         });
@@ -76,18 +77,33 @@ window.addEventListener('DOMContentLoaded', () => {
         const fileInput = document.getElementById('images_files'); if(fileInput) fileInput.value='';
         removedImages = [];
     }
+    // Parse an images field from the DB into an array of real image paths.
+    // This will filter out empty values and known fallback logo entries so
+    // previews/thumbnails only show when there are actual uploaded images.
+    function parseImages(imagesField){
+        if(!imagesField) return [];
+        const t = String(imagesField).trim();
+        if(!t) return [];
+        let arr = [];
+        if(t.startsWith('[')){
+            try { const parsed = JSON.parse(t); if(Array.isArray(parsed)) arr = parsed.slice(); }
+            catch(e){ arr = []; }
+        } else if(t.includes(',')){
+            arr = t.split(',').map(s=>s.trim());
+        } else arr = [t];
+        // Normalize entries and remove empties
+        arr = arr.map(s=>String(s||'').trim()).filter(Boolean);
+        // Treat any reference to the site logo as a fallback (not a real uploaded image)
+        const fallbacks = new Set(['/img/logo.png','img/logo.png','../img/logo.png','logo.png']);
+        arr = arr.filter(s => !fallbacks.has(s));
+        return arr;
+    }
 
     function firstImage(imagesField){
-        if(!imagesField) return '/img/logo.png';
-        const t = imagesField.trim();
-        if(!t) return '/img/logo.png';
-        if(t.startsWith('[')) {
-            try { const arr = JSON.parse(t); if(Array.isArray(arr)&&arr.length>0) return arr[0]; } catch(e){}
-        }
-        if(t.includes(',')) { 
-            const p=t.split(',')[0].trim(); if(p) return p; 
-        }
-        return t;
+        const imgs = parseImages(imagesField);
+        if(imgs.length>0) return imgs[0];
+        // no real images, return the site logo as a fallback
+        return '/img/logo.png';
     }
     // Normalize image paths coming from DB (convert backslashes to slashes, ensure admin relative prefix)
     function normalizeImagePath(p){
@@ -123,16 +139,8 @@ window.addEventListener('DOMContentLoaded', () => {
                         const preview = document.getElementById('imagePreview');
                         preview.innerHTML = '';
                         if(prod.images){
-                            const t = prod.images.trim();
-                            let imgs = [];
-                            if(t.startsWith('[')){
-                                try{ 
-                                  imgs = JSON.parse(t); }catch(e){ imgs = []; 
-
-                                }
-                            } 
-                            else if(t.includes(',')) imgs = t.split(',').map(s=>s.trim()).filter(Boolean);
-                            else imgs = [t];
+                            const imgs = parseImages(prod.images);
+                            // Only show previews when there are actual uploaded images (not just the fallback)
                             imgs.slice(0,4).forEach(src=>{
                                 const wrap = document.createElement('div'); wrap.className='preview-wrap'; wrap.style.display='inline-block'; wrap.style.position='relative'; wrap.style.marginRight='8px';
                                 const img = document.createElement('img'); img.src = normalizeImagePath(src); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover'; img.onerror = ()=>{ img.src='/img/logo.png'; img.classList.add('broken'); };

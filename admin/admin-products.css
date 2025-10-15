@@ -80,6 +80,14 @@ body {
 .product-thumb.broken { 
     opacity:0.3; filter:grayscale(1); 
 }
+.no-thumb {
+    width:60px;
+    height:60px;
+    border-radius:12px;
+    background:linear-gradient(180deg,#f2f2f2,#e9e9e9);
+    border:1px solid #eee;
+    display:inline-block;
+}
 .thumb-caption{ 
     display:none; 
 }

@@ -238,12 +238,17 @@ function pd_first_image($imagesField) {
         }
         // Normalize each path: trim only; final URL normalization happens below (so we can prefix base path)
         $out = array_values(array_map(function($c){ return trim($c); }, $out));
+        // Remove known fallback/logo references which are not real uploaded images
+        $fallbacks = ['img/logo.png','/img/logo.png','../img/logo.png','logo.png'];
+        $out = array_values(array_filter($out, function($v) use ($fallbacks){ return $v !== '' && !in_array($v, $fallbacks); }));
+        // Remove duplicates while preserving order
+        $out = array_values(array_unique($out));
         return $out;
     }
 
     $imagesList = pd_images_array($rawImages);
-    // Only show thumbnails when the DB actually has images (rawImages non-empty)
-    $hasThumbnails = (trim((string)$rawImages) !== '') && count($imagesList) > 0;
+    // Only show thumbnails when there are more than one real (non-fallback) unique images
+    $hasThumbnails = count($imagesList) > 1;
     // Normalize URLs by prefixing basePath when needed (only if thumbnails exist)
     if ($hasThumbnails) {
         $imagesList = array_map(function($u) use ($basePath) {
