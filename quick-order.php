@@ -153,7 +153,6 @@ $legacyQty    = $isMulti ? $multiItems[0]['quantity']   : $quantity;
 // Mandatory: FK, TotalAmount, OrderStatus, created_at if exist else fallback to current timestamp later
 $fkColReal = ORDERS_ACCOUNT_FK_COL;
 $createdColReal = isset($orderCols['created_at']) ? $orderCols['created_at'] : null;
-
 // Helper to add param
 $add = function($col, $type, &$var) use (&$cols,&$placeholders,&$types,&$values) {
     $cols[] = $col; $placeholders[]='?'; $types.=$type; $values[]=&$var; };

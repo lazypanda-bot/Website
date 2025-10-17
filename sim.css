@@ -143,6 +143,9 @@
     object-fit: contain;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+/* cursor affordance for dragging */
+#viewerCanvas { cursor: grab; }
+#viewerCanvas.dragging { cursor: grabbing; }
 /* Make sure the color picker is always visible and styled */
 #colorPickerContainer {
     min-height: 220px;
@@ -244,3 +247,32 @@
 .pcr-app {
     z-index: 3000 !important;
 }
+/* flip button removed */
+
+.rotate-hint {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    background: rgba(255,255,255,0.9);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #6b6b6b;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    z-index: 20;
+}
+.rotate-hint { pointer-events: none; }
+.rotate-hint.hidden { display: none !important; }
+
+.save-design-btn {
+    background: #a02b2b;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.design-preview-card { background:#fff; border:1px solid #eee; padding:8px; border-radius:8px; margin-bottom:8px; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
+.design-preview-thumb { width:72px; height:72px; background:#f3f3f3; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:8px; }
+.design-preview-meta { display:inline-block; vertical-align:middle; max-width:220px; }

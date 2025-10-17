@@ -56,7 +56,7 @@ if (monthYear && calendarDays) renderCalendar(currentDate);
 
 // Fetch order stats for dashboard boxes
 function fetchOrderStats(){
-    fetch('orders_stats_api.php').then(r=>r.json()).then(d=>{
+    fetch('orders-stats-api.php').then(r=>r.json()).then(d=>{
         if(d.status==='ok'){
             const c = d.counts || {}; 
             const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };

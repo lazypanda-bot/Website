@@ -39,7 +39,7 @@ else {
         function badge(status){ const cls = 'status-' + normalizeClass(status); return `<span class="badge ${cls}">${escapeHtml(status)}</span>`; }
 
         function fetchOrders(manual=false){
-            fetch('orders_api.php?action=list', {cache:'no-store'})
+            fetch('orders-api.php?action=list', {cache:'no-store'})
             .then(async r => {
                 if(!r.ok){
                     const txt = await r.text().catch(()=>'<no body>');
@@ -195,7 +195,7 @@ else {
             // disable select briefly as a lightweight saving indicator
             const selElem = sel; if(selElem) selElem.disabled = true;
             const fd = new FormData(); fd.append('action','update_status'); fd.append('order_id',id); fd.append('OrderStatus',status);
-            fetch('orders_api.php',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+            fetch('orders-api.php',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
                 try{ const _s = cell && cell.querySelector && cell.querySelector('select[data-status-select]'); if(_s) _s.disabled = false; }catch(e){}
                 if(d.status==='ok'){
                     sel.className='order-status-select '+statusClass(status);
@@ -210,7 +210,7 @@ else {
                             if(deliveryCell){
                                 const selDelivery = deliveryCell.querySelector('select[data-status-select]'); if(selDelivery) selDelivery.disabled = true;
                                 const fd2 = new FormData(); fd2.append('action','update_delivery_status'); fd2.append('order_id', id); fd2.append('DeliveryStatus','Failed');
-                                fetch('orders_api.php',{method:'POST', body:fd2}).then(r=>r.json()).then(dd=>{
+                                fetch('orders-api.php',{method:'POST', body:fd2}).then(r=>r.json()).then(dd=>{
                                     if(selDelivery) selDelivery.disabled = false;
                                     if(dd.status==='ok'){
                                         deliveryCell.innerHTML = `<div class='status-badge-wrapper'>${badge('Failed')}</div>`;
@@ -235,7 +235,7 @@ else {
                             if(deliveryCell && !deliveryCell.classList.contains('completed-readonly')){
                                 const selDelivery = deliveryCell.querySelector('select[data-status-select]'); if(selDelivery) selDelivery.disabled = true;
                                 const fd3 = new FormData(); fd3.append('action','update_delivery_status'); fd3.append('order_id', id); fd3.append('DeliveryStatus','Shipped');
-                                fetch('orders_api.php',{method:'POST', body:fd3}).then(r=>r.json()).then(dd=>{
+                                fetch('orders-api.php',{method:'POST', body:fd3}).then(r=>r.json()).then(dd=>{
                                     if(selDelivery) selDelivery.disabled = false;
                                     if(dd.status==='ok'){
                                         // If delivery select exists, update its value, otherwise render badge
@@ -274,7 +274,7 @@ else {
             const fd = new FormData(); fd.append('action','update_delivery_status'); 
             fd.append('order_id',id); 
             fd.append('DeliveryStatus',status);
-            fetch('orders_api.php',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+            fetch('orders-api.php',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
                 try{ const _s2 = cell && cell.querySelector && cell.querySelector('select[data-status-select]'); if(_s2) _s2.disabled = false; }catch(e){}
                 if(d.status==='ok'){
                     sel.className='order-status-select '+statusClass(status);

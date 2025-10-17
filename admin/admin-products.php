@@ -106,9 +106,9 @@ require_once '../database.php';
 					<textarea name="product_details" id="product_details" rows="3"></textarea>
 				</div>
 				<div class="form-row">
-					<label>Upload Image</label>
+					<label>Add image/s</label>
 					<div class="file-chooser">
-						<label class="file-btn">Choose File
+						<label class="file-btn">Add image/s
 							<input type="file" name="images_files[]" id="images_files" accept="image/*" multiple />
 						</label>
 						<div class="file-info" id="fileInfo" aria-live="polite"></div>

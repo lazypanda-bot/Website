@@ -186,7 +186,7 @@ if ($isAuthenticated) {
                 <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            <?php include_once 'nav_avatar.php'; ?>
+            <?php include_once 'nav-avatar.php'; ?>
             <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
             <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
             <div id="navbar">

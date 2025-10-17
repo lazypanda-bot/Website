@@ -1,9 +1,3 @@
-@startuml
-' Auto-generated PlantUML from database_schema.sql
-' Generated: 2025-10-13
-skinparam classAttributeIconSize 0
-hide circle
-
 class admin {
   +int admin_id
   +string name
@@ -173,7 +167,3 @@ order_items "*" -- "1" products : product_id
 payments "*" -- "1" orders : order_id
 cart "*" -- "1" customer : customer_id
 cart "*" -- "1" products : product_id
-
-note "This diagram was generated from database_schema.sql. Review and simplify for presentation."
-
-@enduml

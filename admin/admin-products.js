@@ -18,6 +18,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const servicesTbody = document.getElementById('servicesTbody');
     const productModalTitle = document.getElementById('productModalTitle');
     const serviceTypeList = document.getElementById('serviceTypeList');
+    // Track existing-image removals and new selected files
+    let removedImages = [];
+    const newFilesMap = new Map();
 
     function openModal(modal){ modal.style.display='flex'; }
     function closeModal(modal){ modal.style.display='none'; }
@@ -60,12 +63,18 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchProducts(){
-        fetch('products_api.php?action=list')
-        .then(r=>r.json())
-        .then(data=>{
-            if(data.status==='ok') renderProducts(data.products); else console.error(data);
-        })
-        .catch(err=>console.error('List error',err));
+        fetch('products-api.php?action=list')
+            .then(async r => {
+                const text = await r.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.status === 'ok') renderProducts(data.products);
+                    else console.error('products list error', data);
+                } catch (e) {
+                    console.error('products-api returned non-JSON', r.status, text);
+                }
+            })
+            .catch(err=>console.error('List error',err));
     }
 
     function resetProductForm(){
@@ -76,6 +85,8 @@ window.addEventListener('DOMContentLoaded', () => {
         const fileInfo = document.getElementById('fileInfo'); if(fileInfo) fileInfo.textContent='';
         const fileInput = document.getElementById('images_files'); if(fileInput) fileInput.value='';
         removedImages = [];
+        // clear any staged new files
+        newFilesMap.clear();
     }
     // Parse an images field from the DB into an array of real image paths.
     // This will filter out empty values and known fallback logo entries so
@@ -123,97 +134,168 @@ window.addEventListener('DOMContentLoaded', () => {
             const id = editBtn.getAttribute('data-edit');
             // Find row data by reading current table (could also store last fetch list)
             // Simpler: refetch and fill when found
-            fetch('products_api.php?action=list').then(r=>r.json()).then(d=>{
-                if(d.status==='ok'){
-                    const prod = d.products.find(p=>String(p.product_id)===String(id));
-                    if(prod){
-                        productModalTitle.textContent='Edit Product';
-                        openModal(productModal);
-                        document.getElementById('product_id').value = prod.product_id;
-                        document.getElementById('product_name').value = prod.product_name;
-                        document.getElementById('service_type').value = prod.service_type || '';
-                        document.getElementById('price').value = prod.price;
-                        document.getElementById('product_details').value = prod.product_details || '';
-                        // product images are handled via uploads; clear any text-input handling
-                        // populate preview area with existing images if any
-                        const preview = document.getElementById('imagePreview');
-                        preview.innerHTML = '';
-                        if(prod.images){
-                            const imgs = parseImages(prod.images);
-                            // Only show previews when there are actual uploaded images (not just the fallback)
-                            imgs.slice(0,4).forEach(src=>{
-                                const wrap = document.createElement('div'); wrap.className='preview-wrap'; wrap.style.display='inline-block'; wrap.style.position='relative'; wrap.style.marginRight='8px';
-                                const img = document.createElement('img'); img.src = normalizeImagePath(src); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover'; img.onerror = ()=>{ img.src='/img/logo.png'; img.classList.add('broken'); };
-                                const removeBtn = document.createElement('button'); removeBtn.className='img-remove'; removeBtn.type='button'; removeBtn.title='Remove image'; removeBtn.setAttribute('data-src', src);
-                                removeBtn.textContent='✕';
-                                wrap.appendChild(img); wrap.appendChild(removeBtn); preview.appendChild(wrap);
-                            });
+            fetch('products-api.php?action=list').then(async r => {
+                const text = await r.text();
+                try {
+                    const d = JSON.parse(text);
+                    if (d.status === 'ok'){
+                        const prod = d.products.find(p=>String(p.product_id)===String(id));
+                        if(prod){
+                            productModalTitle.textContent='Edit Product';
+                            openModal(productModal);
+                            document.getElementById('product_id').value = prod.product_id;
+                            document.getElementById('product_name').value = prod.product_name;
+                            document.getElementById('service_type').value = prod.service_type || '';
+                            document.getElementById('price').value = prod.price;
+                            document.getElementById('product_details').value = prod.product_details || '';
+                            // product images are handled via uploads; clear any text-input handling
+                            // populate preview area with existing images if any
+                            const preview = document.getElementById('imagePreview');
+                            preview.innerHTML = '';
+                            if(prod.images){
+                                const imgs = parseImages(prod.images);
+                                // Only show previews when there are actual uploaded images (not just the fallback)
+                                imgs.slice(0,4).forEach(src=>{
+                                    const wrap = document.createElement('div'); wrap.className='preview-wrap'; wrap.style.display='inline-block'; wrap.style.position='relative'; wrap.style.marginRight='8px';
+                                    // store the original server path on the wrapper for later serialization
+                                    wrap.setAttribute('data-src', src);
+                                    const img = document.createElement('img'); img.src = normalizeImagePath(src); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover'; img.onerror = ()=>{ img.src='/img/logo.png'; img.classList.add('broken'); };
+                                    const removeBtn = document.createElement('button'); removeBtn.className='img-remove'; removeBtn.type='button'; removeBtn.title='Remove image'; removeBtn.setAttribute('data-src', src);
+                                    removeBtn.textContent='✕';
+                                    wrap.appendChild(img); wrap.appendChild(removeBtn); preview.appendChild(wrap);
+                                });
+                            }
                         }
+                    } else {
+                        console.error('products list error', d);
                     }
+                } catch (e) {
+                    console.error('products-api returned non-JSON (edit fetch)', r.status, text);
                 }
-            });
+            }).catch(err=>console.error('Edit fetch error', err));
         }
         const delBtn = e.target.closest('[data-del]');
         if(delBtn){
             const id = delBtn.getAttribute('data-del');
             if(confirm('Delete this product?')){
                 const fd = new FormData(); fd.append('action','delete'); fd.append('product_id', id);
-                fetch('products_api.php', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
-                    if(d.status==='ok'){ fetchProducts(); } else alert(d.message||'Delete failed');
-                })
-                .catch(err=>alert('Delete error '+err));
+                fetch('products-api.php', {method:'POST', body:fd})
+                    .then(async r => {
+                        const text = await r.text();
+                        try {
+                            const d = JSON.parse(text);
+                            if (d.status === 'ok') { fetchProducts(); }
+                            else alert(d.message || 'Delete failed');
+                        } catch (e) {
+                            console.error('Delete returned non-JSON', r.status, text);
+                            alert('Delete failed; server returned unexpected response. See console.');
+                        }
+                    })
+                    .catch(err=>alert('Delete error '+err));
             }
         }
     });
 
     productForm.addEventListener('submit', e => {
         e.preventDefault();
-          const fd = new FormData(productForm);
-          fd.append('action','save');
-          removedImages.forEach(r=> fd.append('images_removed[]', r));
-          const fileInput = document.getElementById('images_files');
-          if(fileInput && fileInput.files && fileInput.files.length>0){
-              Array.from(fileInput.files).forEach(f=> fd.append('images_files[]', f));
-          }
-          fetch('products_api.php', {method:'POST', body:fd})
-          .then(r=>r.json())
-          .then(d=>{
-              if(d.status==='ok'){ closeModal(productModal); fetchProducts(); }
-              else alert(d.message||'Save failed');
-          })
-          .catch(err=>alert('Save error '+err));
+        const fd = new FormData(productForm);
+        fd.append('action','save');
+        // Collect existing images still present in previews.
+        // Important: only include server-side image paths (data-src) here.
+        // Do NOT include data: URIs from newly selected files (they would bloat the payload).
+        const existingImgs = [];
+        productForm.querySelectorAll('.preview-wrap').forEach(w => {
+            // existing (saved) preview wraps include a data-src attribute set when populated from the product
+            const existingPath = w.getAttribute('data-src');
+            if (existingPath && !removedImages.includes(existingPath)) existingImgs.push(existingPath);
+        });
+        if (existingImgs.length) fd.append('images_current', JSON.stringify(existingImgs));
+        removedImages.forEach(r=> fd.append('images_removed[]', r));
+        // append only the remaining new files from newFilesMap
+        Array.from(newFilesMap.values()).forEach(f=> fd.append('images_files[]', f));
+        fetch('products-api.php', {method:'POST', body:fd})
+            .then(async r => {
+                const text = await r.text();
+                try {
+                    const d = JSON.parse(text);
+                    if (d.status === 'ok') { closeModal(productModal); fetchProducts(); }
+                    else alert(d.message || 'Save failed');
+                } catch (e) {
+                    console.error('Save returned non-JSON', r.status, text);
+                    alert('Save failed; server returned unexpected response. See console.');
+                }
+            })
+            .catch(err=>alert('Save error '+err));
     });
 
     // Preview uploaded image
     const imagesFilesInput = document.getElementById('images_files');
     const imagePreview = document.getElementById('imagePreview');
-    let removedImages = [];
     if(imagesFilesInput){
         imagesFilesInput.addEventListener('change', ()=>{
-            imagePreview.innerHTML='';
             const fileInfo = document.getElementById('fileInfo');
             const files = Array.from(imagesFilesInput.files || []);
-            if(fileInfo) fileInfo.textContent = files.length ? files.map(f=>f.name).join(', ') : '';
+            // Compute existing image basenames to avoid adding duplicates
+            const existingPreviewNodesForBasenames = productForm.querySelectorAll('.preview-wrap');
+            const existingBasenames = new Set();
+            existingPreviewNodesForBasenames.forEach(node => {
+                const imgEl = node.querySelector('img');
+                const src = imgEl ? (imgEl.getAttribute('src') || node.getAttribute('data-src')) : node.getAttribute('data-src');
+                if (!src) return;
+                try { existingBasenames.add((src.split('/').pop() || '').toLowerCase()); } catch(e){}
+            });
+            // Add each new file into newFilesMap using fingerprint to avoid duplicates
             files.forEach(f=>{
-                const img = document.createElement('img'); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover'; img.style.marginRight='8px';
+                const nameBasename = (f.name || '').split('/').pop().toLowerCase();
+                if (existingBasenames.has(nameBasename)) {
+                    // skip adding since the same filename already exists for this product
+                    return;
+                }
+                const key = `${f.name}:${f.size}:${f.lastModified}`;
+                if (!newFilesMap.has(key)) newFilesMap.set(key, f);
+            });
+            if(fileInfo) fileInfo.textContent = newFilesMap.size ? Array.from(newFilesMap.values()).map(f=>f.name).join(', ') : '';
+            // Re-render preview area: existing preview-wraps (kept) + new files
+            imagePreview.innerHTML = '';
+            // Show any existing preview-wrap elements that weren't removed
+            const existingPreviewNodes = productForm.querySelectorAll('.preview-wrap');
+            existingPreviewNodes.forEach(node => {
+                const imgEl = node.querySelector('img');
+                const src = imgEl ? (imgEl.getAttribute('src') || node.getAttribute('data-src')) : node.getAttribute('data-src');
+                if (!src) return;
+                if (removedImages.includes(src)) return; // skip removed
+                const clone = node.cloneNode(true);
+                clone.style.display = 'inline-block'; clone.style.position = 'relative'; clone.style.marginRight = '8px';
+                imagePreview.appendChild(clone);
+            });
+            // Add previews for new files
+            Array.from(newFilesMap.values()).forEach(f=>{
+                const wrap = document.createElement('div'); wrap.className='preview-wrap'; wrap.style.display='inline-block'; wrap.style.position='relative'; wrap.style.marginRight='8px';
+                const img = document.createElement('img'); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover';
                 const reader = new FileReader(); reader.onload = ev => img.src = ev.target.result; reader.readAsDataURL(f);
-                imagePreview.appendChild(img);
+                const removeBtn = document.createElement('button'); removeBtn.className='img-remove new-file-remove'; removeBtn.type='button'; removeBtn.title='Remove image'; removeBtn.setAttribute('data-fp', `${f.name}:${f.size}:${f.lastModified}`);
+                removeBtn.textContent='✕';
+                wrap.appendChild(img); wrap.appendChild(removeBtn); imagePreview.appendChild(wrap);
             });
         });
     }
 
-    // Delegate click on remove buttons inside preview area
+    // Delegate click on remove buttons inside preview area for both existing and new files
     imagePreview?.addEventListener('click', e=>{
         const btn = e.target.closest('.img-remove');
         if(!btn) return;
         const src = btn.getAttribute('data-src');
-        // visually remove
+        const fp = btn.getAttribute('data-fp');
         const wrap = btn.closest('.preview-wrap');
         if(wrap) wrap.remove();
-        if(src) removedImages.push(src);
-        // update fileInfo to show count of removed images (optional)
+        if(src) {
+            removedImages.push(src);
+        }
+        if(fp) {
+            newFilesMap.delete(fp);
+        }
         const fileInfo = document.getElementById('fileInfo');
-        if(fileInfo) fileInfo.textContent = removedImages.length ? `Removed: ${removedImages.length}` : '';
+        if(fileInfo) fileInfo.textContent = newFilesMap.size ? Array.from(newFilesMap.values()).map(f=>f.name).join(', ') : '';
     });
 
     serviceForm.addEventListener('submit', e => {
@@ -228,7 +310,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if(svcFile && svcFile.files && svcFile.files.length>0){ 
             fd.append('service_image', svcFile.files[0]); 
         }
-        fetch('services_api.php', {method:'POST', body:fd})
+    fetch('services-api.php', {method:'POST', body:fd})
         .then(r => r.text().then(text => ({ status: r.status, ok: r.ok, text })))
         .then(resp => {
             let d;
@@ -266,7 +348,7 @@ window.addEventListener('DOMContentLoaded', () => {
     function loadServices(refreshDatalist=false){
     const servicesListEl = document.getElementById('servicesList');
     if (servicesListEl) servicesListEl.innerHTML = '<div class="msg msg-loading">Loading services…</div>';
-        fetch('services_api.php?action=list')
+    fetch('services-api.php?action=list')
             .then(r => r.json())
             .then(d => {
                 console.log('services_api list response:', d);
@@ -360,7 +442,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (editBtn) {
             const id = editBtn.getAttribute('data-edit-svc');
             // fetch single list and open modal with data
-            fetch('services_api.php?action=list').then(r=>r.json()).then(d=>{
+            fetch('services-api.php?action=list').then(r=>r.json()).then(d=>{
                 if(d.status==='ok'){
                     const svc = d.services.find(s=>String(s.service_id)===String(id));
                     if(svc){
@@ -379,7 +461,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const id = delBtn.getAttribute('data-del-svc');
             if(confirm('Delete this service? This does not remove existing products.')){
                 const fd = new FormData(); fd.append('action','delete'); fd.append('service_id', id);
-                fetch('services_api.php', {method:'POST', body:fd}).then(r=>r.text().then(t=>({status:r.status,text:t}))).then(resp=>{
+                fetch('services-api.php', {method:'POST', body:fd}).then(r=>r.text().then(t=>({status:r.status,text:t}))).then(resp=>{
                     try{ const d = JSON.parse(resp.text); if(d.status==='ok'){ loadServices(true); } else alert(d.message||'Delete failed'); }
                     catch(e){ console.error('Delete raw', resp); alert('Delete failed; see console'); }
                 })
@@ -397,7 +479,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const id = btn.getAttribute('data-del-svc');
             if(confirm('Delete this service? This does not remove existing products.')){
                 const fd = new FormData(); fd.append('action','delete'); fd.append('service_id', id);
-                fetch('services_api.php', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+                fetch('services-api.php', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
                     if(d.status==='ok'){ loadServices(true); }
                     else alert(d.message||'Delete failed');
                 })

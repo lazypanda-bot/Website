@@ -22,8 +22,8 @@ $stmt->close();
 
 // Accept either DeliveryStatus='Delivered' OR (no delivery column meaning OrderStatus already "Delivered")
 if(strtolower($dStatus) !== 'delivered' && strtolower($oStatus) !== 'delivered'){
-	echo json_encode(['status'=>'error','message'=>'Order not marked delivered yet']);
-	exit;
+    echo json_encode(['status'=>'error','message'=>'Order not marked delivered yet']);
+    exit;
 }
 if(strtolower($oStatus)==='completed'){ echo json_encode(['status'=>'ok','message'=>'Already completed']); exit; }
 // Set CompletedAt if column exists
@@ -41,13 +41,13 @@ $up->close();
 // Fetch updated values to return to client
 $stmt2 = $conn->prepare('SELECT OrderStatus, DeliveryStatus FROM orders WHERE order_id=? LIMIT 1');
 if($stmt2){
-	$stmt2->bind_param('i',$orderId);
-	$stmt2->execute();
-	$stmt2->bind_result($newOrderStatus,$newDeliveryStatus);
-	$stmt2->fetch();
-	$stmt2->close();
-	echo json_encode(['status'=>'ok','message'=>'Order confirmed','order'=>['OrderStatus'=>$newOrderStatus,'DeliveryStatus'=>$newDeliveryStatus]]);
+    $stmt2->bind_param('i',$orderId);
+    $stmt2->execute();
+    $stmt2->bind_result($newOrderStatus,$newDeliveryStatus);
+    $stmt2->fetch();
+    $stmt2->close();
+    echo json_encode(['status'=>'ok','message'=>'Order confirmed','order'=>['OrderStatus'=>$newOrderStatus,'DeliveryStatus'=>$newDeliveryStatus]]);
 } else {
-	echo json_encode(['status'=>'ok','message'=>'Order confirmed']);
+    echo json_encode(['status'=>'ok','message'=>'Order confirmed']);
 }
 ?>

@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchPayments(){
-        fetch('payments_api.php?action=list').then(r=>r.json()).then(d=>{
+    fetch('payments-api.php?action=list').then(r=>r.json()).then(d=>{
             if(d.status==='ok') render(d.payments); else console.error(d);
         })
         .catch(e=>console.error(e));

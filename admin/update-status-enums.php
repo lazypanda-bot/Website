@@ -19,7 +19,7 @@ function col_has_enum($conn, $table, $column, $value){
 $changed = false;
 // Desired values
 $order_extra = [ 'Ready for Pickup', 'Ready to Ship' ];
-delivery_extra = ['Shipped', 'Picked up'];
+$delivery_extra = ['Shipped', 'Picked up'];
 
 // Fetch current column types
 $res = $conn->query("SHOW COLUMNS FROM `orders` LIKE 'OrderStatus'");

@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if(!orderId) return;
             if(!confirm('Confirm you received order #' + orderId + '?')) return;
             const fd = new FormData(); fd.append('order_id', orderId);
-            fetch('confirm_delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
+            fetch('confirm-delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
                 if(d.status==='ok') {
                     // update order and delivery badges if server returned them
                     const orderData = d.order || null;
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchAndUpdateOrderStatuses(){
         if(!window.isAuthenticated) return;
-        fetch('orders_user_api.php', { cache: 'no-store' }).then(r=>r.json()).then(d=>{
+    fetch('orders-user-api.php', { cache: 'no-store' }).then(r=>r.json()).then(d=>{
             if(d.status !== 'ok' || !Array.isArray(d.orders)) return;
             d.orders.forEach(o => {
                 const card = document.querySelector('.order-card[data-order-id="'+CSS.escape(String(o.order_id))+'"]');
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const orderId = card.getAttribute('data-order-id');
                             if(!confirm('Confirm you received order #' + orderId + '?')) return;
                             const fd = new FormData(); fd.append('order_id', orderId);
-                            fetch('confirm_delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
+                            fetch('confirm-delivery.php', { method:'POST', body: fd }).then(r=>r.json()).then(d=>{
                                 if(d.status==='ok') window.location.reload(); else alert(d.message||'Confirmation failed');
                             }).catch(()=>alert('Network error'));
                         });

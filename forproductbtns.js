@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('size', product.size || 'Default');
                 formData.append('color', product.color || 'Standard');
                 formData.append('quantity', product.quantity || 1);
-                const res = await fetch('add_to_cart.php', { method: 'POST', body: formData });
+                const res = await fetch('add-to-cart.php', { method: 'POST', body: formData });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 if (data.status !== 'ok') throw new Error(data.message || 'Cart error');
@@ -195,14 +195,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (quickOrderConfirmBtn.disabled) return;
             quickOrderConfirmBtn.disabled = true;
             quickOrderConfirmBtn.textContent = 'Placing...';
-            // Call quick_order.php
+            // Call quick-order.php
             try {
                 const fd = new FormData();
                 fd.append('product_id', product.id);
                 fd.append('product_name', product.name || '');
                 fd.append('size', product.size || 'Default');
                 fd.append('quantity', product.quantity);
-                const res = await fetch('quick_order.php', { method:'POST', body: fd });
+                const res = await fetch('quick-order.php', { method:'POST', body: fd });
                 let dataText = await res.text();
                 let data;
                 try { 
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 if (data.status !== 'ok') {
-                    alert((data.message || 'Order failed') + '\n(Enable debug by opening quick_order.php?debug=1 in a new tab)');
+                    alert((data.message || 'Order failed') + '\n(Enable debug by opening quick-order.php?debug=1 in a new tab)');
                     quickOrderConfirmBtn.disabled = false;
                     quickOrderConfirmBtn.textContent = 'Place Order';
                     return;

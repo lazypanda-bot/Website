@@ -57,4 +57,3 @@ if (!isset($navAvatar) || !isset($NAV_AVATAR_HTML)) {
     $NAV_AVATAR_HTML .= '<span class="nav-username">' . $displayName . '</span>';
 }
 ?>
-

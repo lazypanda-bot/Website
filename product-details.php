@@ -194,7 +194,7 @@ function pd_first_image($imagesField) {
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
-            <?php include_once 'nav_avatar.php'; ?>
+            <?php include_once 'nav-avatar.php'; ?>
             <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
@@ -247,24 +247,57 @@ function pd_first_image($imagesField) {
     }
 
     $imagesList = pd_images_array($rawImages);
-    // Only show thumbnails when there are more than one real (non-fallback) unique images
-    $hasThumbnails = count($imagesList) > 1;
-    // Normalize URLs by prefixing basePath when needed (only if thumbnails exist)
-    if ($hasThumbnails) {
-        $imagesList = array_map(function($u) use ($basePath) {
-        if (!$u) return $u;
-        $trim = trim($u);
-        // If it's an uploads path without leading slash or without protocol, prefix basePath
+    // Normalize thumbnail URLs (prefix basePath when needed), remove duplicates,
+    // and exclude any image that is identical to the chosen main image so the
+    // thumbnail row only contains additional images added by the admin.
+    // Robust normalization: convert to predictable relative/absolute forms and compare by filename
+    $normalize = function($u) use ($basePath) {
+        $trim = trim((string)$u);
+        if ($trim === '') return '';
+        $trim = str_replace('\\', '/', $trim);
+        // strip protocol+host if present
+        $trim = preg_replace('#^https?://[^/]+/#i', '', $trim);
+        // remove leading ../ or ./ or leading slash for canonicalization
+        $trim = preg_replace('#^(\.{1,2}/)+#', '', $trim);
+        $trim = ltrim($trim, '/');
+        // if it's an uploads path, ensure basePath prefix
         if (str_starts_with($trim, 'uploads/')) return $basePath . '/' . $trim;
-        if (preg_match('#^(https?:)?//#i', $trim)) return $trim; // already absolute or protocol-relative
-        if (str_starts_with($trim, '/')) return $basePath . $trim;
+        // if it's already absolute (starts with http or //) return as-is
+        if (preg_match('#^(https?:)?//#i', $u)) return $u;
+        // for img/ paths or others, prefix basePath so browser resolves consistently
         return $basePath . '/' . $trim;
-        }, $imagesList);
-    } else {
-        $imagesList = [];
+    };
+    $normalized = array_values(array_filter(array_map($normalize, $imagesList), function($v){ return $v !== '' && $v !== null; }));
+    // Deduplicate by filename (basename) to avoid rendering the same file twice under different path forms
+    $seen = [];
+    $unique = [];
+    foreach ($normalized as $n) {
+        $bn = strtolower(basename(parse_url($n, PHP_URL_PATH) ?: $n));
+        if ($bn === '') continue;
+        if (isset($seen[$bn])) continue;
+        $seen[$bn] = true;
+        $unique[] = $n;
     }
+    // normalize the main image basename for comparison
+    $mainBasename = '';
+    if (!empty($productImg)) {
+        $mp = trim((string)$productImg);
+        $mp = str_replace('\\','/',$mp);
+        $mp = preg_replace('#^https?://[^/]+/#i', '', $mp);
+        $mp = preg_replace('#^(\.{1,2}/)+#', '', $mp);
+        $mp = ltrim($mp, '/');
+        $mainBasename = strtolower(basename($mp));
+    }
+    // Exclude any thumbnail whose basename matches the main image's basename
+    $thumbs = [];
+    foreach ($unique as $u) {
+        $bn = strtolower(basename(parse_url($u, PHP_URL_PATH) ?: $u));
+        if ($mainBasename !== '' && $bn === $mainBasename) continue;
+        $thumbs[] = $u;
+    }
+    $hasThumbnails = count($thumbs) > 0;
     if ($hasThumbnails) {
-        foreach ($imagesList as $idx => $imgSrc) {
+        foreach ($thumbs as $idx => $imgSrc) {
             $safeSrc = htmlspecialchars($imgSrc);
             echo "<div class=\"thumbnail-wrapper\">";
             echo "<img src=\"$safeSrc\" alt=\"Thumbnail {$idx}\" class=\"thumbnail\" data-action=\"change-image\" />";
@@ -396,7 +429,7 @@ function pd_first_image($imagesField) {
                         This product could not be found. It may have been removed or the link is invalid.
                     </div>
                 <?php endif; ?>
-                <form action="place_order.php" method="POST" id="orderForm" class="order-form">
+                <form action="place-order.php" method="POST" id="orderForm" class="order-form">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="form_size" value="12oz" />
                     <input type="hidden" name="color" id="form_color" value="" />
@@ -408,8 +441,8 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="DeliveryStatus" value="Pending" />
                     <button type="button" class="buy-btn" id="buyNowBtn" data-price="<?php echo htmlspecialchars($productPrice); ?>" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Buy Now</button>
                 </form>
-                <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
-                    <form action="add_to_cart.php" method="POST" id="cartForm" class="cart-form">
+                <form action="add-to-cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
+                    <form action="add-to-cart.php" method="POST" id="cartForm" class="cart-form">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="cart_size" value="12oz" />
                     <input type="hidden" name="color" id="cart_color" value="" />

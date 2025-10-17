@@ -19,7 +19,7 @@
     session_start();
     require_once 'database.php';
     $isAuthenticated = isset($_SESSION['user_id']);
-    include_once 'nav_avatar.php';
+    include_once 'nav-avatar.php';
 
     // Fetch services with a representative product image if available
     $servicesHome = [];

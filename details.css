@@ -1180,6 +1180,12 @@ input[type="number"]::-webkit-outer-spin-button {
     cursor:pointer; 
     font-size:.75rem; 
 }
+
+/* Hide the thumbnail row when there are no thumbnails to show */
+.thumbnail-row:empty,
+.thumbnail-row:not(:has(.thumbnail-wrapper)) {
+    display: none !important;
+}
 .flash-order-success { 
     position:fixed; 
     top:70px; 

@@ -223,9 +223,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Thumbnails - only admin can add/delete thumbnails
 const isAdmin = !!window.isAdmin;
-// Support thumbnails rendered either server-side or client-side: bind to any .thumbnail
-document.querySelectorAll('.thumbnail').forEach(img => {
-    img.addEventListener('click', function() { changeImage(img); });
+// Support thumbnails rendered either server-side or client-side: use delegation so
+// thumbnails added later (e.g. by admin preview) will also respond to clicks.
+document.addEventListener('click', function(e){
+    const thumb = e.target && e.target.closest && e.target.closest('.thumbnail');
+    if (!thumb) return;
+    changeImage(thumb);
 });
 if (isAdmin) {
     const addThumbBtn = document.getElementById('add-thumbnail-btn');
@@ -363,7 +366,7 @@ if (addCartBtn && cartForm) {
         // Build form data
         const fd = new FormData(cartForm);
         try {
-            const res = await fetch('add_to_cart.php', { method: 'POST', body: fd });
+            const res = await fetch('add-to-cart.php', { method: 'POST', body: fd });
             const text = await res.text();
             let data = null;
             try { data = JSON.parse(text); } catch (_) {}

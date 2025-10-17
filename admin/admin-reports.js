@@ -11,7 +11,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
     function fetchWeekly(){
-        fetch('reports_api.php?action=weekly').then(r=>r.json()).then(d=>{
+    fetch('reports-api.php?action=weekly').then(r=>r.json()).then(d=>{
             if(d.status==='ok') renderWeekly(d.weekly); else console.error(d);
         })
         .catch(e=>console.error(e));

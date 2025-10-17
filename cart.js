@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchDbCart(){
     try {
-        const res = await fetch('cart_items.php');
+    const res = await fetch('cart-items.php');
         if(!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
         items = Array.isArray(data.items)? data.items : [];
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if(useDb && btn.dataset.id) {
                   try {
                       const fd = new FormData(); fd.append('id', btn.dataset.id);
-                      await fetch('delete_cart_item.php',{method:'POST',body:fd});
+                      await fetch('delete-cart-item.php',{method:'POST',body:fd});
                   } catch(err){ console.error(err); }
               } else {
                     const key = btn.getAttribute('data-key');
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
           inp.addEventListener('change', async ()=> {
               let val = parseInt(inp.value,10); if(isNaN(val)||val<1) val=1; inp.value=val;
               if(useDb && inp.dataset.id) {
-                  try { const fd=new FormData(); fd.append('id', inp.dataset.id); fd.append('quantity', val); await fetch('update_cart_item.php',{method:'POST',body:fd}); } catch(e){ console.error(e);} }
+                  try { const fd=new FormData(); fd.append('id', inp.dataset.id); fd.append('quantity', val); await fetch('update-cart-item.php',{method:'POST',body:fd}); } catch(e){ console.error(e);} }
               else {
                   let local = JSON.parse(localStorage.getItem('cart')||'[]');
                   local.forEach(it=>{ if(getKey(it)===inp.getAttribute('data-key')) it.quantity = val; });
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
               const btn = checkoutForm.querySelector('.place-order-btn');
               if(btn){ btn.disabled=true; btn.textContent='Placing'; }
-              const res = await fetch('quick_order.php',{method:'POST',body:fd});
+              const res = await fetch('quick-order.php',{method:'POST',body:fd});
               const text = await res.text(); let data; try{ data=JSON.parse(text);}catch(parseErr){ console.error(parseErr,text); alert('Order failed: Unexpected response'); if(btn){ btn.disabled=false; btn.textContent='Place Order'; } return; }
               if(data.status==='ok') {
                   if(!useDb){ let loc = JSON.parse(localStorage.getItem('cart')||'[]'); valid.forEach(v=>{ loc = loc.filter(p=> !((p.product_id||p.id)===v.product_id && (p.size||'Default')===v.size)); }); localStorage.setItem('cart', JSON.stringify(loc)); }

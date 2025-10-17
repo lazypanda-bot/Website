@@ -53,6 +53,7 @@
             <div class="sim-viewer-left">
                 <div id="shirt3d-wrapper">
                     <div id="viewerCanvas"></div>
+                        <div class="rotate-hint">Drag left / right to rotate</div>
                 </div>
             </div>
             <div class="sim-viewer-right">
@@ -60,6 +61,10 @@
                     <div class="sim-control-block">
                         <label>Shirt Color:</label>
                         <div id="colorPickerContainer"></div>
+                        <div style="margin-top:12px;">
+                            <button id="saveDesignBtn" class="save-design-btn">Save design</button>
+                        </div>
+                        <div id="designPreviewList" style="margin-top:14px;"></div>
                     </div>
                 </div>
             </div>
@@ -113,9 +118,4 @@
     <script src="sim.js"></script>
 </body>
     <!-- 3D dependencies: must be after viewerCanvas -->
-    <script src="three.min.js"></script>
-    <script src="OrbitControls.js"></script>
-    <script src="GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
-    <script src="sim.js"></script>
 </html>

@@ -147,7 +147,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 fd.append('images_current', JSON.stringify(normalizedKept));
                 // append selectedFiles
                 for(let i=0;i<selectedFiles.length;i++){ if (selectedFiles[i]) fd.append('images_files[]', selectedFiles[i]); }
-                const res = await fetch('products_api.php?action=save',{method:'POST',body:fd});
+                const res = await fetch('products-api.php?action=save',{method:'POST',body:fd});
                 const data = await res.json();
                 console.debug('[AdminSave] response', data);
                 if(data.status==='ok'){
@@ -176,7 +176,7 @@ window.addEventListener('DOMContentLoaded', () => {
     async function load(){
         productListEl.innerHTML = '<div class="loader">Loading products…</div>';
         try{
-            const res = await fetch('products_api.php?action=list');
+            const res = await fetch('products-api.php?action=list');
             const data = await res.json();
             if(data.status !== 'ok'){ productListEl.innerHTML = 'Failed to load'; return; }
             productListEl.innerHTML = '';
