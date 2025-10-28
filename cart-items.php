@@ -6,11 +6,9 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 require_once 'database.php';
 session_start();
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['items'=>[]]);
-    exit;
-}
-$userId = (int)$_SESSION['user_id'];
+require_once 'includes/auth.php';
+$userId = session_user_id_or_zero();
+if ($userId === 0) { echo json_encode(['items'=>[]]); exit; }
 
 // Adaptive cart table mapping (reuse logic if already defined)
 if (!defined('CART_TABLE')) {
@@ -56,9 +54,29 @@ $sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id,
 $productPk = 'id';
 foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($productCols[$c])) { $productPk = $productCols[$c]; break; } }
 
-$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity, p.".$productNameCol." AS name, p.".$productPriceCol." AS price
-        FROM ".CART_TABLE." c
-        LEFT JOIN products p ON p.".$productPk." = c.".CART_PRODUCT_FK_COL." WHERE c.".CART_USER_FK_COL."=?";
+$designColSelect = '';
+// If cart table has a designoption_id (or similar) column, include it and try to pull design metadata
+$cartTableCols = [];
+if ($resCols = $conn->query('SHOW COLUMNS FROM ' . CART_TABLE)) { while ($r = $resCols->fetch_assoc()) { $cartTableCols[strtolower($r['Field'])] = $r['Field']; } $resCols->free(); }
+$designColName = null;
+if (isset($cartTableCols['designoption_id'])) $designColName = $cartTableCols['designoption_id'];
+elseif (isset($cartTableCols['design_option_id'])) $designColName = $cartTableCols['design_option_id'];
+elseif (isset($cartTableCols['design_id'])) $designColName = $cartTableCols['design_id'];
+
+// Build SELECT and JOINs
+$joinSql = '';
+$designSelect = '';
+if ($designColName) {
+    $designSelect = ', c.' . $designColName . ' AS designoption_id';
+    // Join to designoption and customization if those tables/columns are present
+    // We'll attempt the common column names
+    $joinSql = ' LEFT JOIN designoption d ON d.designoption_id = c.' . $designColName . ' LEFT JOIN customization cu ON cu.customization_id = d.customization_id ';
+    $designSelect .= ', cu.color AS design_color, cu.note AS design_meta, d.request_design AS design_request';
+}
+
+$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", p.".$productNameCol." AS name, p.".$productPriceCol." AS price
+    FROM ".CART_TABLE." c
+    LEFT JOIN products p ON p.".$productPk." = c.".CART_PRODUCT_FK_COL." " . $joinSql . " WHERE c.".CART_USER_FK_COL."=?";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('i', $userId);

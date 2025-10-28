@@ -17,10 +17,13 @@ if ($action === 'list') {
     // AmountPaid: sum of payments for order (Paid or Partial) for display. If payments table large, consider separate endpoint / LIMIT.
     $sql = "SELECT o.order_id, o.product_id, o.customer_id, o.size, o.quantity, o.OrderStatus, o.DeliveryStatus, o.TotalAmount, o.isPartialPayment, o.created_at".$completedFrag.
         ", c.".ACCOUNT_NAME_COL." AS customer_name, c.".ACCOUNT_PHONE_COL." AS phone, c.".ACCOUNT_ADDRESS_COL." AS address, p.product_name, p.price,
+         do.designoption_id, do.designfilepath, cu.color AS design_color, cu.note AS design_note,
          (SELECT COALESCE(SUM(py.payment_amount),0) FROM payments py WHERE py.order_id = o.order_id AND py.payment_status IN ('Paid','Partial')) AS AmountPaid
          FROM orders o
          LEFT JOIN ".ACCOUNT_TABLE." c ON c.".ACCOUNT_ID_COL." = o.customer_id
          LEFT JOIN products p ON p.product_id = o.product_id
+         LEFT JOIN designoption do ON do.designoption_id = o.designoption_id
+         LEFT JOIN customization cu ON cu.customization_id = do.customization_id
          ORDER BY o.created_at DESC";
     $rows = [];
     $res = $conn->query($sql);

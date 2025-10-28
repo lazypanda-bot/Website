@@ -81,7 +81,8 @@ if ($action === 'list') {
 }
 
 if ($action === 'add') {
-    $name = trim($_POST['name'] ?? '');
+    // accept either 'name' or 'service_name' (admin UI uses service_name)
+    $name = trim($_POST['name'] ?? $_POST['service_name'] ?? '');
     $desc = trim($_POST['description'] ?? '');
     if ($name === '') fail('Service name required');
     // Handle optional uploaded image
@@ -121,9 +122,14 @@ if ($action === 'add') {
         if(!$stmt) fail('Prepare failed: '.$conn->error,500);
         $stmt->bind_param('ss',$name,$desc);
     }
-    if(!$stmt->execute()) {
-        if ($conn->errno == 1062) fail('Service already exists');
-        fail('Insert failed: '.$stmt->error,500);
+    try {
+        $stmt->execute();
+    } catch (mysqli_sql_exception $e) {
+        // handle duplicate name gracefully
+        if ($e->getCode() == 1062) {
+            fail('Service already exists');
+        }
+        fail('Insert failed: ' . $e->getMessage(), 500);
     }
     flush_json(['status'=>'ok','action'=>'inserted','id'=>$stmt->insert_id]);
     $stmt->close();
@@ -133,7 +139,8 @@ if ($action === 'add') {
 if ($action === 'edit') {
     $id = (int)($_POST['service_id'] ?? 0);
     if ($id <= 0) fail('Invalid id');
-    $name = trim($_POST['name'] ?? '');
+    // accept either 'name' or 'service_name' (admin UI uses service_name)
+    $name = trim($_POST['name'] ?? $_POST['service_name'] ?? '');
     if ($name === '') fail('Service name required');
 
     // Load existing image (if any)

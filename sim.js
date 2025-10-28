@@ -332,18 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Save design button logic
             const saveBtn = document.getElementById('saveDesignBtn');
-            const previewList = document.getElementById('designPreviewList');
-            function renderPreviewList() {
-                const local = JSON.parse(localStorage.getItem('cart')||'[]');
-                const previews = local.filter(i=> i.is_design);
-                previewList.innerHTML = '';
-                previews.forEach((d,idx)=>{
-                    const card = document.createElement('div'); card.className='design-preview-card';
-                    card.innerHTML = `<div class="design-preview-thumb"></div><div class="design-preview-meta"><strong>${d.name||'Custom Shirt'}</strong><div>Color: ${d.color||''}</div><div>Size: ${d.size||'Default'}</div></div>`;
-                    previewList.appendChild(card);
-                });
-            }
-            renderPreviewList();
+            // Preview/listing removed — no UI preview or localStorage writes here for now
 
             if (saveBtn) {
                 saveBtn.addEventListener('click', async function(){
@@ -367,21 +356,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             const res = await fetch('save&add.php', { method: 'POST', body: fd });
                             const data = await res.json();
                             if (data.status === 'ok') {
-                                // if server added to cart, also refresh cart preview list (we'll still keep local preview for speed)
-                                const t = document.createElement('div'); t.className='toast-msg'; t.textContent='Design saved to your account and added to cart';
-                                const c = document.getElementById('toast-container') || document.body; c.appendChild(t); setTimeout(()=>{ t.classList.add('toast-hide'); setTimeout(()=>t.remove(),300); }, 2000);
-                                // add local preview marker
-                                const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-                                cart.push({ id: data.cart_id||null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta) });
-                                localStorage.setItem('cart', JSON.stringify(cart));
-                                renderPreviewList();
+                                // Redirect back to product start-order tab if product_id available
+                                if (product_id) {
+                                    const did = data.designoption_id ? '&designoption_id=' + encodeURIComponent(data.designoption_id) : '';
+                                    window.location.href = 'product-details.php?id=' + encodeURIComponent(product_id) + did + '#order';
+                                } else {
+                                    window.location.href = 'products.php#order';
+                                }
                                 return;
                             }
                         } catch(err){ console.error('Server save failed', err); }
                     }
 
                     // Fallback: localStorage only
-                    const item = { id:null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta) };
+                    const item = { id:null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta), designoption_id: null };
                     const cart = JSON.parse(localStorage.getItem('cart')||'[]'); cart.push(item); localStorage.setItem('cart', JSON.stringify(cart));
                     renderPreviewList();
                     const t = document.createElement('div'); t.className='toast-msg'; t.textContent='Design saved and added to cart'; const c = document.getElementById('toast-container') || document.body; c.appendChild(t); setTimeout(()=>{ t.classList.add('toast-hide'); setTimeout(()=>t.remove(),300); }, 2000);

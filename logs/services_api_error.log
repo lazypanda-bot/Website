@@ -3,3 +3,18 @@ Stack trace:
 #0 C:\xampp\htdocs\Website\admin\services_api.php(111): mysqli_stmt->execute()
   thrown in C:\xampp\htdocs\Website\admin\services_api.php on line 111
 [cleared log] Cleared on 2025-10-17 by automated cleanup
+[27-Oct-2025 07:07:33 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry 'Aparrel Printing' for key 'name' in C:\xampp\htdocs\Website\admin\services-api.php:124
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(124): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 124
+[27-Oct-2025 15:44:02 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[27-Oct-2025 15:44:04 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44

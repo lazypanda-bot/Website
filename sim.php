@@ -1,0 +1,128 @@
+<?php
+session_start();
+$isAuthenticated = isset($_SESSION['user_id']);
+// include nav avatar helper so $NAV_AVATAR_HTML is available like other pages
+require_once __DIR__ . '/nav-avatar.php';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shirt Customizer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+  <link rel="stylesheet" href="navbar-footer.css" />
+  <link rel="stylesheet" href="sim.css" />
+  <link rel="stylesheet" href="details.css" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+<script>window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;</script>
+<body>
+    <section id="header">
+        <div class="left-nav">
+            <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
+            <ul class="desktop-nav">
+                <li><a href="home.php" class="nav-link">Home</a></li>
+                <li><a href="products.php" class="nav-link">Products</a></li>
+                <li><a href="about.php" class="nav-link">About</a></li>
+                <li><a href="contact.php" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+        <div class="right-nav">
+            <form class="search-bar">
+                <input type="search" placeholder="Search" name="searchbar" class="search-input hidden">
+                <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+            <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
+            <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
+            <div id="navbar">
+                <button id="close-menu" aria-label="Close Menu">x</button>
+                <div class="menu-user">
+                    <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
+                </div>
+                <ul class="mobile-nav">
+                    <li><a href="home.php" class="nav-link">Home</a></li>
+                    <li><a href="products.php" class="nav-link">Products</a></li>
+                    <li><a href="about.php" class="nav-link">About</a></li>
+                    <li><a href="contact.php" class="nav-link">Contact</a></li>
+                </ul>
+            </div>
+            <button id="menu-toggle" aria-label="Toggle Menu"><i class="fas fa-outdent"></i></button>
+        </div>
+    </section>
+
+    <main class="sim-viewer-container">
+        <div class="back-container">
+            <button onclick="history.back()" class="back-btn">← Back</button>
+        </div>
+        <h2 class="sim-title">Customize</h2>
+        <div class="sim-viewer-layout">
+            <div class="sim-viewer-left">
+                <div id="shirt3d-wrapper">
+                    <div id="viewerCanvas"></div>
+                        <div class="rotate-hint">Drag left / right to rotate</div>
+                </div>
+            </div>
+            <div class="sim-viewer-right">
+                <div id="picker-wrapper">
+                    <div class="sim-control-block">
+                        <label>Shirt Color:</label>
+                        <div id="colorPickerContainer"></div>
+                        <div style="margin-top:12px;">
+                            <button id="saveDesignBtn" class="save-design-btn">Save design</button>
+                        </div>
+                        <!-- designPreviewList removed to avoid printing raw saved-design JSON in the sidebar -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-column">
+                <h4>Customer Service</h4>
+                <p>Available 7am to 12pm</p>
+                <p>+63 917 123 4567</p>
+                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
+            </div>
+            <div class="footer-column">
+                <h4>Information</h4>
+                <ul>
+                    <li><a href="about.php">About</a></li>
+                    <li><a href="contact.php">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Services</h4>
+                <ul>
+                    <li>Tarpaulin Printing</li>
+                    <li>Apparel Printing</li>
+                    <li>Personalized Items</li>
+                    <li>Stickers</li>
+                    <li>Signages</li>
+                    <li>Tailoring</li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Follow Us</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div id="login-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/geometries/TextGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+    <script src="login.js"></script>
+    <script src="sim.js"></script>
+</body>
+</html>

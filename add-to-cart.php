@@ -26,6 +26,8 @@ if (!defined('CART_TABLE')) {
     define('CART_COLOR_COL', $colorCol);
 }
 session_start();
+require_once __DIR__ . '/includes/auth.php';
+$user_id = require_valid_user_json();
 
 function json_error($message, $code = 400) {
     http_response_code($code);

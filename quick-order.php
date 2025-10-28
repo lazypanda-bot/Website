@@ -4,6 +4,8 @@ ini_set('display_errors',1);error_reporting(E_ALL);
 $isDebug = isset($_GET['debug']);
 if(!$isDebug) header('Content-Type: application/json');
 require_once __DIR__ . '/database.php';
+// Centralized auth helper (clears stale sessions and responds with JSON on failure)
+require_once __DIR__ . '/includes/auth.php';
 
 function qlog($msg){
     $dir = __DIR__ . '/logs';
@@ -22,8 +24,9 @@ function respond($arr, $code=200){
     }
     exit;
 }
-if(!isset($_SESSION['user_id'])) { qlog('Not logged in'); respond(['status'=>'auth','message'=>'Not logged in']); }
-$userId = (int)$_SESSION['user_id'];
+// Validate session and referenced account row using centralized helper.
+// This will respond with a 401 JSON payload and exit if invalid.
+$userId = require_valid_user_json();
 
 // Support either single product fields or multi-items (JSON)
 $rawItemsJson = $_POST['items'] ?? '';
@@ -39,13 +42,14 @@ if ($rawItemsJson) {
     $decoded = json_decode($rawItemsJson, true);
     if (is_array($decoded) && count($decoded) > 0) {
         foreach ($decoded as $it) {
-            $pid = (int)($it['product_id'] ?? 0);
-            $qty = (int)($it['quantity'] ?? 0);
-            $sz  = trim($it['size'] ?? 'Default');
-            if ($pid > 0 && $qty > 0) {
-                $multiItems[] = ['product_id'=>$pid,'quantity'=>$qty,'size'=>$sz];
+                $pid = (int)($it['product_id'] ?? 0);
+                $qty = (int)($it['quantity'] ?? 0);
+                $sz  = trim($it['size'] ?? 'Default');
+                $designoption = isset($it['designoption_id']) ? (int)$it['designoption_id'] : null;
+                if ($pid > 0 && $qty > 0) {
+                    $multiItems[] = ['product_id'=>$pid,'quantity'=>$qty,'size'=>$sz,'designoption_id'=>$designoption];
+                }
             }
-        }
         if (count($multiItems) > 0) { $isMulti = true; }
     }
 }
@@ -145,6 +149,17 @@ if ($placeholders) {
 // Insert order adaptively based on existing columns
 $cols = []; $placeholders = []; $types = ''; $values = [];
 $isPartial = isset($_POST['isPartialPayment']) ? (int)$_POST['isPartialPayment'] : 0; // 1 partial, 0 full
+// partial amount (optional)
+$partialAmount = null;
+// Accept both legacy 'partial_amount' and new shorter 'partial' POST names
+$paRaw = null;
+if (isset($_POST['partial'])) $paRaw = $_POST['partial'];
+if ($paRaw !== null) {
+    $pa = preg_replace('/[^0-9\.]/','', (string)$paRaw);
+    if ($pa !== '') {
+        $partialAmount = number_format((float)$pa, 2, '.', '');
+    }
+}
 $orderStatus='Pending'; $deliveryStatus='Pending';
 $legacyProdId = $isMulti ? $multiItems[0]['product_id'] : $product_id;
 $legacySize   = $isMulti ? $multiItems[0]['size']       : $size;
@@ -164,6 +179,14 @@ if(isset($orderCols['size'])) $add($orderCols['size'],'s',$legacySize);
 if(isset($orderCols['quantity'])) $add($orderCols['quantity'],'i',$legacyQty);
 if(isset($orderCols['ispartialpayment'])) $add($orderCols['ispartialpayment'],'i',$isPartial);
 if(isset($orderCols['totalamount'])) $add($orderCols['totalamount'],'s',$totalFormatted);
+// include partial_amount if orders table has a column for it
+if ($partialAmount !== null) {
+    // common column names to check
+    // prefer canonical 'partial', but accept other modern synonyms if present in DB
+    foreach(['partial','amount_paid','downpayment','deposit'] as $c) {
+        if (isset($orderCols[$c])) { $add($orderCols[$c],'s',$partialAmount); break; }
+    }
+}
 if(isset($orderCols['orderstatus'])) $add($orderCols['orderstatus'],'s',$orderStatus);
 if(isset($orderCols['deliveryaddress'])) $add($orderCols['deliveryaddress'],'s',$userAddress);
 if(isset($orderCols['deliverystatus'])) $add($orderCols['deliverystatus'],'s',$deliveryStatus);
@@ -179,22 +202,54 @@ if(!$stmt->execute()) { $m=$stmt->error; qlog('Insert failed '.$m.' SQL='.$sql);
 $orderId = $stmt->insert_id; $stmt->close();
 
 // Insert order_items for multi or (optional) single for future consistency
-if ($isMulti) {
-    if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
-        foreach ($multiItems as $it) {
-            $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
-            $ins->bind_param('iisis', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice);
-            $ins->execute();
+    if ($isMulti) {
+    // Insert order_items; include designoption_id if the column exists
+    $orderItemsCols = [];
+    if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) { while($r=$resCols->fetch_assoc()){ $orderItemsCols[strtolower($r['Field'])]=$r['Field']; } $resCols->free(); }
+    $hasDesignInOrderItems = isset($orderItemsCols['designoption_id']) || isset($orderItemsCols['design_option_id']) || isset($orderItemsCols['design_id']);
+    if ($hasDesignInOrderItems) {
+        $colName = isset($orderItemsCols['designoption_id']) ? $orderItemsCols['designoption_id'] : (isset($orderItemsCols['design_option_id']) ? $orderItemsCols['design_option_id'] : $orderItemsCols['design_id']);
+        $insSql = "INSERT INTO order_items (order_id, product_id, size, quantity, line_price, {$colName}) VALUES (?,?,?,?,?,?)";
+        if ($ins = $conn->prepare($insSql)) {
+            foreach ($multiItems as $it) {
+                $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
+                $did = isset($it['designoption_id']) && $it['designoption_id'] ? (int)$it['designoption_id'] : null;
+                $ins->bind_param('iisisi', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice, $did);
+                $ins->execute();
+            }
+            $ins->close();
         }
-        $ins->close();
+    } else {
+        if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
+            foreach ($multiItems as $it) {
+                $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
+                $ins->bind_param('iisis', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice);
+                $ins->execute();
+            }
+            $ins->close();
+        }
     }
 } else {
-    // Optional: create matching single line (keeps future compatibility)
-    if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
-        $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
-        $ins->bind_param('iisis',$orderId,$product_id,$size,$quantity,$linePrice);
-        $ins->execute();
-        $ins->close();
+    // Optional: create matching single line (keeps future compatibility). Include designoption_id if exists in order_items
+    $orderItemsCols = [];
+    if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) { while($r=$resCols->fetch_assoc()){ $orderItemsCols[strtolower($r['Field'])]=$r['Field']; } $resCols->free(); }
+    $hasDesignInOrderItems = isset($orderItemsCols['designoption_id']) || isset($orderItemsCols['design_option_id']) || isset($orderItemsCols['design_id']);
+    if ($hasDesignInOrderItems) {
+        $colName = isset($orderItemsCols['designoption_id']) ? $orderItemsCols['designoption_id'] : (isset($orderItemsCols['design_option_id']) ? $orderItemsCols['design_option_id'] : $orderItemsCols['design_id']);
+        if ($ins = $conn->prepare("INSERT INTO order_items (order_id, product_id, size, quantity, line_price, {$colName}) VALUES (?,?,?,?,?,?)")) {
+            $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
+            $did = isset($multiItems[0]['designoption_id']) ? (int)$multiItems[0]['designoption_id'] : null;
+            $ins->bind_param('iisisi',$orderId,$product_id,$size,$quantity,$linePrice,$did);
+            $ins->execute();
+            $ins->close();
+        }
+    } else {
+        if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
+            $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
+            $ins->bind_param('iisis',$orderId,$product_id,$size,$quantity,$linePrice);
+            $ins->execute();
+            $ins->close();
+        }
     }
 }
 

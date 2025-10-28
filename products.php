@@ -2,6 +2,8 @@
 // Start session and load DB for dynamic products
 session_start();
 require_once 'database.php';
+// Validate session and clear stale sessions (centralized helper)
+require_once __DIR__ . '/includes/auth.php';
 
 // --- Search Handling ---
 $searchTerm = isset($_GET['q']) ? trim($_GET['q']) : '';
@@ -102,7 +104,7 @@ if ($conn && !$conn->connect_error) {
 } else {
     $queryError = 'DB connection failed.';
 }
-$isAuthenticated = isset($_SESSION['user_id']);
+$isAuthenticated = session_user_id_or_zero() > 0;
 // Helper to derive first image path
 function firstImage($imagesField) {
     if (!$imagesField) return 'img/logo.png';

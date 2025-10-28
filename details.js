@@ -329,6 +329,13 @@ if (firstActive) {
     const tabEl = document.getElementById(target);
     if (tabEl) { tabEl.hidden = false; tabEl.style.display = 'block'; }
 }
+// If URL contains #order, open that tab automatically
+if (window.location && window.location.hash && window.location.hash.toLowerCase().includes('order')) {
+    const orderBtn = document.querySelector('.tab-btn[data-tab="order"]');
+    if (orderBtn) {
+        try { orderBtn.click(); } catch (e) { console.warn('Failed to auto-open order tab', e); }
+    }
+}
 const modal = document.getElementById('viewerModal');
 if (modal) {
     modal.style.display = 'flex';

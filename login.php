@@ -27,6 +27,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'login') {
   $stmt = $conn->prepare(
     "SELECT " . ACCOUNT_ID_COL . ", " . ACCOUNT_NAME_COL . ", " . ACCOUNT_PASS_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_EMAIL_COL . " = ?"
   );
+    if (!$stmt) {
+      // Prepare failed (invalid schema/table); treat as authentication failure
+      header("Location: $redirect?login_error=1");
+      exit();
+    }
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
@@ -71,35 +76,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
   $password = password_hash($passwordRaw, PASSWORD_DEFAULT);
 
   if ($username && $email && $passwordRaw) {
-  $stmt = $conn->prepare(
-    "SELECT " . ACCOUNT_ID_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_EMAIL_COL . " = ?"
-  );
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if ($stmt->num_rows > 0) {
-      $registerMessage = "Email already registered.";
+    // Check whether email already exists
+    $chk = $conn->prepare("SELECT " . ACCOUNT_ID_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_EMAIL_COL . " = ? LIMIT 1");
+    if (!$chk) {
+      $registerMessage = "Error: registration not available (DB schema mismatch).";
     } else {
-  $stmt = $conn->prepare(
-    "INSERT INTO " . ACCOUNT_TABLE . " (" . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_PASS_COL . ") VALUES (?, ?, ?)"
-  );
-      $stmt->bind_param("sss", $username, $email, $password);
-      if ($stmt->execute()) {
-        $_SESSION['user_id'] = $stmt->insert_id;
-        $_SESSION['username'] = $username;
-        $_SESSION['email'] = $email;
-        // Set welcome toast for new registration
-  $welcomeMsg = 'Account created — welcome, ' . ($username ?: 'user') . '!';
-  $safeMsg = str_replace(["\r","\n",";"], ' ', $welcomeMsg);
-  setcookie('welcome_toast', $safeMsg, time()+60, '/');
-        header("Location: " . $_SESSION['redirect_after_auth']);
-        exit();
+      $chk->bind_param('s', $email);
+      $chk->execute();
+      $chk->store_result();
+      if ($chk->num_rows > 0) {
+        $registerMessage = "Email already registered.";
       } else {
-        $registerMessage = "Error: " . $stmt->error;
+        // Insert new account
+        $ins = $conn->prepare("INSERT INTO " . ACCOUNT_TABLE . " (" . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_PASS_COL . ") VALUES (?, ?, ?)");
+        if (!$ins) {
+          $registerMessage = "Error: registration unavailable (prepare failed).";
+        } else {
+          $ins->bind_param('sss', $username, $email, $password);
+          if ($ins->execute()) {
+            $_SESSION['user_id'] = $ins->insert_id;
+            $_SESSION['username'] = $username;
+            $_SESSION['email'] = $email;
+            $welcomeMsg = 'Account created — welcome, ' . ($username ?: 'user') . '!';
+            $safeMsg = str_replace(["\r","\n",";"], ' ', $welcomeMsg);
+            setcookie('welcome_toast', $safeMsg, time()+60, '/');
+            header("Location: " . $_SESSION['redirect_after_auth']);
+            exit();
+          } else {
+            $registerMessage = "Error: " . $ins->error;
+          }
+          $ins->close();
+        }
       }
+      $chk->close();
     }
-    $stmt->close();
   } else {
     $registerMessage = "Please fill in all fields.";
   }

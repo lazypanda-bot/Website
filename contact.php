@@ -15,8 +15,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
 <?php
-    session_start();
-    $isAuthenticated = isset($_SESSION['user_id']);
+    require_once __DIR__ . '/includes/auth.php';
+    $isAuthenticated = session_user_id_or_zero() > 0;
     ?>
 <script>
     window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;

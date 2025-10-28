@@ -1,8 +1,10 @@
 <?php
 session_start();
-$isAuthenticated = isset($_SESSION['user_id']);
 // Ensure DB connection is available
 require_once 'database.php';
+// Use centralized auth helper to clear stale sessions and validate user
+require_once __DIR__ . '/includes/auth.php';
+$isAuthenticated = session_user_id_or_zero() > 0;
 // Compute base path (handles when app is served from a subdirectory, e.g. /Website)
 $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 if ($basePath === '/') $basePath = '';
@@ -413,7 +415,12 @@ function pd_first_image($imagesField) {
                     <button type="button" class="design-btn" id="uploadDesignBtn">
                         Upload Your Design
                     </button>
-                    <a href="sim.html" class="design-btn">Customize Design</a>
+                    <?php 
+                        // preserve previous href but prefer server-side sim with product_id
+                        $simHref = 'sim.php';
+                        if (!empty($productId)) $simHref .= '?product_id=' . intval($productId);
+                    ?>
+                    <a href="<?= htmlspecialchars($simHref) ?>" class="design-btn">Customize Design</a>
                     <button type="button" class="design-btn" id="requestDesignBtn">
                         Request Design
                     </button>
@@ -422,6 +429,52 @@ function pd_first_image($imagesField) {
                     <strong>Note:</strong> A digital proof of your design will be sent to your registered account. Please review and approve it to proceed with printing.
                 </p>
                 <input type="hidden" name="design-option" id="design-option" value="" />
+                <?php
+                    // If page was opened with a saved designoption id, render a small preview area
+                    $queriedDesignOption = isset($_GET['designoption_id']) ? (int)$_GET['designoption_id'] : null;
+                    if ($queriedDesignOption && isset($conn) && !$conn->connect_error) {
+                        $dsql = 'SELECT do.designoption_id, do.designfilepath, do.request_design, cu.color, cu.note FROM designoption do LEFT JOIN customization cu ON cu.customization_id = do.customization_id WHERE do.designoption_id = ? LIMIT 1';
+                        if ($dstmt = $conn->prepare($dsql)) {
+                            $dstmt->bind_param('i', $queriedDesignOption);
+                            if ($dstmt->execute()) {
+                                $dres = $dstmt->get_result();
+                                if ($drow = $dres->fetch_assoc()) {
+                                    $thumb = $drow['designfilepath'] ? htmlspecialchars($drow['designfilepath']) : null;
+                                    $dc_raw = $drow['color'] ?? '';
+                                    $dc = $dc_raw ? htmlspecialchars($dc_raw) : '';
+                                    $rawNote = $drow['note'] ?? $drow['request_design'] ?? '';
+                                    // If the note looks like internal 3D metadata (JSON with camera/rotation), don't print raw JSON — show a friendly label instead
+                                    $noteDisplay = '';
+                                    $is3Dmeta = false;
+                                    if ($rawNote !== '') {
+                                        $trim = trim($rawNote);
+                                        if ((str_starts_with($trim, '{') || str_starts_with($trim, '['))) {
+                                            $dec = json_decode($trim, true);
+                                            if (is_array($dec) && (isset($dec['camera']) || isset($dec['rotation']))) {
+                                                $is3Dmeta = true;
+                                            }
+                                        }
+                                        $noteDisplay = $is3Dmeta ? 'Custom 3D design saved' : htmlspecialchars($rawNote);
+                                    } else {
+                                        $noteDisplay = 'No description';
+                                    }
+
+                                    echo "<div class=\"saved-design-preview\">";
+                                    if ($thumb) {
+                                        $src = $thumb;
+                                        echo "<div class=\"saved-design-thumb\"><img src=\"$src\" alt=\"Saved design\"/></div>";
+                                    } else {
+                                        $sw = $dc ? $dc : '#efeef0';
+                                        echo "<div class=\"saved-design-thumb swatch\" style=\"background:$sw\"></div>";
+                                    }
+                                    echo "<div class=\"saved-design-meta\"><strong>Saved design</strong><div class=\"sd-note\">" . $noteDisplay . "</div></div></div>";
+                                }
+                                $dres->free();
+                            }
+                            $dstmt->close();
+                        }
+                    }
+                ?>
             </section>
             <div class="action-buttons">
                 <?php if ($productNotFound): ?>

@@ -22,7 +22,11 @@ $designoption_id = $res['designoption_id'];
 $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $cart_inserted = false;
 $cart_insert_id = null;
+require_once __DIR__ . '/includes/auth.php';
 if ($user_id > 0 && $product_id > 0) {
+    // Defensive: ensure account still exists before attempting to add to cart
+    $user_id = session_user_id_or_zero();
+    if ($user_id === 0) { /* skip cart insert */ }
     // Use adaptive cart table column names detection similar to add-to-cart.php
     $cartCols = [];
     if ($res2 = $conn->query('SHOW COLUMNS FROM cart')) {
@@ -35,13 +39,27 @@ if ($user_id > 0 && $product_id > 0) {
     $sizeCol = $cartCols['size'] ?? 'size';
     $colorCol = $cartCols['color'] ?? 'color';
 
-    $insSql = "INSERT INTO cart ({$userFk}, {$prodFk}, {$sizeCol}, {$colorCol}, {$qtyCol}) VALUES (?,?,?,?,?)";
-    $ins = $conn->prepare($insSql);
-    if ($ins) {
-        $qty = 1; $s = $size ?: 'Default'; $c = $color ?: 'Standard';
-        $ins->bind_param('iissi', $user_id, $product_id, $s, $c, $qty);
-        if ($ins->execute()) { $cart_inserted = true; $cart_insert_id = $ins->insert_id; }
-        $ins->close();
+    // Detect if cart table has a column to store designoption_id (nullable int)
+    $designCol = $cartCols['designoption_id'] ?? $cartCols['design_option_id'] ?? $cartCols['design_id'] ?? null;
+    $qty = 1; $s = $size ?: 'Default'; $c = $color ?: 'Standard';
+    if ($designCol) {
+        // include designoption column in insert
+        $insSql = "INSERT INTO cart ({$userFk}, {$prodFk}, {$sizeCol}, {$colorCol}, {$qtyCol}, {$designCol}) VALUES (?,?,?,?,?,?)";
+        $ins = $conn->prepare($insSql);
+        if ($ins) {
+            $did = $designoption_id ? (int)$designoption_id : 0;
+            $ins->bind_param('iissii', $user_id, $product_id, $s, $c, $qty, $did);
+            if ($ins->execute()) { $cart_inserted = true; $cart_insert_id = $ins->insert_id; }
+            $ins->close();
+        }
+    } else {
+        $insSql = "INSERT INTO cart ({$userFk}, {$prodFk}, {$sizeCol}, {$colorCol}, {$qtyCol}) VALUES (?,?,?,?,?)";
+        $ins = $conn->prepare($insSql);
+        if ($ins) {
+            $ins->bind_param('iissi', $user_id, $product_id, $s, $c, $qty);
+            if ($ins->execute()) { $cart_inserted = true; $cart_insert_id = $ins->insert_id; }
+            $ins->close();
+        }
     }
 }
 

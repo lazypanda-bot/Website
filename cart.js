@@ -37,6 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load animation class moved from inline script
   window.addEventListener('load', ()=> document.body.classList.add('loaded'));
+  // Read user data from body dataset (moved from inline script in PHP)
+  try {
+      const body = document.body;
+      if(body && body.dataset) {
+          window.isAuthenticated = body.dataset.userAuth === '1';
+          window.userAddress = body.dataset.userAddress || '';
+          window.userPhone = body.dataset.userPhone || '';
+          window.userName = body.dataset.userName || '';
+      }
+  } catch(e) { /* ignore */ }
   // Profile shortcut button
   const updateProfileBtn = document.getElementById('update-profile-btn');
   if (updateProfileBtn) updateProfileBtn.addEventListener('click', () => window.location.href='profile.php');
@@ -67,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
         items = Array.isArray(data.items)? data.items : [];
+        // NOTE: preview merge removed — cart will not display saved-design previews
     } catch(err){ console.error(err); items=[]; }
   }
 
@@ -112,11 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
         subtotal += line;
             if(cartItemsContainer){
             const idAttr = p.id ? `data-id="${p.id}"` : '';
+            const designHtml = '';
             cartItemsContainer.innerHTML += `
             <div class="cart-item cart-item-card" data-line-index="${idx}">
                 <label class="cart-item-label">
                     <input type="checkbox" class="select-cart-item" checked data-key="${getKey(p)}" ${idAttr} />
-                    <strong>${p.name}</strong>
+                    ${designHtml}<strong>${p.name}</strong>
                 </label>
                 <p>Size: ${p.size||''}</p>
                 <p>Design: ${p.design||''}</p>
@@ -124,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label for="qty_${idx}" class="qty-label">QTY</label>
                     <input id="qty_${idx}" type="number" class="qty-input" min="1" value="${p.quantity}" data-key="${getKey(p)}" ${idAttr} />
                 </div>
-                <p>Price: ₱${price.toFixed(2)} each</p>
-                <p><strong>Subtotal: ₱${line.toFixed(2)}</strong></p>
+                <p>Price: ${price.toFixed(2)} each</p>
+                <p><strong>Subtotal: ${line.toFixed(2)}</strong></p>
                 <div class="cart-item-actions">
                     <button class="delete-cart-item" data-key="${getKey(p)}" ${idAttr}><i class="fa fa-trash"></i> Delete</button>
               </div>
@@ -261,6 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const delivery = checkoutForm.querySelector('input[name="delivery_method"]:checked');
       const paymentMethod = checkoutForm.querySelector('input[name="payment_method"]:checked');
       const partial = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
+    const partialAmountEl = checkoutForm.querySelector('#partial');
+    const partialAmount = partialAmountEl && partialAmountEl.value ? parseFloat(partialAmountEl.value) : null;
       const deliveryLabel = delivery ? (delivery.value==='standard' ? 'Standard Delivery' : 'Pick Up') : '';
       const payMethodLabel = paymentMethod ? (paymentMethod.value==='gcash' ? 'GCash' : 'Cash') : '';
       const partialLabel = partial ? (partial.value==='1' ? 'Partial Payment' : 'Full Payment') : '';
@@ -268,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(deliveryLabel) lines += `<div class="meta-line meta-delivery">Delivery: <strong>${deliveryLabel}</strong></div>`;
       if(payMethodLabel) lines += `<div class="meta-line meta-payment">Payment Method: <strong>${payMethodLabel}</strong></div>`;
       if(partialLabel) lines += `<div class="meta-line meta-partial">Payment Type: <strong>${partialLabel}</strong></div>`;
+      if (partialAmount !== null && !isNaN(partialAmount)) lines += `<div class="meta-line meta-partial-amount">Partial Amount: <strong>₱${partialAmount.toFixed(2)}</strong></div>`;
       return lines;
   }
 
@@ -282,7 +297,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // Delivery method changes (already handled) + new listeners for payment method and payment type
       checkoutForm.querySelectorAll('input[name="delivery_method"]').forEach(r=> r.addEventListener('change', ()=>{ updateShippingFee(); }));
       checkoutForm.querySelectorAll('input[name="payment_method"]').forEach(r=> r.addEventListener('change', ()=>{ updateShippingFee(); }));
-      checkoutForm.querySelectorAll('input[name="isPartialPayment"]').forEach(r=> r.addEventListener('change', ()=>{ updateShippingFee(); }));
+      checkoutForm.querySelectorAll('input[name="isPartialPayment"]').forEach(r=> r.addEventListener('change', ()=>{
+          // Show or hide the partial amount input row
+          const sel = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
+          const row = checkoutForm.querySelector('#partial-amount-row');
+          if (row) row.style.display = (sel && sel.value === '1') ? '' : 'none';
+          updateShippingFee();
+      }));
       // Update header info if user edits address/phone
       [deliveryAddressInput, deliveryPhoneInput].forEach(inp=>{ if(inp){ inp.addEventListener('blur', ()=>{ updateShippingFee(); }); } });
   }
@@ -314,6 +335,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const dm = checkoutForm.querySelector('input[name="delivery_method"]:checked');
           const pm = checkoutForm.querySelector('input[name="payment_method"]:checked');
           const partial = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
+          const partialAmountEl = checkoutForm.querySelector('#partial');
+          const partialAmountRaw = partialAmountEl ? partialAmountEl.value : '';
+          let partialAmount = null;
+          if (partial && partial.value === '1') {
+              partialAmount = parseFloat(partialAmountRaw);
+              if (isNaN(partialAmount) || partialAmount <= 0) { alert('Please enter a valid partial amount greater than 0.'); if (partialAmountEl) partialAmountEl.focus(); return; }
+          }
           if(!address){ alert('Please enter your delivery address.'); return; }
           if(!phone){ alert('Please enter your phone number.'); return; }
           if(!dm){ alert('Please select a delivery method.'); return; }
@@ -322,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if(!selected.length){ alert('Please select at least one item.'); return; }
           const src = useDb? items : JSON.parse(localStorage.getItem('cart')||'[]');
           const payload=[];
-          selected.forEach(cb=>{ const id = cb.getAttribute('data-id'); const key = cb.getAttribute('data-key'); const it = src.find(p=> useDb ? (p.id && id && String(p.id)===id) : getKey(p)===key); if(!it) return; payload.push({product_id: it.product_id||it.id, quantity: it.quantity, size: it.size||'Default'}); });
+          selected.forEach(cb=>{ const id = cb.getAttribute('data-id'); const key = cb.getAttribute('data-key'); const it = src.find(p=> useDb ? (p.id && id && String(p.id)===id) : getKey(p)===key); if(!it) return; payload.push({product_id: it.product_id||it.id, quantity: it.quantity, size: it.size||'Default', designoption_id: it.designoption_id||null}); });
           const valid = payload.filter(p=> Number(p.product_id)>0 && Number(p.quantity)>0);
           if(!valid.length){ alert('No valid items to order.'); return; }
           const fd = new FormData();
@@ -330,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
           fd.append('delivery_address', address);
           fd.append('delivery_phone', phone);
           fd.append('isPartialPayment', partial ? partial.value : '0');
+          if (partialAmount !== null) fd.append('partial', partialAmount.toFixed(2));
           try {
               const btn = checkoutForm.querySelector('.place-order-btn');
               if(btn){ btn.disabled=true; btn.textContent='Placing'; }

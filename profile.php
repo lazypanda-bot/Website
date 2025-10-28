@@ -1,10 +1,11 @@
 <?php
-session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-require_once __DIR__ . '/database.php';
+    session_start();
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    require_once __DIR__ . '/database.php';
+    require_once __DIR__ . '/includes/auth.php';
 
-$isAuthenticated = isset($_SESSION['user_id']);
+    $isAuthenticated = session_user_id_or_zero() > 0;
 $username = $email = $address = $phone = $avatarPath = '';
 $userOrders = [];
 if ($isAuthenticated) {
@@ -95,6 +96,16 @@ if ($isAuthenticated) {
     $stmt = $conn->prepare("SELECT " . ACCOUNT_NAME_COL . ", " . ACCOUNT_EMAIL_COL . ", " . ACCOUNT_ADDRESS_COL . ", " . ACCOUNT_PHONE_COL . ", " . ACCOUNT_AVATAR_COL . " FROM " . ACCOUNT_TABLE . " WHERE " . ACCOUNT_ID_COL . " = ?");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
+    // Defensive: ensure a row exists for the session user; if not, destroy the session and redirect to login
+    $stmt->store_result();
+    if ($stmt->num_rows === 0) {
+        // Account row missing (stale session) — ensure logout and redirect to login
+        $stmt->close();
+        session_unset();
+        session_destroy();
+        header('Location: login.php?session_missing=1');
+        exit();
+    }
     $stmt->bind_result($username, $email, $address, $phone, $avatarPath);
     $stmt->fetch();
     $stmt->close();
@@ -107,6 +118,9 @@ if ($isAuthenticated) {
             while ($r = $res->fetch_assoc()) { $orderCols[strtolower($r['Field'])] = $r['Field']; }
             $res->free();
         }
+        // Detect if orders table stores a designoption linkage
+        $ordersDesignCol = null;
+        foreach (['designoption_id','design_option_id','design_id'] as $c) { if (isset($orderCols[$c])) { $ordersDesignCol = $orderCols[$c]; break; } }
         $fkCol = 'user_id';
         foreach (['customer_id','user_id','account_id','cust_id'] as $c) { if (isset($orderCols[$c])) { $fkCol = $orderCols[$c]; break; } }
         define('ORDERS_ACCOUNT_FK_COL', $fkCol);
@@ -119,7 +133,17 @@ if ($isAuthenticated) {
     }
     $orderItemsMap = [];
     if ($isAuthenticated && !$conn->connect_error) {
-        $sqlOrders = "SELECT o." . ORDERS_PK_COL . " AS order_id, o.TotalAmount, o.OrderStatus, o.DeliveryStatus, o." . ORDERS_CREATED_COL . " AS created_col, o.product_id, o.size, o.quantity, p.product_name FROM " . ORDERS_TABLE . " o LEFT JOIN products p ON p.product_id = o.product_id WHERE o." . ORDERS_ACCOUNT_FK_COL . " = ? ORDER BY created_col DESC";
+        // Include orders-level designoption_id when available (some installations store design on orders)
+        $orderSelectExtras = '';
+        if ($ordersDesignCol) { $orderSelectExtras = ", o." . $ordersDesignCol . " AS order_designoption_id"; }
+        // Normalize column names from DB to the legacy names expected by the template
+        $sqlOrders = "SELECT o." . ORDERS_PK_COL . " AS order_id, "
+            . "o.total_amount AS TotalAmount, "
+            . "o.order_status AS OrderStatus, "
+            . "o.delivery_status AS DeliveryStatus, "
+            . "o." . ORDERS_CREATED_COL . " AS created_col, o.product_id, o.size, o.quantity"
+            . $orderSelectExtras
+            . ", p.product_name FROM " . ORDERS_TABLE . " o LEFT JOIN products p ON p.product_id = o.product_id WHERE o." . ORDERS_ACCOUNT_FK_COL . " = ? ORDER BY created_col DESC";
         if ($stmtO = $conn->prepare($sqlOrders)) {
             $stmtO->bind_param('i', $userId);
             if ($stmtO->execute()) {
@@ -129,8 +153,23 @@ if ($isAuthenticated) {
                 $resO->free();
                 if (count($orderIds) > 0) {
                     $in = implode(',', array_map('intval', $orderIds));
-                    $sqlItems = "SELECT oi.order_id, oi.product_id, oi.size, oi.quantity, oi.line_price, p.product_name FROM order_items oi LEFT JOIN products p ON p.product_id = oi.product_id WHERE oi.order_id IN ($in) ORDER BY oi.order_id DESC, oi.order_item_id ASC";
-                    if ($resI = $conn->query($sqlItems)) { while ($ri = $resI->fetch_assoc()) { $orderItemsMap[$ri['order_id']][] = $ri; } $resI->free(); }
+                    // Detect if order_items table contains a design link column and include design metadata when present
+                    $orderItemsDesignCol = null;
+                    $oiCols = [];
+                    if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) {
+                        while ($rc = $resCols->fetch_assoc()) { $oiCols[strtolower($rc['Field'])] = $rc['Field']; }
+                        $resCols->free();
+                    }
+                    foreach (['designoption_id','design_option_id','design_id'] as $c) { if (isset($oiCols[$c])) { $orderItemsDesignCol = $oiCols[$c]; break; } }
+
+                    if ($orderItemsDesignCol) {
+                        $sqlItems = "SELECT oi.order_id, oi.product_id, oi.size, oi.quantity, oi.line_price, p.product_name, oi." . $orderItemsDesignCol . " AS designoption_id, do.designfilepath AS designfilepath, cu.color AS design_color, cu.note AS design_note FROM order_items oi LEFT JOIN products p ON p.product_id = oi.product_id LEFT JOIN designoption do ON do.designoption_id = oi." . $orderItemsDesignCol . " LEFT JOIN customization cu ON cu.customization_id = do.customization_id WHERE oi.order_id IN ($in) ORDER BY oi.order_id DESC, oi.order_item_id ASC";
+                        if ($resI = $conn->query($sqlItems)) { while ($ri = $resI->fetch_assoc()) { $orderItemsMap[$ri['order_id']][] = $ri; } $resI->free(); }
+                    } else {
+                        // Fallback: no per-item design column, just pull basic items. Order-level design (if any) will be applied later.
+                        $sqlItems = "SELECT oi.order_id, oi.product_id, oi.size, oi.quantity, oi.line_price, p.product_name FROM order_items oi LEFT JOIN products p ON p.product_id = oi.product_id WHERE oi.order_id IN ($in) ORDER BY oi.order_id DESC, oi.order_item_id ASC";
+                        if ($resI = $conn->query($sqlItems)) { while ($ri = $resI->fetch_assoc()) { $orderItemsMap[$ri['order_id']][] = $ri; } $resI->free(); }
+                    }
                 }
             }
             $stmtO->close();

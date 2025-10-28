@@ -16,9 +16,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
 <?php
-session_start();
-require_once __DIR__ . '/database.php';
-$isAuthenticated = isset($_SESSION['user_id']);
+$isAuthenticated = false;
+// Use centralized auth helper which starts a session if necessary
+require_once __DIR__ . '/includes/auth.php';
+$isAuthenticated = session_user_id_or_zero() > 0;
 $userAddress = '';
 $userPhone = '';
 $userName = '';
@@ -32,17 +33,17 @@ if ($isAuthenticated && !$conn->connect_error) {
     $stmt->close();
 }
 ?>
-<script>
-    // Inline bootstrap (allowed) for page-specific user data
-    window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
-    window.userAddress = <?= json_encode($userAddress) ?>;
-    window.userPhone = <?= json_encode($userPhone) ?>;
-    window.userName = <?= json_encode($userName) ?>;
-</script>
+
+<!-- page data exposed via data- attributes on the body -->
+<?php /* body attributes added below */ ?>
 <script src="login.js?v=<?= time() ?>"></script>
 
 </head>
-<body class="cart-page">
+<body class="cart-page"
+    data-user-auth="<?= $isAuthenticated ? '1' : '0' ?>"
+    data-user-address="<?= htmlspecialchars($userAddress, ENT_QUOTES) ?>"
+    data-user-phone="<?= htmlspecialchars($userPhone, ENT_QUOTES) ?>"
+    data-user-name="<?= htmlspecialchars($userName, ENT_QUOTES) ?>">
     <section id="header">
         <div class="left-nav">
             <a href="home.php"><img src="img/Icons/printing_logo-removebg-preview.png" class="logo" alt=""></a>
@@ -90,6 +91,11 @@ if ($isAuthenticated && !$conn->connect_error) {
                     <span>Payment Type:</span><br>
                     <input type="radio" name="isPartialPayment" id="payment_partial" value="1" required> <label for="payment_partial">Partial</label>
                     <input type="radio" name="isPartialPayment" id="payment_full" value="0"> <label for="payment_full">Full</label>
+                    <div id="partial-amount-row">
+                        <label for="partial">Partial amount (₱)</label><br>
+                        <input type="number" step="0.01" min="0" id="partial" name="partial" placeholder="Enter partial amount" />
+                        <div class="form-note">Enter the amount you will pay now.</div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <span>Delivery Method:</span><br>

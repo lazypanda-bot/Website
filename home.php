@@ -18,7 +18,9 @@
 <?php
     session_start();
     require_once 'database.php';
-    $isAuthenticated = isset($_SESSION['user_id']);
+    // Use centralized auth helper to clear stale sessions and validate user existence
+    require_once __DIR__ . '/includes/auth.php';
+    $isAuthenticated = session_user_id_or_zero() > 0;
     include_once 'nav-avatar.php';
 
     // Fetch services with a representative product image if available
@@ -27,7 +29,19 @@
         // Ensure services table exists before querying (non-fatal if missing)
         if ($chk = $conn->query("SHOW TABLES LIKE 'services'")) {
             if ($chk->num_rows > 0) {
-                $sql = "SELECT s.name, s.image AS service_image, (SELECT images FROM products p WHERE p.service_type = s.name ORDER BY p.created_at DESC LIMIT 1) AS sample_images FROM services s ORDER BY s.name ASC";
+                // services table in this database doesn't have an 'image' column and products
+                // store images in `product_images` (linked by product_id -> products.service_id).
+                // Use a safe subquery to grab one sample image for the service (if any).
+                $sql = "SELECT s.service_id, s.name, s.image AS service_image, (
+                    SELECT pi.image_path
+                    FROM products p
+                    JOIN product_images pi ON pi.product_id = p.product_id
+                    WHERE p.service_id = s.service_id
+                    ORDER BY p.product_id DESC, pi.image_id DESC
+                    LIMIT 1
+                ) AS sample_images
+                FROM services s
+                ORDER BY s.service_id ASC";
                 if ($res = $conn->query($sql)) {
                     while ($row = $res->fetch_assoc()) { $servicesHome[] = $row; }
                     $res->free();

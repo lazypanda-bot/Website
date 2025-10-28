@@ -25,7 +25,27 @@ if (!defined('ORDERS_TABLE')) {
 session_start();
 
 
-$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+$user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+// Defensive: verify session user exists in the accounts table. If not, clear session and redirect to login.
+if (!$user_id) {
+    header('Location: login.php?login_error=1');
+    exit;
+} else {
+    // Check the account actually exists
+    $chk = $conn->prepare('SELECT 1 FROM ' . ACCOUNT_TABLE . ' WHERE ' . ACCOUNT_ID_COL . ' = ? LIMIT 1');
+    if ($chk) {
+        $chk->bind_param('i', $user_id);
+        $chk->execute();
+        $chk->store_result();
+        if ($chk->num_rows === 0) {
+            $chk->close();
+            session_unset(); session_destroy();
+            header('Location: login.php?session_missing=1');
+            exit;
+        }
+        $chk->close();
+    }
+}
 $product_id = isset($_POST['product_id']) ? $_POST['product_id'] : null;
 $size = $_POST['size'];
 $color = $_POST['color'];
