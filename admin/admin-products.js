@@ -1,0 +1,506 @@
+window.addEventListener('DOMContentLoaded', () => {
+    // Highlight active nav
+    const currentPage = window.location.pathname.split('/').pop();
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        const linkPage = href.split('/').pop().split('#')[0];
+        if (currentPage === linkPage) link.classList.add('active');
+    });
+
+    const tbody = document.getElementById('productsTbody');
+    const productModal = document.getElementById('productModal');
+    const serviceModal = document.getElementById('serviceModal');
+    const openProductBtn = document.getElementById('openProductModal');
+    const openServiceBtn = document.getElementById('openServiceModal');
+    const productForm = document.getElementById('productForm');
+    const serviceForm = document.getElementById('serviceForm');
+    const servicesTbody = document.getElementById('servicesTbody');
+    const productModalTitle = document.getElementById('productModalTitle');
+    const serviceTypeList = document.getElementById('serviceTypeList');
+    // Track existing-image removals and new selected files
+    let removedImages = [];
+    const newFilesMap = new Map();
+
+    function openModal(modal){ modal.style.display='flex'; }
+    function closeModal(modal){ modal.style.display='none'; }
+    document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeModal(btn.closest('.modal'))));
+
+    openProductBtn?.addEventListener('click', () => { resetProductForm(); productModalTitle.textContent='Add Product'; openModal(productModal); });
+    openServiceBtn?.addEventListener('click', () => { serviceForm.reset(); loadServices(); openModal(serviceModal); });
+
+    function renderProducts(list){
+        tbody.innerHTML='';
+        if(!list || list.length===0){
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-row">No products yet</td></tr>';
+            return;
+        }
+        // Collect service types for datalist
+        const serviceTypes = new Set();
+        list.forEach(p=>{ 
+            if(p.service_type) serviceTypes.add(p.service_type); 
+          });
+        serviceTypeList.innerHTML = Array.from(serviceTypes).map(s=>`<option value="${escapeHtml(s)}"></option>`).join('');
+
+        list.forEach(p=>{
+        const tr = document.createElement('tr');
+        const imgs = parseImages(p.images);
+        const hasReal = imgs && imgs.length>0;
+        const imgSrc = hasReal ? normalizeImagePath(imgs[0]) : '';
+        tr.innerHTML = `
+            <td>${escapeHtml(p.service_type||'')}</td>
+            <td>${imgSrc?`<img src="${escapeAttr(imgSrc)}" alt="thumb" class="product-thumb" onerror="this.classList.add('broken'); this.src='../img/logo.png'" />`:`<div class="no-thumb" aria-hidden="true"></div>`}</td>
+            <td>${escapeHtml(p.product_name)}</td>
+            <td>₱${Number(p.price).toFixed(2)}</td>
+            <td class="td-ellipsis">${escapeHtml(p.product_details||'')}</td>
+            <td>
+                <button class="action-icon-btn edit" title="Edit" data-edit="${p.product_id}"><i class="fas fa-edit"></i></button>
+                <button class="action-icon-btn delete" title="Delete" data-del="${p.product_id}"><i class="fas fa-trash"></i></button>
+                <a href="../product-details.php?id=${p.product_id}" target="_blank" class="action-icon-btn" title="View"><i class="fas fa-external-link-alt"></i></a>
+            </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function fetchProducts(){
+        fetch('products-api.php?action=list')
+            .then(async r => {
+                const text = await r.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.status === 'ok') renderProducts(data.products);
+                    else console.error('products list error', data);
+                } catch (e) {
+                    console.error('products-api returned non-JSON', r.status, text);
+                }
+            })
+            .catch(err=>console.error('List error',err));
+    }
+
+    function resetProductForm(){
+        productForm.reset();
+        document.getElementById('product_id').value='';
+        // clear previews and file info
+        const preview = document.getElementById('imagePreview'); if(preview) preview.innerHTML='';
+        const fileInfo = document.getElementById('fileInfo'); if(fileInfo) fileInfo.textContent='';
+        const fileInput = document.getElementById('images_files'); if(fileInput) fileInput.value='';
+        removedImages = [];
+        // clear any staged new files
+        newFilesMap.clear();
+    }
+    // Parse an images field from the DB into an array of real image paths.
+    // This will filter out empty values and known fallback logo entries so
+    // previews/thumbnails only show when there are actual uploaded images.
+    function parseImages(imagesField){
+        if(!imagesField) return [];
+        const t = String(imagesField).trim();
+        if(!t) return [];
+        let arr = [];
+        if(t.startsWith('[')){
+            try { const parsed = JSON.parse(t); if(Array.isArray(parsed)) arr = parsed.slice(); }
+            catch(e){ arr = []; }
+        } else if(t.includes(',')){
+            arr = t.split(',').map(s=>s.trim());
+        } else arr = [t];
+        // Normalize entries and remove empties
+        arr = arr.map(s=>String(s||'').trim()).filter(Boolean);
+        // Treat any reference to the site logo as a fallback (not a real uploaded image)
+        const fallbacks = new Set(['/img/logo.png','img/logo.png','../img/logo.png','logo.png']);
+        arr = arr.filter(s => !fallbacks.has(s));
+        return arr;
+    }
+
+    function firstImage(imagesField){
+        const imgs = parseImages(imagesField);
+        if(imgs.length>0) return imgs[0];
+        // no real images, return the site logo as a fallback
+        return '/img/logo.png';
+    }
+    // Normalize image paths coming from DB (convert backslashes to slashes, ensure admin relative prefix)
+    function normalizeImagePath(p){
+        if(!p) return '/img/logo.png';
+        p = String(p).trim().replace(/^\"|\"$/g,'').replace(/^'|'$/g,'');
+        p = p.replace(/\\\\/g, '/');
+        if(/^uploads\//i.test(p) && !p.startsWith('../') && !p.startsWith('/')) p = '../' + p;
+        if(/^img\//i.test(p) && !p.startsWith('../') && !p.startsWith('/')) p = '../' + p;
+        return p;
+    }
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+    function escapeAttr(s){ return escapeHtml(s); }
+
+    tbody.addEventListener('click', e => {
+        const editBtn = e.target.closest('[data-edit]');
+        if(editBtn){
+            const id = editBtn.getAttribute('data-edit');
+            // Find row data by reading current table (could also store last fetch list)
+            // Simpler: refetch and fill when found
+            fetch('products-api.php?action=list').then(async r => {
+                const text = await r.text();
+                try {
+                    const d = JSON.parse(text);
+                    if (d.status === 'ok'){
+                        const prod = d.products.find(p=>String(p.product_id)===String(id));
+                        if(prod){
+                            productModalTitle.textContent='Edit Product';
+                            openModal(productModal);
+                            document.getElementById('product_id').value = prod.product_id;
+                            document.getElementById('product_name').value = prod.product_name;
+                            document.getElementById('service_type').value = prod.service_type || '';
+                            document.getElementById('price').value = prod.price;
+                            document.getElementById('product_details').value = prod.product_details || '';
+                            // product images are handled via uploads; clear any text-input handling
+                            // populate preview area with existing images if any
+                            const preview = document.getElementById('imagePreview');
+                            preview.innerHTML = '';
+                            if(prod.images){
+                                const imgs = parseImages(prod.images);
+                                // Only show previews when there are actual uploaded images (not just the fallback)
+                                imgs.slice(0,4).forEach(src=>{
+                                    const wrap = document.createElement('div'); wrap.className='preview-wrap'; wrap.style.display='inline-block'; wrap.style.position='relative'; wrap.style.marginRight='8px';
+                                    // store the original server path on the wrapper for later serialization
+                                    wrap.setAttribute('data-src', src);
+                                    const img = document.createElement('img'); img.src = normalizeImagePath(src); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover'; img.onerror = ()=>{ img.src='/img/logo.png'; img.classList.add('broken'); };
+                                    const removeBtn = document.createElement('button'); removeBtn.className='img-remove'; removeBtn.type='button'; removeBtn.title='Remove image'; removeBtn.setAttribute('data-src', src);
+                                    removeBtn.textContent='✕';
+                                    wrap.appendChild(img); wrap.appendChild(removeBtn); preview.appendChild(wrap);
+                                });
+                            }
+                        }
+                    } else {
+                        console.error('products list error', d);
+                    }
+                } catch (e) {
+                    console.error('products-api returned non-JSON (edit fetch)', r.status, text);
+                }
+            }).catch(err=>console.error('Edit fetch error', err));
+        }
+        const delBtn = e.target.closest('[data-del]');
+        if(delBtn){
+            const id = delBtn.getAttribute('data-del');
+            if(confirm('Delete this product?')){
+                const fd = new FormData(); fd.append('action','delete'); fd.append('product_id', id);
+                fetch('products-api.php', {method:'POST', body:fd})
+                    .then(async r => {
+                        const text = await r.text();
+                        try {
+                            const d = JSON.parse(text);
+                            if (d.status === 'ok') { fetchProducts(); }
+                            else alert(d.message || 'Delete failed');
+                        } catch (e) {
+                            console.error('Delete returned non-JSON', r.status, text);
+                            alert('Delete failed; server returned unexpected response. See console.');
+                        }
+                    })
+                    .catch(err=>alert('Delete error '+err));
+            }
+        }
+    });
+
+    productForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const fd = new FormData(productForm);
+        fd.append('action','save');
+        // Collect existing images still present in previews.
+        // Important: only include server-side image paths (data-src) here.
+        // Do NOT include data: URIs from newly selected files (they would bloat the payload).
+        const existingImgs = [];
+        productForm.querySelectorAll('.preview-wrap').forEach(w => {
+            // existing (saved) preview wraps include a data-src attribute set when populated from the product
+            const existingPath = w.getAttribute('data-src');
+            if (existingPath && !removedImages.includes(existingPath)) existingImgs.push(existingPath);
+        });
+        if (existingImgs.length) fd.append('images_current', JSON.stringify(existingImgs));
+        removedImages.forEach(r=> fd.append('images_removed[]', r));
+        // append only the remaining new files from newFilesMap
+        Array.from(newFilesMap.values()).forEach(f=> fd.append('images_files[]', f));
+        fetch('products-api.php', {method:'POST', body:fd})
+            .then(async r => {
+                const text = await r.text();
+                try {
+                    const d = JSON.parse(text);
+                    if (d.status === 'ok') { closeModal(productModal); fetchProducts(); }
+                    else alert(d.message || 'Save failed');
+                } catch (e) {
+                    console.error('Save returned non-JSON', r.status, text);
+                    alert('Save failed; server returned unexpected response. See console.');
+                }
+            })
+            .catch(err=>alert('Save error '+err));
+    });
+
+    // Preview uploaded image
+    const imagesFilesInput = document.getElementById('images_files');
+    const imagePreview = document.getElementById('imagePreview');
+    if(imagesFilesInput){
+        imagesFilesInput.addEventListener('change', ()=>{
+            const fileInfo = document.getElementById('fileInfo');
+            const files = Array.from(imagesFilesInput.files || []);
+            // Compute existing image basenames to avoid adding duplicates
+            const existingPreviewNodesForBasenames = productForm.querySelectorAll('.preview-wrap');
+            const existingBasenames = new Set();
+            existingPreviewNodesForBasenames.forEach(node => {
+                const imgEl = node.querySelector('img');
+                const src = imgEl ? (imgEl.getAttribute('src') || node.getAttribute('data-src')) : node.getAttribute('data-src');
+                if (!src) return;
+                try { existingBasenames.add((src.split('/').pop() || '').toLowerCase()); } catch(e){}
+            });
+            // Add each new file into newFilesMap using fingerprint to avoid duplicates
+            files.forEach(f=>{
+                const nameBasename = (f.name || '').split('/').pop().toLowerCase();
+                if (existingBasenames.has(nameBasename)) {
+                    // skip adding since the same filename already exists for this product
+                    return;
+                }
+                const key = `${f.name}:${f.size}:${f.lastModified}`;
+                if (!newFilesMap.has(key)) newFilesMap.set(key, f);
+            });
+            if(fileInfo) fileInfo.textContent = newFilesMap.size ? Array.from(newFilesMap.values()).map(f=>f.name).join(', ') : '';
+            // Re-render preview area: existing preview-wraps (kept) + new files
+            imagePreview.innerHTML = '';
+            // Show any existing preview-wrap elements that weren't removed
+            const existingPreviewNodes = productForm.querySelectorAll('.preview-wrap');
+            existingPreviewNodes.forEach(node => {
+                const imgEl = node.querySelector('img');
+                const src = imgEl ? (imgEl.getAttribute('src') || node.getAttribute('data-src')) : node.getAttribute('data-src');
+                if (!src) return;
+                if (removedImages.includes(src)) return; // skip removed
+                const clone = node.cloneNode(true);
+                clone.style.display = 'inline-block'; clone.style.position = 'relative'; clone.style.marginRight = '8px';
+                imagePreview.appendChild(clone);
+            });
+            // Add previews for new files
+            Array.from(newFilesMap.values()).forEach(f=>{
+                const wrap = document.createElement('div'); wrap.className='preview-wrap'; wrap.style.display='inline-block'; wrap.style.position='relative'; wrap.style.marginRight='8px';
+                const img = document.createElement('img'); img.style.maxWidth='120px'; img.style.maxHeight='120px'; img.style.objectFit='cover';
+                const reader = new FileReader(); reader.onload = ev => img.src = ev.target.result; reader.readAsDataURL(f);
+                const removeBtn = document.createElement('button'); removeBtn.className='img-remove new-file-remove'; removeBtn.type='button'; removeBtn.title='Remove image'; removeBtn.setAttribute('data-fp', `${f.name}:${f.size}:${f.lastModified}`);
+                removeBtn.textContent='✕';
+                wrap.appendChild(img); wrap.appendChild(removeBtn); imagePreview.appendChild(wrap);
+            });
+        });
+    }
+
+    // Delegate click on remove buttons inside preview area for both existing and new files
+    imagePreview?.addEventListener('click', e=>{
+        const btn = e.target.closest('.img-remove');
+        if(!btn) return;
+        const src = btn.getAttribute('data-src');
+        const fp = btn.getAttribute('data-fp');
+        const wrap = btn.closest('.preview-wrap');
+        if(wrap) wrap.remove();
+        if(src) {
+            removedImages.push(src);
+        }
+        if(fp) {
+            newFilesMap.delete(fp);
+        }
+        const fileInfo = document.getElementById('fileInfo');
+        if(fileInfo) fileInfo.textContent = newFilesMap.size ? Array.from(newFilesMap.values()).map(f=>f.name).join(', ') : '';
+    });
+
+    serviceForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const fd = new FormData();
+        const sid = (document.getElementById('service_id').value || '').trim();
+        fd.append('action', sid ? 'edit' : 'add');
+        if (sid) fd.append('service_id', sid);
+        fd.append('name', document.getElementById('service_name').value.trim());
+        // attach optional image file
+        const svcFile = document.getElementById('service_image');
+        if(svcFile && svcFile.files && svcFile.files.length>0){ 
+            fd.append('service_image', svcFile.files[0]); 
+        }
+    fetch('services-api.php', {method:'POST', body:fd})
+        .then(r => r.text().then(text => ({ status: r.status, ok: r.ok, text })))
+        .then(resp => {
+            let d;
+            try {
+                d = JSON.parse(resp.text);
+            } 
+            catch (err) {
+                // show raw response and status for debugging
+                console.error('Service add raw response (status ' + resp.status + '):', resp.text);
+                alert('Service error HTTP ' + resp.status + '\nResponse is not valid JSON. See console for raw response.');
+                return;
+            }
+            if (d.status === 'ok') { loadServices(true); serviceForm.reset(); if(serviceImagePreview) serviceImagePreview.innerHTML=''; }
+            else alert(d.message || 'Add failed');
+        })
+        .catch(err => { console.error('Fetch error', err); alert('Service error '+err); });
+    });
+
+    // Live preview for service image chooser
+    const serviceImageInput = document.getElementById('service_image');
+    const serviceImagePreview = document.getElementById('serviceImagePreview');
+    const serviceFileInfo = document.getElementById('serviceFileInfo');
+    if(serviceImageInput){
+        serviceImageInput.addEventListener('change', ()=>{
+            serviceImagePreview.innerHTML = '';
+            const f = serviceImageInput.files && serviceImageInput.files[0];
+            if(!f) { if(serviceFileInfo) serviceFileInfo.textContent=''; return; }
+            if(serviceFileInfo) serviceFileInfo.textContent = f.name;
+            const img = document.createElement('img'); img.style.maxWidth='120px'; img.style.maxHeight='80px'; img.style.objectFit='cover'; img.style.borderRadius='6px';
+            const reader = new FileReader(); reader.onload = ev => img.src = ev.target.result; reader.readAsDataURL(f);
+            serviceImagePreview.appendChild(img);
+        });
+    }
+
+    function loadServices(refreshDatalist=false){
+    const servicesListEl = document.getElementById('servicesList');
+    if (servicesListEl) servicesListEl.innerHTML = '<div class="msg msg-loading">Loading services…</div>';
+    fetch('services-api.php?action=list')
+            .then(r => r.json())
+            .then(d => {
+                console.log('services_api list response:', d);
+                if (d.status === 'ok') {
+                    renderServices(d.services);
+                    if (refreshDatalist) syncServiceDatalist(d.services);
+                    else if (serviceTypeList.children.length === 0) syncServiceDatalist(d.services);
+                } else {
+                    if (servicesListEl) servicesListEl.innerHTML = '<div class="msg msg-error">Failed to load services</div>';
+                    console.error('services list failed', d);
+                }
+            })
+            .catch(e => {
+                console.error('services fetch error', e);
+                if (servicesListEl) servicesListEl.innerHTML = '<div class="msg msg-error">Error fetching services; see console.</div>';
+            });
+    }
+    function renderServices(list){
+    if (servicesTbody) servicesTbody.innerHTML='';
+        const servicesList = document.getElementById('servicesList');
+        if (servicesList) servicesList.innerHTML = '';
+        if(!list || list.length===0){
+            if (servicesList) servicesList.innerHTML = '<div class="msg msg-empty">No services</div>';
+            return;
+        }
+        list.forEach(s=>{
+            // Render table row for backwards compatibility (hidden) and render card in modal
+            const tr=document.createElement('tr');
+            const imgSrc = s.image ? (s.image.startsWith('http') ? s.image : ('../'+s.image.replace(/\\/g,'/'))) : '';
+            const imgCell = `<td class="svc-img-cell">${imgSrc?`<img src="${escapeAttr(imgSrc)}" class="svc-img-thumb"/>`:''}</td>`;
+            const delBtnHtml = `<button class="svc-del" data-del-svc="${s.service_id}" title="Delete">🗑️</button>`;
+            const editBtnHtml = `<button class="svc-edit" data-edit-svc="${s.service_id}" title="Edit">✎</button>`;
+            tr.innerHTML = `${imgCell}<td>${escapeHtml(s.name)}</td><td class="text-center">${editBtnHtml} ${delBtnHtml}</td>`;
+            if (servicesTbody) servicesTbody.appendChild(tr);
+
+            if (servicesList) {
+                const card = document.createElement('div');
+                card.className = 'service-card';
+
+                const imgWrap = document.createElement('div');
+                imgWrap.className = 'svc-thumb';
+                if (imgSrc) {
+                    const img = document.createElement('img');
+                    img.src = imgSrc;
+                    img.className = 'svc-img-thumb';
+                    imgWrap.appendChild(img);
+                }
+                card.appendChild(imgWrap);
+
+                const content = document.createElement('div');
+                content.className = 'svc-content';
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'svc-name';
+                nameEl.textContent = s.name;
+                content.appendChild(nameEl);
+
+                const dep = document.createElement('div');
+                dep.className = 'svc-deps';
+                dep.textContent = (s.product_count && s.product_count>0) ? `${s.product_count} product(s) use this service` : 'No product dependencies';
+                content.appendChild(dep);
+
+                card.appendChild(content);
+
+                const btns = document.createElement('div');
+                btns.className = 'svc-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'svc-edit';
+                editBtn.setAttribute('data-edit-svc', s.service_id);
+                editBtn.textContent = 'Edit';
+                // visual styling handled by CSS
+                btns.appendChild(editBtn);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'svc-del';
+                delBtn.setAttribute('data-del-svc', s.service_id);
+                delBtn.textContent = 'Delete';
+                if (s.product_count && s.product_count>0) { delBtn.disabled = true; delBtn.title = 'Cannot delete — has dependent products'; }
+                btns.appendChild(delBtn);
+
+                card.appendChild(btns);
+
+                servicesList.appendChild(card);
+            }
+        });
+    }
+    // Unified edit / delete handler for service cards and rows
+    document.addEventListener('click', function(e) {
+        const editBtn = e.target.closest('[data-edit-svc]');
+        if (editBtn) {
+            const id = editBtn.getAttribute('data-edit-svc');
+            // fetch single list and open modal with data
+            fetch('services-api.php?action=list').then(r=>r.json()).then(d=>{
+                if(d.status==='ok'){
+                    const svc = d.services.find(s=>String(s.service_id)===String(id));
+                    if(svc){
+                        document.getElementById('service_id').value = svc.service_id;
+                        document.getElementById('service_name').value = svc.name;
+                        const preview = document.getElementById('serviceImagePreview'); if(preview) preview.innerHTML='';
+                        if(svc.image){ const img = document.createElement('img'); img.src = svc.image.startsWith('http')?svc.image:('../'+svc.image.replace(/\\/g,'/')); img.style.maxWidth='120px'; img.style.maxHeight='80px'; img.style.objectFit='cover'; img.style.borderRadius='6px'; if(preview) preview.appendChild(img); }
+                        openModal(serviceModal);
+                    }
+                }
+            }).catch(console.error);
+            return;
+        }
+        const delBtn = e.target.closest('[data-del-svc]');
+        if (delBtn) {
+            const id = delBtn.getAttribute('data-del-svc');
+            if(confirm('Delete this service? This does not remove existing products.')){
+                const fd = new FormData(); fd.append('action','delete'); fd.append('service_id', id);
+                fetch('services-api.php', {method:'POST', body:fd}).then(r=>r.text().then(t=>({status:r.status,text:t}))).then(resp=>{
+                    try{ const d = JSON.parse(resp.text); if(d.status==='ok'){ loadServices(true); } else alert(d.message||'Delete failed'); }
+                    catch(e){ console.error('Delete raw', resp); alert('Delete failed; see console'); }
+                })
+                .catch(err=>alert('Delete error '+err));
+            }
+            return;
+        }
+    });
+    function syncServiceDatalist(list){
+        serviceTypeList.innerHTML = (list||[]).map(s=>`<option value="${escapeHtml(s.name)}"></option>`).join('');
+    }
+    servicesTbody?.addEventListener('click', e => {
+        const btn = e.target.closest('[data-del-svc]');
+        if(btn){
+            const id = btn.getAttribute('data-del-svc');
+            if(confirm('Delete this service? This does not remove existing products.')){
+                const fd = new FormData(); fd.append('action','delete'); fd.append('service_id', id);
+                fetch('services-api.php', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+                    if(d.status==='ok'){ loadServices(true); }
+                    else alert(d.message||'Delete failed');
+                })
+                .catch(err=>alert('Delete error '+err));
+            }
+        }
+    });
+
+    // initial services load for datalist
+    loadServices();
+
+    // Search filter
+    const searchInput = document.querySelector('.search-input');
+    searchInput?.addEventListener('input', () => {
+        const term = searchInput.value.toLowerCase();
+        Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+            const text = tr.innerText.toLowerCase();
+            tr.style.display = text.includes(term) ? '' : 'none';
+        });
+    });
+
+    // Initial load
+    fetchProducts();
+});

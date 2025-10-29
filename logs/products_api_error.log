@@ -1,0 +1,60 @@
+[17-Oct-2025 11:44:02 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:126
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(126): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 126
+[17-Oct-2025 11:44:02 Europe/Berlin] PHP Warning:  PHP Request Shutdown: Error occurred while closing statement in Unknown on line 0
+[17-Oct-2025 11:44:47 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:137
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(137): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 137
+[17-Oct-2025 11:44:47 Europe/Berlin] PHP Warning:  PHP Request Shutdown: Error occurred while closing statement in Unknown on line 0
+[17-Oct-2025 11:45:02 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:137
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(137): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 137
+[17-Oct-2025 11:45:12 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:137
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(137): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 137
+[17-Oct-2025 11:46:57 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:126
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(126): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 126
+[17-Oct-2025 11:46:57 Europe/Berlin] PHP Warning:  PHP Request Shutdown: Error occurred while closing statement in Unknown on line 0
+[17-Oct-2025 11:47:04 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:126
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(126): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 126
+[17-Oct-2025 11:47:04 Europe/Berlin] PHP Warning:  PHP Request Shutdown: Error occurred while closing statement in Unknown on line 0
+[17-Oct-2025 11:47:18 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Got a packet bigger than 'max_allowed_packet' bytes in C:\xampp\htdocs\Website\admin\products-api.php:126
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(126): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 126
+[17-Oct-2025 11:47:18 Europe/Berlin] PHP Warning:  PHP Request Shutdown: Error occurred while closing statement in Unknown on line 0
+[27-Oct-2025 15:44:02 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'service_type' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:38
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(38): mysqli->query('SELECT product_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 38
+[27-Oct-2025 16:24:26 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Cannot add or update a child row: a foreign key constraint fails (`website`.`products`, CONSTRAINT `products_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`admin_id`)) in C:\xampp\htdocs\Website\admin\products-api.php:160
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(160): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 160
+[27-Oct-2025 16:24:55 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Cannot add or update a child row: a foreign key constraint fails (`website`.`products`, CONSTRAINT `products_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`admin_id`)) in C:\xampp\htdocs\Website\admin\products-api.php:160
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(160): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 160
+[27-Oct-2025 16:27:44 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Cannot add or update a child row: a foreign key constraint fails (`website`.`products`, CONSTRAINT `products_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`admin_id`)) in C:\xampp\htdocs\Website\admin\products-api.php:160
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(160): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 160

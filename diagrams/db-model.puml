@@ -1,0 +1,169 @@
+class admin {
+  +int admin_id
+  +string name
+  +string admin_password
+  +string email
+  +string phone_number
+  +string profilepicture
+  +datetime created_at
+  +datetime updated_at
+}
+
+class customer {
+  +int customer_id
+  +string name
+  +string email
+  +string cust_password
+  +string facebook_account
+  +string address
+  +string profile_pic
+  +datetime registration_date
+  +string phone_number
+  +datetime updated_at
+}
+
+class products {
+  +int product_id
+  +int admin_id
+  +string service_type
+  +string product_name
+  +text product_details
+  +decimal price
+  +text images
+  +datetime created_at
+  +datetime updated_at
+}
+
+class product_images {
+  +int image_id
+  +int product_id
+  +string image_path
+  +int sort_order
+  +datetime created_at
+}
+
+class cart {
+  +int cart_id
+  +int customer_id
+  +int product_id
+  +string size
+  +string color
+  +int quantity
+  +datetime created_at
+}
+
+class customization {
+  +int customization_id
+  +string font_text
+  +string font_size
+  +string font_color
+  +string color
+  +text note
+  +datetime created_at
+}
+
+class designoption {
+  +int designoption_id
+  +int customization_id
+  +string designfilepath
+  +text request_design
+  +enum design_status
+  +datetime created_at
+  +datetime updated_at
+}
+
+class orders {
+  +int order_id
+  +int product_id
+  +int customer_id
+  +int admin_id
+  +int designoption_id
+  +string size
+  +int quantity
+  +bool isPartialPayment
+  +decimal TotalAmount
+  +enum OrderStatus
+  +string DeliveryAddress
+  +enum DeliveryStatus
+  +string phone_number
+  +datetime created_at
+}
+
+class order_items {
+  +int order_item_id
+  +int order_id
+  +int product_id
+  +string size
+  +int quantity
+  +decimal line_price
+}
+
+class payments {
+  +int payment_id
+  +int customer_id
+  +int admin_id
+  +int order_id
+  +decimal payment_amount
+  +datetime payment_date
+  +enum payment_status
+  +enum payment_method
+}
+
+class messages {
+  +int message_id
+  +int admin_id
+  +int customer_id
+  +text message_content
+  +datetime time_stamp
+  +enum message_status
+  +string attachment_url
+}
+
+class reviews {
+  +int review_id
+  +int product_id
+  +int customer_id
+  +tinyint rating
+  +text review_text
+  +datetime created_at
+}
+
+class reports {
+  +int report_id
+  +int product_id
+  +int admin_id
+  +int customer_id
+  +string report_type
+  +text report_details
+  +datetime created_at
+}
+
+' Relations (foreign keys from schema)
+admin "1" <|-- "0..*" products : manages
+admin "1" <|-- "0..*" orders : assigned
+admin "1" <|-- "0..*" payments : recorded_by
+admin "1" <|-- "0..*" messages : receives
+
+customer "1" <|-- "0..*" cart : owns
+customer "1" <|-- "0..*" orders : places
+customer "1" <|-- "0..*" payments : makes
+customer "1" <|-- "0..*" messages : sends
+customer "1" <|-- "0..*" reviews : writes
+
+products "1" <|-- "0..*" cart : referenced_by
+products "1" <|-- "0..*" order_items : included_in
+products "1" <|-- "0..*" product_images : has
+products "1" <|-- "0..*" reviews : reviewed_in
+
+orders "1" <|-- "0..*" order_items : contains
+orders "1" o-- "0..1" payments : paid_by
+orders "0..*" -- "0..1" designoption : may_use
+
+designoption "1" o-- "0..1" customization : based_on
+
+product_images "*" -- "1" products : product_id
+order_items "*" -- "1" orders : order_id
+order_items "*" -- "1" products : product_id
+payments "*" -- "1" orders : order_id
+cart "*" -- "1" customer : customer_id
+cart "*" -- "1" products : product_id

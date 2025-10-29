@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="nav&side.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <div class="logo-box">
+                <img src="img/logo.png" alt="ILovePrintshoppe Logo" class="admin-logo">
+            </div>
+            <nav class="admin-nav">
+                <ul class="nav-links">
+                    <li><a href="admin.html">Dashboard</a></li>
+                    <li><a href="admin-products.php">Products</a></li>
+                    <li><a href="admin-orders.php">Orders</a></li>
+                    <li><a href="admin-payments.php">Payments</a></li>
+                    <li><a href="admin-reports.php">Reports</a></li>
+                    <li><a href="settings.html">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <div class="main-panel">
+            <header class="admin-header">
+                <div class="right-header">
+                    <!-- <div class="search-box">
+                        <input type="text" placeholder="Search" />
+                        <a href="#" class="auth-link"><i class="fas fa-search"></i></a>
+                    </div> -->
+                    <div class="notifications">
+                        <div class="icon-wrapper">
+                            <a href="#" class="auth-link"><i class="fas fa-bell"></i></a>
+                        </div>
+                    </div>
+                    <div class="user-profile">
+                        <a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
+                    </div>
+                </div>
+            </header>
+
+            <main class="settings-panel">
+                <div class="settings-page">
+                    <div class="settings">
+                        <nav class="settings-nav">
+                            <ul>
+                                <li><a href="#" class="active" data-tab="account">Account</a></li>
+                                <li><a href="#" data-tab="system">System</a></li>
+                                <li><a href="#" data-tab="notifications">Notifications</a></li>
+                            </ul>
+                        </nav>
+                        <section id="account" class="settings-tab active">
+                            <div class="avatar-upload">
+                                <img src="img/admin-avatar.png" alt="Admin Avatar" id="avatarPreview" />
+                                <input type="file" id="avatarInput" accept="image/*" hidden />
+                                <label for="avatarInput" class="upload-btn"><i class="fas fa-upload"></i> Choose Avatar</label>
+                            </div>
+                            <div class="section-header">
+                                <h3>Account Details</h3>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" value="admin@gmail.com" />
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" value="**********" />
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <input type="tel" value="+63 912 345 6789" />
+                            </div>
+                            <div class="section-header">
+                                <button class="edit-btn">Edit Account</button>
+                            </div>
+                        </section>
+                        <section id="system" class="settings-tab">
+                            <div class="shop-info">
+                                <div class="section-header">
+                                    <h3>Shop Information</h3>
+                                    <!-- <button class="edit-btn">Edit</button> -->
+                                </div>
+                                <div class="form-group">
+                                    <label>Shop Name</label>
+                                    <input type="text" value="I Love PrintShoppe Printing Services" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone</label>
+                                    <input type="tel" value="+63 912 345 6789" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Address</label>
+                                    <input type="text" value="Zamora St. Ozamis City, Misamis Occidental, Philippines" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Business Hours</label>
+                                    <input type="text" value="Available 7am to 12pm" />
+                                    </div>
+                                <div class="section-header">
+                                    <button class="edit-btn">Edit</button>
+                                </div>
+                            </div>
+                            <!-- Manage Product Images removed per request -->
+                        </section>
+
+                        <section id="notifications" class="settings-tab">
+                            <div class="section-header">
+                                <h3>Configure which email alerts you want to receive</h3>
+                            </div>
+
+                            <div class="notification-row">
+                                <label class="notification-label">Order Updates</label>
+                                <label class="switch">
+                                    <input type="checkbox" checked />
+                                        <span class="slider"></span>
+                                </label>
+                                <p class="notification-desc">Get notified when orders are placed, updated, or completed, and customer approved design or requests design.</p>
+                            </div>
+
+                            <div class="notification-row">
+                                <label class="notification-label">Customer Messages</label>
+                                <label class="switch">
+                                    <input type="checkbox" />
+                                    <span class="slider"></span>
+                                </label>
+                                    <p class="notification-desc">Receive emails when customers send inquiries or messages.</p>
+                            </div>
+
+                            <div class="notification-row">
+                                <label class="notification-label">Inactive Customer Account Alert</label>
+                                <label class="switch">
+                                    <input type="checkbox" />
+                                    <span class="slider"></span>
+                                </label>
+                                <p class="notification-desc">Get notified when a customer is no longer active within 5 months.</p>
+                            </div>
+
+                            <div class="notification-row">
+                                <label class="notification-label">Daily Reports</label>
+                                <label class="switch">
+                                    <input type="checkbox" />
+                                    <span class="slider"></span>
+                                </label>
+                                <p class="notification-desc">Receive daily summary reports of shop activity.</p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+
+    <script src="settings.js"></script>
+</body>
+</html>

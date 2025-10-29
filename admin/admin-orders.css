@@ -1,0 +1,420 @@
+/* Status badge colors to match user orders page */
+.badge, .badge-status, .status-badge-wrapper span {
+    background: #efefef;
+    color: #222;
+    padding: 8px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    font-weight: 700;
+    font-size: .85rem;
+    letter-spacing: .6px;
+}
+/* Order status colors */
+.badge.status-pending { 
+    background: #888; 
+    color: #fff; 
+}
+.badge.status-processing { 
+    background: #5c6bc0; 
+    color: #fff; 
+}
+.badge.status-ready-for-pickup { 
+    background: #f39c12; 
+    color: #fff; 
+}
+.badge.status-ready-to-ship { 
+    background: #0288d1; 
+    color: #fff; 
+}
+.badge.status-completed { 
+    background: #2e7d32; 
+    color: #fff; 
+}
+.badge.status-cancelled { 
+    background: #b71c1c; 
+    color: #fff; 
+}
+/* Delivery status colors */
+.badge.status-shipped, .badge.delivery-shipped { 
+    background: #0277bd; 
+    color: #fff; 
+}
+.badge.status-delivered, .badge.delivery-delivered { 
+    background: #2e7d32; 
+    color: #fff;
+}
+.badge.status-picked-up, .badge.delivery-picked-up { 
+    background: #790aa9; 
+    color: #fff; 
+}
+.badge.status-pending, .badge.delivery-pending { 
+    background: #888; 
+    color: #fff; 
+}
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9f9;
+}
+.product-dashboard {
+    flex: 1;
+    max-width: 1200px; 
+    margin: 20px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.dashboard-header h1 {
+    font-size: 1.8rem;
+    color: #752525;
+    margin: 0;
+}
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.search-input {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 200px;
+    background-color: #f9f9f9;
+    transition: box-shadow 0.3s ease;
+}
+.search-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(117, 37, 37, 0.2);
+}
+.service-filter {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f9f9f9;
+    transition: box-shadow 0.3s ease;
+}
+.service-filter:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(117, 37, 37, 0.2);
+}
+.filter-btn,
+.add-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: #752525;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s ease;
+}
+.filter-btn:hover,
+.add-btn:hover {
+    background-color: #a03b3b;
+}
+.product-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 15px;
+}
+.product-table th,
+.product-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+    height:54px; /* uniform row height */
+    box-sizing:border-box;
+}
+.product-table th:nth-child(8),
+.product-table td:nth-child(8),
+.product-table th:nth-child(9),
+.product-table td:nth-child(9){
+    width:130px;
+    white-space:nowrap;
+}
+.product-table th {
+    background-color: #f2f2f2;
+    color: #752525;
+    font-weight: 600;
+}
+.product-table td {
+    color: #555;
+}
+/* Ensure status cell layout does not compress height */
+.product-table td.status-cell { display:flex; 
+    align-items:center; 
+    gap:6px; height:54px; 
+}
+.product-table td.status-cell.completed-readonly { 
+    justify-content:flex-start; 
+}
+/* Prevent multi-line wrapping inflating row height */
+.product-table td { 
+    white-space:nowrap; 
+}
+.product-table td:nth-child(3), /* Design */
+.product-table td:nth-child(9) { /* Delivery Address */
+    white-space:nowrap; 
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:180px;
+}
+/* Make status selects visually fill vertical rhythm */
+.status-select-wrap { 
+    display:flex; 
+    align-items:center; 
+}
+.order-status-select { 
+    height:34px; 
+    line-height:34px; 
+    padding:0 28px 0 14px; 
+}
+.order-status-select:hover { 
+    transform:none; 
+}
+.edit-btn,
+.delete-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: 10px;
+    color: #555;
+}
+.edit-btn:hover {
+    color: #2e8b57;
+}
+.delete-btn:hover {
+    color: #d9534f;
+}
+/* Column width helpers */
+.col.col-id { 
+    width:60px; 
+}
+.col.col-customer { 
+    width:140px; 
+}
+.col.col-design { 
+    width:170px; 
+}
+.col.col-size { 
+    width:70px; 
+}
+.col.col-qty { 
+    width:70px; 
+}
+.col.col-paid { 
+    width:110px; 
+}
+.col.col-total { 
+    width:110px; 
+}
+.col.col-order-status { 
+    width:125px; 
+}
+.col.col-address { 
+    width:210px; 
+}
+.col.col-delivery { 
+    width:125px; 
+}
+/* Badge/status styles */
+.badge-status { 
+    padding:2px 8px; 
+    border-radius:12px; 
+    font-size:.6rem; 
+    font-weight:600; 
+    text-transform:uppercase; 
+    letter-spacing:.5px; 
+    display:inline-block; 
+}
+.st-Pending { 
+    background:#ffe8c5; 
+    color:#8a5200; 
+}
+.st-Processing { 
+    background:#fff1d6; 
+    color:#9c6d00; 
+}
+.st-Ready { 
+    background:#e5ffe5; 
+    color:#1d6b13; 
+}
+.st-Shipped { 
+    background:#e0dcff; 
+    color:#3c278a; 
+}
+.st-Delivered { 
+    background:#d4f4ff; 
+    color:#054861; 
+}
+.st-Dispatched { 
+    background:#d4f4ff; 
+    color:#054861; 
+}
+.st-Failed { 
+    background:#ffd4d4; 
+    color:#7d0e0e; 
+}
+.st-Completed { 
+    background:#d4ffd8; 
+    color:#136b1d; 
+}
+.st-Cancelled { 
+    background:#ffd4d4; 
+    color:#7d0e0e; 
+}
+
+.status-cell { 
+    display:flex; 
+    flex-direction:column; 
+    gap:4px; 
+    align-items:flex-start; 
+}
+.status-cell:not(.completed-readonly) .status-badge-wrapper { 
+    display:none; 
+}
+.status-saving { 
+    font-size:.55rem; 
+    color:#666; 
+    font-weight:500; 
+}
+.table-msg { 
+    text-align:center; 
+    padding:25px; 
+    color:#555; 
+}
+.status-select-wrap { 
+    position:relative; 
+    display:inline-block; 
+}
+.status-select-wrap:after { 
+    content:'\25BE'; 
+    position:absolute; 
+    top:50%; 
+    right:10px; 
+    transform:translateY(-52%); 
+    font-size:.7rem; 
+    color:rgba(0,0,0,.55); 
+    pointer-events:none; 
+    transition:.25s color; 
+}
+.status-select-wrap:hover:after { 
+    color:rgba(0,0,0,.75); 
+}
+.order-status-select { 
+    appearance:none; 
+    -webkit-appearance:none; 
+    -moz-appearance:none; 
+    padding:4px 26px 5px 14px; 
+    border:1px solid transparent; 
+    border-radius:999px; 
+    font-size:.6rem; 
+    font-weight:600; 
+    letter-spacing:.5px; 
+    text-transform:uppercase; 
+    cursor:pointer; 
+    background:#f3f3f3; 
+    color:#333; 
+    line-height:1.1; 
+    outline:none; 
+    transition:.25s background,.25s color,.25s box-shadow,.25s transform; 
+}
+.order-status-select:hover { 
+    transform:translateY(-1px); 
+}
+.order-status-select:focus { 
+    box-shadow:0 0 0 3px rgba(112,99,255,0.25); 
+}
+.order-status-select.os-Pending { 
+    background:#ffe8c5; 
+    color:#8a5200; 
+}
+.order-status-select.os-Processing { 
+    background:#fff1d6; 
+    color:#9c6d00; 
+}
+.order-status-select.os-Ready { 
+    background:#e5ffe5; 
+    color:#1d6b13; 
+}
+.order-status-select.os-Shipped { 
+    background:#e0dcff; 
+    color:#3c278a; 
+}
+.order-status-select.os-Delivered { 
+    background:#d4f4ff; 
+    color:#054861; 
+}
+.order-status-select.os-Dispatched { 
+    background:#d4f4ff; 
+    color:#054861; 
+}
+.order-status-select.os-Failed { 
+    background:#ffd4d4; 
+    color:#7d0e0e; 
+}
+.order-status-select.os-Cancelled { 
+    background:#ffd4d4; 
+    color:#7d0e0e; 
+}
+.order-status-select::-ms-expand { 
+    display:none; 
+}
+.completed-readonly { 
+    pointer-events:none; 
+}
+.completed-readonly .status-select-wrap { 
+    display:none !important; 
+}
+
+/* Controls */
+.controls { 
+    display:flex; 
+    flex-direction:column; 
+    gap:4px; 
+}
+.controls-row { 
+    display:flex; 
+    align-items:center; 
+    gap:8px; 
+    flex-wrap:wrap; 
+}
+.last-updated { 
+    font-size:.55rem; 
+    color:#555; 
+    font-weight:600; 
+    letter-spacing:.5px; 
+    margin-left:2px; 
+    align-self:flex-end; 
+}
+.dashboard-header { 
+    display:flex; 
+    flex-direction:row; 
+    justify-content:space-between; 
+    align-items:flex-start; 
+    gap:16px; 
+}
+.status-cell .completed-at { 
+    font-size:.48rem; 
+    margin-top:3px; 
+    opacity:.65; 
+    letter-spacing:.4px; 
+}

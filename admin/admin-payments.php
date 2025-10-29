@@ -1,0 +1,100 @@
+<?php 
+session_start(); 
+require_once '../database.php'; 
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Payments</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="nav&side.css">
+  <link rel="stylesheet" href="admin-payments.css">
+</head>
+<body>
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <div class="logo-box">
+                <img src="img/logo.png" alt="ILovePrintshoppe Logo" class="admin-logo">
+            </div>
+            <nav class="admin-nav">
+                <ul class="nav-links">
+                    <li><a href="admin.html">Dashboard</a></li>
+                    <li><a href="admin-products.php">Products</a></li>
+                    <li><a href="admin-orders.php">Orders</a></li>
+                    <li><a href="admin-payments.php">Payments</a></li>
+                    <li><a href="admin-reports.php">Reports</a></li>
+                    <li><a href="settings.html">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <div class="main-panel">
+            <header class="admin-header">
+                <div class="right-header">
+                    <!-- <div class="search-box">
+                        <input type="text" placeholder="Search" />
+                        <a href="#" class="auth-link"><i class="fas fa-search"></i></a>
+                    </div> -->
+                    <div class="notifications">
+                        <div class="icon-wrapper">
+                            <a href="#" class="auth-link"><i class="fas fa-bell"></i></a>
+                        </div>
+                    </div>
+                    <div class="user-profile">
+                        <a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
+                    </div>
+                </div>
+            </header>
+
+            <section class="product-dashboard">
+                <div class="dashboard-header">
+                    <h1>Payments</h1>
+                    <div class="controls">
+                        <!-- <input type="text" placeholder="Search" class="search-input" /> -->
+                        <button class="filter-btn"><i class="fas fa-filter"></i> Filter</button>
+                        <!-- <button class="add-btn"><i class="fas fa-plus"></i> Add Order</button> -->
+                    </div>
+                </div>
+                <table class="payments-table" id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total Amount</th>
+                            <th>Amount Paid</th>
+                            <th>Balance</th>
+                            <th>Payment Method</th>
+                            <th>Payment Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTbody"></tbody>
+                </table>
+
+        <style>
+            /* Payment status as a styled select (pill) */
+            .payment-cell { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+            .payment-select-wrap { position:relative; display:inline-block; }
+            .payment-select-wrap:after { content:'\25BE'; /* down arrow */ position:absolute; top:50%; right:10px; transform:translateY(-52%); font-size:.7rem; color:rgba(0,0,0,.55); pointer-events:none; transition:.25s color; }
+            .payment-select-wrap:hover:after { color:rgba(0,0,0,.75); }
+            .payment-status-select { 
+                appearance:none; -webkit-appearance:none; -moz-appearance:none;
+                padding:4px 26px 5px 14px; border:1px solid transparent; border-radius:999px;
+                font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; cursor:pointer;
+                background:#f3f3f3; color:#333; line-height:1.1; position:relative; outline:none; transition:.25s background,.25s color,.25s box-shadow,.25s transform; 
+            }
+            .payment-status-select:focus { box-shadow:0 0 0 3px rgba(112,99,255,0.25); }
+            .payment-status-select:hover { transform:translateY(-1px); }
+            .payment-status-select.ps-Paid { background:#c8f7d0; color:#1b6e2a; }
+            .payment-status-select.ps-Unpaid { background:#ffe0e0; color:#8f1b1b; }
+            .payment-status-select.ps-Partial { background:#fff7c2; color:#7a5a00; }
+            .payment-status-select::-ms-expand { display:none; }
+            .saving-text { font-size:.55rem; color:#666; font-weight:500; }
+        </style>
+        <script src="admin-payments.js?v=<?php echo time(); ?>"></script>
+</body>
+</html>

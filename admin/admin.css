@@ -1,0 +1,92 @@
+.dashboard-content {
+    padding: 20px;
+    margin: 0;
+}
+.dashboard-grid {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 20px 70px;
+}
+.status-boxes {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    max-width: 300px;
+}
+.status-box {
+    background-color: #fff;
+    padding: 0 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.status-box h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #752525;
+}
+.calendar {
+    flex: 1;
+    max-width: 400px;
+    margin: 0;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.calendar-header h2 {
+    font-size: 1.4rem;
+    color: #9a4141;
+}
+.calendar-header button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.3s ease;
+}
+.calendar-header button:hover {
+    color: #d62828;
+}
+.weekdays,
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    gap: 5px;
+}
+.weekdays div {
+    font-weight: bold;
+    color: #555;
+}
+.days div {
+    padding: 10px;
+    background: #f4f4f4;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.days div:hover {
+    background: #ffe5e5;
+}
+.today {
+    background-color: #fff;
+    color: #e10909;
+    font-weight: bold;
+    border: 1px solid #e10909;
+}
