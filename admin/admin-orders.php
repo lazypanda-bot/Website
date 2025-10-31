@@ -59,7 +59,7 @@ require_once '../database.php';
                     <div class="controls">
                         <div class="controls-row">
                             <input type="text" placeholder="Search Order" class="search-input" />
-                            <button class="filter-btn"><i class="fas fa-filter"></i> Filter</button>
+                            <!-- <button class="filter-btn"><i class="fas fa-filter"></i> Filter</button> -->
                             <button class="add-btn"><i class="fas fa-plus"></i> Add Order</button>
                         </div>
                         <span class="last-updated" id="lastUpdated" aria-live="polite"></span>

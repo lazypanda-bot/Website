@@ -70,8 +70,8 @@
 
             <div class="options">
                 <div class="option">
-                    <h2>Option 1:</h2>
-                    <p>Reach us via chat, call, or in-store—whichever gets your printing needs sorted fastest.</p>
+                    <!-- <h2>Option 1:</h2>
+                    <p>Reach us via chat, call, or in-store—whichever gets your printing needs sorted fastest.</p> -->
           
                     <div class="contact-methods">
                         <div class="method">
@@ -81,7 +81,7 @@
                                 </svg>
                             </div>
                             <h3>Chat with us</h3>
-                                <p>Available 10 7am to 12pm</p>
+                            <p>Available 10 7am to 12pm</p>
                         </div>
 
                         <div class="method">
@@ -108,9 +108,8 @@
                 </div>
 
                 <div class="option">
-                    <h2>Option 2:</h2>
-                    <p>Message us on Facebook, explore all links via Linktree, or email us directly, whichever gets your request answered quickest.</p>
-          
+                    <!-- <h2>Option 2:</h2>
+                    <p>Message us on Facebook, explore all links via Linktree, or email us directly, whichever gets your request answered quickest.</p> -->
                     <div class="contact-methods">
                         <div class="method">
                             <div class="icon facebook-icon">
@@ -122,7 +121,7 @@
                             <p>https://www.facebook.com/iLovePrintShoppe</p>
                         </div>
 
-                        <div class="method">
+                        <!-- <div class="method">
                             <div class="icon linktree-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -132,7 +131,7 @@
                             </div>
                             <h3>Linktree</h3>
                             <p>https://linktr.ee/iloveprintshoppe</p>
-                        </div>
+                        </div> -->
 
                         <div class="method">
                             <div class="icon email-icon">

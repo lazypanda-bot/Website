@@ -54,8 +54,8 @@ require_once '../database.php';
                 <div class="dashboard-header">
                     <h1>Payments</h1>
                     <div class="controls">
-                        <!-- <input type="text" placeholder="Search" class="search-input" /> -->
-                        <button class="filter-btn"><i class="fas fa-filter"></i> Filter</button>
+                        <input type="text" placeholder="Search" class="search-input" />
+                        <!-- <button class="filter-btn"><i class="fas fa-filter"></i> Filter</button> -->
                         <!-- <button class="add-btn"><i class="fas fa-plus"></i> Add Order</button> -->
                     </div>
                 </div>
