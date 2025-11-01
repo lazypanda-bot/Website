@@ -219,6 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error handling flash dismiss:', err);
         }
     }); 
+
+    // Product-level payment UI removed. Payment/partial amount is handled on the checkout page.
 });
 
   // Thumbnails - only admin can add/delete thumbnails

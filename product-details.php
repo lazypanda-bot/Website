@@ -487,7 +487,7 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="size" id="form_size" value="12oz" />
                     <input type="hidden" name="color" id="form_color" value="" />
                     <input type="hidden" name="quantity" id="form_quantity" value="1" />
-                    <input type="hidden" name="isPartialPayment" value="0" />
+                    
                     <input type="hidden" name="TotalAmount" id="form_totalAmount" value="<?php echo htmlspecialchars($productPrice); ?>" />
                     <input type="hidden" name="OrderStatus" value="Pending" />
                     <input type="hidden" name="DeliveryAddress" id="form_DeliveryAddress" value="" />

@@ -87,14 +87,13 @@ if ($isAuthenticated && !$conn->connect_error) {
         </div>
         <div class="checkout-columns">
             <div class="checkout-left-col">
-                <div class="form-group">
+                <div class="form-group payment-type">
                     <span>Payment Type:</span><br>
                     <input type="radio" name="isPartialPayment" id="payment_partial" value="1" required> <label for="payment_partial">Partial</label>
                     <input type="radio" name="isPartialPayment" id="payment_full" value="0"> <label for="payment_full">Full</label>
-                    <div id="partial-amount-row">
+                    <div id="partial-amount-row" style="display:none;">
                         <label for="partial">Partial amount (₱)</label><br>
                         <input type="number" step="0.01" min="0" id="partial" name="partial" placeholder="Enter partial amount" />
-                        <div class="form-note">Enter the amount you will pay now.</div>
                     </div>
                 </div>
                 <div class="form-group">

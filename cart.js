@@ -35,9 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   } catch(e) { /* ignore URL parse errors */ }
 
-  // Load animation class moved from inline script
+  // Load animation class 
   window.addEventListener('load', ()=> document.body.classList.add('loaded'));
-  // Read user data from body dataset (moved from inline script in PHP)
+  // Read user data from body dataset
   try {
       const body = document.body;
       if(body && body.dataset) {
@@ -301,9 +301,32 @@ document.addEventListener('DOMContentLoaded', () => {
           // Show or hide the partial amount input row
           const sel = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
           const row = checkoutForm.querySelector('#partial-amount-row');
-          if (row) row.style.display = (sel && sel.value === '1') ? '' : 'none';
+          if (row) row.style.display = (sel && sel.value === '1') ? 'block' : 'none';
           updateShippingFee();
       }));
+      // Initialize partial row visibility on load based on currently checked radio
+      try {
+          const initSel = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
+          const initRow = checkoutForm.querySelector('#partial-amount-row');
+          if (initRow) initRow.style.display = (initSel && initSel.value === '1') ? 'block' : 'none';
+      } catch(e) { /* ignore */ }
+      // Also listen for clicks on the styled labels (some themes style radios as buttons)
+      try {
+          const paymentLabels = checkoutForm.querySelectorAll('label[for^="payment_"]');
+          paymentLabels.forEach(lbl => lbl.addEventListener('click', () => {
+              // allow the native radio to update first
+              setTimeout(() => {
+                  const sel = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
+                  const row = checkoutForm.querySelector('#partial-amount-row');
+                  if (row) row.style.display = (sel && sel.value === '1') ? 'block' : 'none';
+                  if (row && sel && sel.value === '1') {
+                      const partialInput = checkoutForm.querySelector('#partial');
+                      if (partialInput) partialInput.focus();
+                  }
+                  updateShippingFee();
+              }, 10);
+          }));
+      } catch(e) { /* ignore */ }
       // Update header info if user edits address/phone
       [deliveryAddressInput, deliveryPhoneInput].forEach(inp=>{ if(inp){ inp.addEventListener('blur', ()=>{ updateShippingFee(); }); } });
   }
@@ -341,6 +364,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (partial && partial.value === '1') {
               partialAmount = parseFloat(partialAmountRaw);
               if (isNaN(partialAmount) || partialAmount <= 0) { alert('Please enter a valid partial amount greater than 0.'); if (partialAmountEl) partialAmountEl.focus(); return; }
+              // Ensure partial does not exceed subtotal + fee
+              const selData = getSelectedSummaryData();
+              let fee = 0; if (dm && dm.value === 'standard') fee = 25;
+              const allowedTotal = (selData && typeof selData.subtotal === 'number') ? (selData.subtotal + fee) : Infinity;
+              if (partialAmount > allowedTotal) { alert('Partial amount cannot exceed the order total (including shipping): ₱' + allowedTotal.toFixed(2)); if (partialAmountEl) partialAmountEl.focus(); return; }
           }
           if(!address){ alert('Please enter your delivery address.'); return; }
           if(!phone){ alert('Please enter your phone number.'); return; }

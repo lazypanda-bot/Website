@@ -153,12 +153,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prodIdInput && prodIdInput.value) product.id = parseInt(prodIdInput.value,10);
             // Build summary (kept for potential future use)
             if (quickOrderSummary) {
+                // Build payment meta (partial/full) if present on the form
+                const orderForm = document.getElementById('orderForm');
+                let paymentLine = '';
+                if (orderForm) {
+                    const sel = orderForm.querySelector('input[name="isPartialPayment"]:checked');
+                    const partialAmountEl = orderForm.querySelector('#partial');
+                    const partialAmt = partialAmountEl && partialAmountEl.value ? parseFloat(partialAmountEl.value) : null;
+                    const partialLabel = sel ? (sel.value === '1' ? 'Partial Payment' : 'Full Payment') : '';
+                    if (partialLabel) paymentLine += `<br><strong>Payment:</strong> ${partialLabel}`;
+                    if (partialAmt !== null && !isNaN(partialAmt)) paymentLine += `<br><strong>Partial Amount:</strong> ₱${partialAmt.toFixed(2)}`;
+                }
+
                 quickOrderSummary.innerHTML = `
                 <strong>Product:</strong> ${product.name || 'Item'}<br>
                 <strong>Size:</strong> ${product.size}<br>
                 <strong>Quantity:</strong> ${product.quantity}<br>
                 <strong>Unit Price:</strong> ₱${product.price.toFixed(2)}<br>
-                <strong>Total:</strong> ₱${product.total.toFixed(2)}
+                <strong>Total:</strong> ₱${product.total.toFixed(2)}${paymentLine}
                 `;
             }
             // keep pending product in variable for potential quick-order confirm flows
@@ -202,6 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 fd.append('product_name', product.name || '');
                 fd.append('size', product.size || 'Default');
                 fd.append('quantity', product.quantity);
+                // include payment selection and partial amount when present
+                try {
+                    const of = document.getElementById('orderForm');
+                    if (of) {
+                        const sel = of.querySelector('input[name="isPartialPayment"]:checked');
+                        fd.append('isPartialPayment', sel ? sel.value : '0');
+                        const partialEl = of.querySelector('#partial');
+                        if (partialEl && partialEl.value) fd.append('partial', parseFloat(partialEl.value).toFixed(2));
+                    }
+                } catch (e) { /* ignore if form not present */ }
                 const res = await fetch('quick-order.php', { method:'POST', body: fd });
                 let dataText = await res.text();
                 let data;

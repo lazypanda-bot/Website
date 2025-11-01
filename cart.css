@@ -724,8 +724,20 @@ body.loaded .cart-progress-bar {
     margin-top:8px; 
 }
 #partial-amount-row {
-    margin-top:8px;
+    margin-top:4px;
     display:none;
+}
+.checkout-form .form-group.payment-type {
+    padding-bottom:8px;
+    margin-bottom:15px;
+    border-bottom:1px solid #f1e5e5;
+}
+.checkout-form #partial-amount-row label {
+    margin-bottom:6px;
+    display:block;
+}
+.checkout-form #partial-amount-row br { 
+    display:none; 
 }
 .checkout-form .form-note {
     font-size:.9em;
@@ -734,13 +746,14 @@ body.loaded .cart-progress-bar {
 }
 .checkout-form #partial-amount-row input,
 .checkout-form #partial {
-    width:100%;  
-    max-width:400px;   
-    padding:14px 16px;  
-    font-size:1.05rem; 
-    border-radius:14px; 
+    width:100%;
+    max-width:400px;
+    padding:10px 12px;
+    font-size:1rem;
+    border-radius:12px;
     border:1.5px solid #e7d2d2;
     box-shadow:none;
+    margin-bottom:28px;
 }
 .checkout-form #partial-amount-row input:focus,
 .checkout-form #partial:focus {
@@ -753,7 +766,8 @@ body.loaded .cart-progress-bar {
     .checkout-form #partial-amount-row input,
     .checkout-form #partial {
         max-width:100%;
-        padding:12px 12px;
-        font-size:1rem;
+        padding:10px 10px;
+        font-size:0.98rem;
+        margin-bottom:20px;
     }
 }
