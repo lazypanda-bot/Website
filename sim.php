@@ -15,7 +15,7 @@ require_once __DIR__ . '/nav-avatar.php';
   <link rel="stylesheet" href="navbar-footer.css" />
   <link rel="stylesheet" href="sim.css" />
   <link rel="stylesheet" href="details.css" />
-  <link rel="stylesheet" href="login.css" />
+    <link rel="stylesheet" href="login.css" />
 </head>
 <script>window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;</script>
 <body>
@@ -52,30 +52,52 @@ require_once __DIR__ . '/nav-avatar.php';
         </div>
     </section>
 
-    <main class="sim-viewer-container">
+    <main class="sim-viewer-container" style="padding:18px;">
         <div class="back-container">
             <button onclick="history.back()" class="back-btn">← Back</button>
         </div>
         <h2 class="sim-title">Customize</h2>
-        <div class="sim-viewer-layout">
-            <div class="sim-viewer-left">
-                <div id="shirt3d-wrapper">
-                    <div id="viewerCanvas"></div>
-                        <div class="rotate-hint">Drag left / right to rotate</div>
-                </div>
-            </div>
-            <div class="sim-viewer-right">
-                <div id="picker-wrapper">
-                    <div class="sim-control-block">
-                        <label>Shirt Color:</label>
-                        <div id="colorPickerContainer"></div>
-                        <div style="margin-top:12px;">
-                            <button id="saveDesignBtn" class="save-design-btn">Save design</button>
-                        </div>
-                        <!-- designPreviewList removed to avoid printing raw saved-design JSON in the sidebar -->
+
+        <!-- Two-column layout: left controls, right editor + 3D viewer -->
+        <div class="sim-twocol" style="display:flex;gap:18px;align-items:flex-start;">
+            <!-- LEFT: controls (upload, color swatches, color picker) -->
+                <aside class="sim-left" style="width:460px;background:#fbf8ff;border-radius:12px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.04);">
+                <!-- Upload area removed — 3D-only editor uses model assets and decals -->
+                <div style="font-weight:700;margin-top:6px;margin-bottom:8px;">Shirt Color</div>
+                <div id="colorPickerContainer" style="margin-bottom:6px;"></div>
+                <!-- Inline text input removed (2D-only) -->
+                <div style="margin-top:12px;">
+                    <div style="font-size:13px;font-weight:600;margin-bottom:6px;">3D Apply Mode</div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                        <label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="applyMode" value="full" id="applyModeFull" checked /> Full</label>
+                        <label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="applyMode" value="logo" id="applyModeLogo" /> Logo</label>
+                    </div>
+                    <div id="logoControls" style="display:none;align-items:center;gap:8px;">
+                        <div style="font-size:12px;color:#666;margin-bottom:4px;">Logo scale</div>
+                        <input id="logoScale" type="range" min="0.05" max="0.6" step="0.01" value="0.15" style="width:100%;" />
+                    </div>
+                    <div style="margin-top:8px;display:flex;gap:8px;">
+                        <button id="applyTo3DBtn" class="editor2d-btn" style="flex:1;background:#2b7aeb;color:#fff;border-radius:6px;padding:8px 10px;border:none;">Apply to 3D</button>
                     </div>
                 </div>
-            </div>
+                <div style="margin-top:10px;font-size:13px;color:#666;">Material</div>
+                <div style="background:#fff;border-radius:8px;padding:10px;border:1px solid #eee;margin-top:6px;">Cotton base</div>
+            </aside>
+
+            <!-- RIGHT: editor canvas + 3D viewer (toggle) -->
+            <section class="sim-right" style="flex:1;display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                    <div style="font-weight:700;font-size:16px;">Design your shirt</div>
+                </div>
+
+                <div id="editor-area" style="background:#fff;border-radius:10px;padding:14px;border:1px solid #f0f0f0;min-height:520px;display:flex;flex-direction:column;">
+                    <div id="shirt3d-wrapper" style="flex:1;position:relative;background:#ffffff;border-radius:6px;padding:8px;display:flex;align-items:center;justify-content:center;">
+                        <div id="viewerCanvas" style="display:block;position:absolute;inset:0;border-radius:6px;overflow:hidden;background:#fff;"></div>
+                        <div class="rotate-hint" id="rotateHint" style="display:block;">Drag left / right to rotate</div>
+                    </div>
+                    <div style="margin-top:10px;color:#666;font-size:13px;text-align:center;"></div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -116,9 +138,13 @@ require_once __DIR__ . '/nav-avatar.php';
     </footer>
     <div id="login-container"></div>
 
+    <!-- 3D-only viewer: no 2D export fields -->
+
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- DecalGeometry from three examples for logo decal support -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/geometries/DecalGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
