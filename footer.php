@@ -39,7 +39,7 @@ if (!isset($servicesFooter)) {
                 <?php if (!empty($servicesFooter)): foreach ($servicesFooter as $srvName): $slug = strtolower(preg_replace('/\s+/', '-', $srvName)); ?>
                     <li><a href="products.php#<?= htmlspecialchars($slug) ?>"><?= htmlspecialchars($srvName) ?></a></li>
                 <?php endforeach; else: ?>
-                    <li style="font-style:italic;color:#666;">No services yet</li>
+                    <li class="muted-italic">No services yet</li>
                 <?php endif; ?>
             </ul>
         </div>

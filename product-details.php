@@ -308,18 +308,18 @@ function pd_first_image($imagesField) {
     }
     // Temporary debug: show image src and server file existence when ?debug_images=1 is present
     if (isset($_GET['debug_images'])) {
-        echo '<div class="image-debug" style="margin-top:18px;padding:12px;background:#fff6f6;border:1px solid #f2dede;border-radius:8px;color:#5a1d1d;">';
-        echo '<strong>Image debug</strong><ul style="margin:8px 0;padding-left:18px;">';
+        echo '<div class="image-debug">';
+        echo '<strong>Image debug</strong><ul>';
         // show rawImages and whether thumbnails exist
-        echo '<li>rawImages: ' . htmlspecialchars($rawImages) . '</li>';
-        echo '<li>hasThumbnails: ' . ($hasThumbnails ? 'yes' : 'no') . '</li>';
+        echo '<li class="image-debug-item">rawImages: ' . htmlspecialchars($rawImages) . '</li>';
+        echo '<li class="image-debug-item">hasThumbnails: ' . ($hasThumbnails ? 'yes' : 'no') . '</li>';
         foreach ($imagesList as $ii => $isrc) {
             $url = $isrc;
             // Resolve a filesystem path for checking existence
             $rel = ltrim($url, '/');
             $fs = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . $rel;
             $exists = file_exists($fs) ? 'exists' : 'missing';
-            echo '<li style="margin-bottom:6px;">src: ' . htmlspecialchars($url) . ' — file: ' . htmlspecialchars($fs) . ' — <strong>' . $exists . '</strong></li>';
+            echo '<li class="image-debug-item">src: ' . htmlspecialchars($url) . ' — file: ' . htmlspecialchars($fs) . ' — <strong>' . $exists . '</strong></li>';
         }
         echo '</ul></div>';
     }
@@ -462,9 +462,20 @@ function pd_first_image($imagesField) {
                                     echo "<div class=\"saved-design-preview\">";
                                     if ($thumb) {
                                         $src = $thumb;
-                                        echo "<div class=\"saved-design-thumb\"><img src=\"$src\" alt=\"Saved design\"/></div>";
+                                        // Prefer to check the file exists on disk so we can render reliably
+                                        $absPath = __DIR__ . '/' . $src;
+                                        if (file_exists($absPath)) {
+                                            $safeSrc = htmlspecialchars($src);
+                                            echo "<div class=\"saved-design-thumb\"><a href=\"$safeSrc\" target=\"_blank\" rel=\"noopener noreferrer\"><img src=\"$safeSrc\" alt=\"Saved design\"/></a></div>";
+                                        } else {
+                                            // File missing on disk — show a placeholder and the stored path for debugging
+                                            $debugPath = htmlspecialchars($src);
+                                            echo "<div class=\"saved-design-thumb\"><div class=\"saved-design-missing\">Image not found</div></div>";
+                                            echo "<div class=\"saved-design-debugpath\">Stored path: <code>$debugPath</code></div>";
+                                        }
                                     } else {
                                         $sw = $dc ? $dc : '#efeef0';
+                                        // background color is dynamic so we set it inline here (color value comes from DB)
                                         echo "<div class=\"saved-design-thumb swatch\" style=\"background:$sw\"></div>";
                                     }
                                     echo "<div class=\"saved-design-meta\"><strong>Saved design</strong><div class=\"sd-note\">" . $noteDisplay . "</div></div></div>";
@@ -478,7 +489,7 @@ function pd_first_image($imagesField) {
             </section>
             <div class="action-buttons">
                 <?php if ($productNotFound): ?>
-                    <div class="product-warning" style="color:#b30000; font-weight:600; padding:10px 0;">
+                    <div class="product-warning">
                         This product could not be found. It may have been removed or the link is invalid.
                     </div>
                 <?php endif; ?>
@@ -492,7 +503,7 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="OrderStatus" value="Pending" />
                     <input type="hidden" name="DeliveryAddress" id="form_DeliveryAddress" value="" />
                     <input type="hidden" name="DeliveryStatus" value="Pending" />
-                    <button type="button" class="buy-btn" id="buyNowBtn" data-price="<?php echo htmlspecialchars($productPrice); ?>" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Buy Now</button>
+                    <button type="button" class="buy-btn" id="buyNowBtn" data-price="<?php echo htmlspecialchars($productPrice); ?>" <?php echo $productNotFound ? 'disabled' : ''; ?>>Buy Now</button>
                 </form>
                 <form action="add-to-cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
                     <form action="add-to-cart.php" method="POST" id="cartForm" class="cart-form">
@@ -500,7 +511,7 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="size" id="cart_size" value="12oz" />
                     <input type="hidden" name="color" id="cart_color" value="" />
                     <input type="hidden" name="quantity" id="cart_quantity" value="1" />
-                    <button type="button" class="addcart-btn" <?php echo $productNotFound ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>Add to Cart</button>
+                    <button type="button" class="addcart-btn" <?php echo $productNotFound ? 'disabled' : ''; ?>>Add to Cart</button>
                 </form>
                                 <script>
                                 // Inline fallback: attach only if the external buy-now handler never registered.

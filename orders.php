@@ -79,13 +79,13 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
                 <th class="order-total-th">Total (₱)</th>
                 <th class="order-status-th">Status</th>
                 <th class="order-delivery-th">Delivery</th>
-                <th style="width:160px;">Date</th>
+                <th class="order-date-th">Date</th>
                 <th>Items</th>
             </tr>
         </thead>
         <tbody>
         <?php if(empty($orders)): ?>
-            <tr><td colspan="6" style="text-align:center;padding:30px 0;">No orders yet.</td></tr>
+            <tr><td colspan="6" class="orders-empty">No orders yet.</td></tr>
         <?php else: foreach($orders as $row): $oid=(int)$row['order_id']; $lines = $itemsMap[$oid] ?? []; ?>
             <tr class="order-row">
                 <td><?php echo htmlspecialchars($row['order_id']); ?></td>
@@ -95,18 +95,18 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
                 <td><?php echo htmlspecialchars($row['created_col']); ?></td>
                 <td>
                     <?php if(empty($lines)): ?>
-                        <div style="font-size:.7rem;color:#555;">No line items.</div>
+                        <div class="no-line-items">No line items.</div>
                     <?php else: ?>
-                        <ul class="order-lines" style="list-style:none;margin:0;padding:0;display:grid;gap:6px;">
+                        <ul class="order-lines">
                             <?php foreach($lines as $li): ?>
                         <li class="order-line-item">
-                                    <span style="font-weight:600;color:#752525;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <span class="order-line-name">
                                         <?php echo htmlspecialchars($li['product_name'] ?? ('#'.$li['product_id'])); ?>
                                     </span>
-                                    <span style="font-weight:500;">Size: <?php echo htmlspecialchars($li['size'] ?? '—'); ?></span>
-                                    <span>Qty: <?php echo htmlspecialchars($li['quantity']); ?></span>
-                                    <span>Line: ₱<?php echo htmlspecialchars(number_format((float)($li['line_price'] ?? 0),2)); ?></span>
-                                    <span style="font-weight:600;">₱<?php echo htmlspecialchars(number_format(((float)($li['line_price'] ?? 0))*(int)($li['quantity'] ?? 1),2)); ?></span>
+                                    <span class="order-line-size">Size: <?php echo htmlspecialchars($li['size'] ?? '—'); ?></span>
+                                    <span class="order-line-qty">Qty: <?php echo htmlspecialchars($li['quantity']); ?></span>
+                                    <span class="order-line-line">Line: ₱<?php echo htmlspecialchars(number_format((float)($li['line_price'] ?? 0),2)); ?></span>
+                                    <span class="order-line-total">₱<?php echo htmlspecialchars(number_format(((float)($li['line_price'] ?? 0))*(int)($li['quantity'] ?? 1),2)); ?></span>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -117,7 +117,7 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
         </tbody>
     </table>
     </div>
-    <p style="margin-top:24px;"><a href="products.php">Continue Shopping</a></p>
+    <p class="continue-shopping"><a href="products.php">Continue Shopping</a></p>
     </div>
 
 </body>

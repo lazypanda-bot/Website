@@ -53,11 +53,11 @@
 .sim-viewer-container {
     width: 100%;
     max-width: 1600px;
-    margin: 40px auto;
+    margin: 8px auto;
     padding-left: clamp(16px, 8vw, 120px);
     padding-right: clamp(16px, 8vw, 120px);
-    padding-top: 32px;
-    padding-bottom: 32px;
+    padding-top: 12px;
+    padding-bottom: 20px;
     background: #fff;
     border-radius: 18px;
     box-shadow: 0 8px 32px rgba(117,37,37,0.10);
@@ -66,6 +66,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 .sim-viewer-layout {
     display: flex;
@@ -327,6 +328,25 @@
 .rotate-hint { pointer-events: none; }
 .rotate-hint.hidden { display: none !important; }
 
+/* Ensure the back button in the sim viewer sits above the viewer content */
+.sim-viewer-container .back-container {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    z-index: 3100; /* above viewer and other overlays */
+}
+.sim-viewer-container .back-btn {
+    background-color: #9a4141;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+.sim-viewer-container .back-btn:hover { background-color:#7c1b1b; }
+
 .save-design-btn {
     background: #a02b2b;
     color: #fff;
@@ -339,3 +359,5 @@
 .design-preview-card { background:#fff; border:1px solid #eee; padding:8px; border-radius:8px; margin-bottom:8px; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
 .design-preview-thumb { width:72px; height:72px; background:#f3f3f3; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:8px; }
 .design-preview-meta { display:inline-block; vertical-align:middle; max-width:220px; }
+.mt-12 { margin-top: 12px; }
+.mt-14 { margin-top: 14px; }

@@ -82,6 +82,7 @@ body {
 .report-table td {
     color: #555;
 }
+.table-msg { text-align:center; padding:25px; color:#555; }
 .rev-positive { 
     color:#1b6e2a; 
     font-weight:600; 

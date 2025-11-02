@@ -26,7 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
     function render(list){
         tbody.innerHTML='';
         if(!list || list.length===0){ 
-            tbody.innerHTML='<tr><td colspan="8" style="padding:25px;text-align:center;color:#555;">No payment records</td></tr>'; 
+            tbody.innerHTML='<tr><td colspan="8" class="table-msg">No payment records</td></tr>'; 
             return; 
         }
         list.forEach(p=>{
@@ -47,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 <td>${escapeHtml(p.payment_method||'')}</td>
                 <td class="payment-cell" data-id="${p.order_id}">
                     ${buildPaymentSelect(paymentStatus)}
-                    <div class="saving-text" style="display:none;">Saving...</div>
+                    <div class="saving-text">Saving...</div>
                 </td>`;
             tbody.appendChild(tr);
         });

@@ -56,7 +56,13 @@ require_once __DIR__ . '/nav-avatar.php';
         <div class="back-container">
             <button onclick="history.back()" class="back-btn">← Back</button>
         </div>
-        <h2 class="sim-title">Customize</h2>
+        <!-- Heading and save button row -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h2 class="sim-title" style="margin:0;">Customize</h2>
+            <div>
+                <button id="saveDesignBtn" class="save-design-btn" style="position:absolute;top:24px;right:24px;z-index:2000;">Save Design</button>
+            </div>
+        </div>
 
         <!-- Two-column layout: left controls, right editor + 3D viewer -->
         <div class="sim-twocol" style="display:flex;gap:18px;align-items:flex-start;">

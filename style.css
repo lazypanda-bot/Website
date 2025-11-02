@@ -416,6 +416,7 @@
 .reason-carousel p {
     color: #fff;
 }
+.muted-italic { font-style: italic; color: #666; }
 .section2 {
     padding: 0;
     margin: 0;

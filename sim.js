@@ -1,11 +1,17 @@
 
 document.addEventListener('DOMContentLoaded', function() {
+    // If there is no #viewerCanvas on this page, quietly skip initialization.
+    const viewerCanvas = document.getElementById('viewerCanvas');
+    if (!viewerCanvas) {
+        // Many pages include sim.js but don't render a 3D viewer; do nothing here.
+        console.debug('sim.js: no #viewerCanvas found on this page — skipping 3D viewer init.');
+        return;
+    }
+
     if (typeof THREE === 'undefined') {
-        alert('Three.js is not loaded! Please check your script order.');
-        const viewerCanvas = document.getElementById('viewerCanvas');
-        if (viewerCanvas) {
-            viewerCanvas.innerHTML = '<div class="sim-error">Three.js is not loaded!<br>Check your script order and CDN loading.</div>';
-        }
+        // Only show the error inside the viewer area when the viewer is expected.
+        try { viewerCanvas.innerHTML = '<div class="sim-error">Three.js is not loaded!<br>Check your script order and CDN loading.</div>'; } catch(e){}
+        console.error('Three.js is not loaded! Please check your script order.');
         return;
     }
     console.log("sim.js is running");
@@ -25,13 +31,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 3.5); // initial camera position; will be adjusted after model loads
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    const viewerCanvas = document.getElementById('viewerCanvas');
-    if (!viewerCanvas) {
-        console.error('viewerCanvas element not found!');
-        return;
-    }
+    // Renderer (enable preserveDrawingBuffer so snapshots capture the current frame)
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    // set device pixel ratio for crisper snapshots (cap to 2)
+    try { renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); } catch(e) {}
     viewerCanvas.appendChild(renderer.domElement);
 
     // simple loading overlay for the 3D viewer
@@ -64,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateRendererSize() {
         const w = Math.max(320, viewerCanvas.clientWidth || 800);
         const h = Math.max(240, viewerCanvas.clientHeight || 600);
+        try { renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); } catch(e) {}
         renderer.setSize(w, h, true);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
@@ -470,51 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try { initPickrIfNeeded(); } catch (e) { console.warn('initPickrIfNeeded failed after model load', e); }
         }, 300);
 
-        // Save design button logic
-        const saveBtn = document.getElementById('saveDesignBtn');
-        // Preview/listing removed — no UI preview or localStorage writes here for now
-
-        if (saveBtn) {
-            saveBtn.addEventListener('click', async function(){
-                const color = pickrInstance ? pickrInstance.getColor().toHEXA().toString() : '#ffffff';
-                const size = 'Default';
-                const meta = JSON.stringify({ camera: camera.position.toArray(), rotation: shirt ? shirt.rotation.toArray() : [0,0,0] });
-
-                // get optional product_id from URL
-                let product_id = 0;
-                try { const url = new URL(window.location.href); product_id = parseInt(url.searchParams.get('product_id')||'0',10) || 0; } catch(e){}
-
-                // Prefer server save when authenticated
-                if (window.isAuthenticated) {
-                    const fd = new FormData();
-                    fd.append('color', color);
-                    fd.append('size', size);
-                    fd.append('meta', meta);
-                    fd.append('name', 'Custom Shirt');
-                    if (product_id) fd.append('product_id', String(product_id));
-                    try {
-                        const res = await fetch('save&add.php', { method: 'POST', body: fd });
-                        const data = await res.json();
-                        if (data.status === 'ok') {
-                            // Redirect back to product start-order tab if product_id available
-                            if (product_id) {
-                                const did = data.designoption_id ? '&designoption_id=' + encodeURIComponent(data.designoption_id) : '';
-                                window.location.href = 'product-details.php?id=' + encodeURIComponent(product_id) + did + '#order';
-                            } else {
-                                window.location.href = 'products.php#order';
-                            }
-                            return;
-                        }
-                    } catch(err){ console.error('Server save failed', err); }
-                }
-
-                // Fallback: localStorage only
-                const item = { id:null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta), designoption_id: null };
-                const cart = JSON.parse(localStorage.getItem('cart')||'[]'); cart.push(item); localStorage.setItem('cart', JSON.stringify(cart));
-                renderPreviewList();
-                const t = document.createElement('div'); t.className='toast-msg'; t.textContent='Design saved and added to cart'; const c = document.getElementById('toast-container') || document.body; c.appendChild(t); setTimeout(()=>{ t.classList.add('toast-hide'); setTimeout(()=>t.remove(),300); }, 2000);
-            });
-        }
+        // Save design button logic removed from here and attached globally below
         // hide spinner once model successfully loaded and added
         try { hideViewerSpinner(); } catch(e){}
     }
@@ -528,6 +488,103 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         initViewer();
     } catch(e) { console.warn('Auto initViewer failed', e); }
+
+    // Attach Save Design handler (always present, not dependent on model load)
+    (function attachSaveHandler(){
+        const saveBtn = document.getElementById('saveDesignBtn');
+        if (!saveBtn) return;
+
+        // helper to create a toast (if toast container exists, otherwise alert)
+        function showToast(msg){
+            const c = document.getElementById('toast-container');
+            if (c) {
+                const t = document.createElement('div'); t.className='toast-msg'; t.textContent=msg; c.appendChild(t);
+                setTimeout(()=>{ t.classList.add('toast-hide'); setTimeout(()=>t.remove(),300); }, 1800);
+            } else {
+                // fallback
+                try { console.info(msg); } catch(e){}
+            }
+        }
+
+        async function handleSaveClick(){
+            try {
+                const color = pickrInstance ? pickrInstance.getColor().toHEXA().toString() : '#ffffff';
+                const size = 'Default';
+                const product_id = (function(){ try { const url = new URL(window.location.href); return parseInt(url.searchParams.get('product_id') || url.searchParams.get('id') || '0',10) || 0; } catch(e){ return 0; } })();
+                const meta = JSON.stringify({ camera: camera.position.toArray(), rotation: (scene.getObjectByName('loadedShirt') ? scene.getObjectByName('loadedShirt').rotation.toArray() : [0,0,0]) });
+
+                // Capture canvas snapshot
+                const canvas = renderer.domElement;
+
+                // If user is authenticated, send to server with PNG blob
+                if (window.isAuthenticated) {
+                    // Ensure we render the latest frame to the drawing buffer before capture
+                    try {
+                        renderer.render(scene, camera);
+                        await new Promise((res) => requestAnimationFrame(res));
+                    } catch (e) { /* continue even if render timing fails */ }
+
+                    // canvas.toBlob is async callback, wrap in promise
+                    const blob = await new Promise((resolve) => {
+                        try {
+                            canvas.toBlob(function(b){ resolve(b); }, 'image/png');
+                        } catch (e) { try { resolve(null); } catch(e){} }
+                    });
+
+                    const fd = new FormData();
+                    fd.append('color', color);
+                    fd.append('size', size);
+                    fd.append('meta', meta);
+                    fd.append('name', 'Custom Shirt');
+                    if (product_id) fd.append('product_id', String(product_id));
+                    if (blob) fd.append('design_png', blob, 'design.png');
+
+                    try {
+                        const res = await fetch('save&add.php', { method: 'POST', body: fd });
+                        const data = await res.json();
+                        if (data && data.status === 'ok') {
+                            showToast('Design saved');
+                            // If the save produced a thumbnail path, try to make the cart
+                            // preview update immediately. If the current page shows the
+                            // cart (element #cart-items exists) simply reload so cart.js
+                            // re-queries the API and will render the thumbnail.
+                            try {
+                                if (document.getElementById('cart-items')) {
+                                    // Reload the page so cart UI reflects the new item
+                                    window.location.reload();
+                                    return;
+                                }
+                            } catch(e) { /* ignore reload failures */ }
+
+                            if (product_id) {
+                                const did = data.designoption_id ? '&designoption_id=' + encodeURIComponent(data.designoption_id) : '';
+                                window.location.href = 'product-details.php?id=' + encodeURIComponent(product_id) + did + '#order';
+                                return;
+                            } else {
+                                window.location.href = 'products.php#order';
+                                return;
+                            }
+                        } else {
+                            console.warn('Server returned non-ok result', data);
+                        }
+                    } catch (err) { console.error('Server save failed', err); }
+                }
+
+                // Fallback: save an entry in localStorage including a PNG dataURL
+                let pngData = null;
+                try { pngData = canvas.toDataURL('image/png'); } catch(e) { pngData = null; }
+                const item = { id:null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta), design_png: pngData, designoption_id: null };
+                const cart = JSON.parse(localStorage.getItem('cart')||'[]'); cart.push(item); localStorage.setItem('cart', JSON.stringify(cart));
+                try { if (typeof renderPreviewList === 'function') renderPreviewList(); } catch(e){}
+                showToast('Design saved locally and added to cart');
+            } catch (e) { console.error('Save handler failed', e); showToast('Save failed'); }
+        }
+
+        saveBtn.addEventListener('click', function(e){
+            e.preventDefault();
+            handleSaveClick();
+        });
+    })();
 
     // Close button logic (moved from inline script)
     var closeBtn = document.getElementById('simCloseBtn');

@@ -20,12 +20,17 @@ links.forEach(link => {
   }
 });
 
-  toggleBtn.addEventListener('click', () => {
-    navbar.classList.add('active');
-  });
-  closeBtn.addEventListener('click', () => {
-    navbar.classList.remove('active');
-  });
+  // Guard menu toggle/close handlers — on some pages the elements are absent
+  if (toggleBtn && navbar) {
+    toggleBtn.addEventListener('click', () => {
+      navbar.classList.add('active');
+    });
+  }
+  if (closeBtn && navbar) {
+    closeBtn.addEventListener('click', () => {
+      navbar.classList.remove('active');
+    });
+  }
 });
 
 // document.querySelector('.search-btn').addEventListener('click', function () {

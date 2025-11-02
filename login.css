@@ -194,6 +194,12 @@
     border: 2px solid #fff;
     color: #fff;
 }
+.auth-register-message {
+    color: #b30000;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 10px;
+}
 .auth-box .panels-container {
     position: relative;
     height: 100%;

@@ -120,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $formType === 'register') {
 
 <div class="modal" id="auth-modal">
   <?php if(!empty($registerMessage)): ?>
-    <div style="color:#b30000;font-weight:600;text-align:center;margin-bottom:10px;"><?= htmlspecialchars($registerMessage) ?></div>
+    <div class="auth-register-message"><?= htmlspecialchars($registerMessage) ?></div>
   <?php endif; ?>
   <div class="auth-box" id="auth-box">
     <button id="modal-close" class="close-btn" aria-label="Close">&times;</button>

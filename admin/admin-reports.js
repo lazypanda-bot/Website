@@ -18,7 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     function renderWeekly(list){
         tbody.innerHTML='';
-        if(!list || list.length===0){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:25px;color:#555;">No data</td></tr>'; return; }
+    if(!list || list.length===0){ tbody.innerHTML='<tr><td colspan="6" class="table-msg">No data</td></tr>'; return; }
         list.forEach(w=>{
             const rev = Number(w.revenue||0);
             const revCls = rev>0 ? 'rev-positive' : 'rev-zero';

@@ -95,6 +95,8 @@ body {
 .payments-table td {
     color: #555;
 }
+.table-msg { text-align:center; padding:25px; color:#555; }
+.saving-text { display:none; }
 .edit-btn,
 .delete-btn {
     background: none;

@@ -71,7 +71,7 @@ if ($designColName) {
     // Join to designoption and customization if those tables/columns are present
     // We'll attempt the common column names
     $joinSql = ' LEFT JOIN designoption d ON d.designoption_id = c.' . $designColName . ' LEFT JOIN customization cu ON cu.customization_id = d.customization_id ';
-    $designSelect .= ', cu.color AS design_color, cu.note AS design_meta, d.request_design AS design_request';
+    $designSelect .= ', cu.color AS design_color, cu.note AS design_meta, d.request_design AS design_request, d.designfilepath AS designfilepath';
 }
 
 $sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", p.".$productNameCol." AS name, p.".$productPriceCol." AS price
@@ -83,7 +83,21 @@ $stmt->bind_param('i', $userId);
 $stmt->execute();
 $res = $stmt->get_result();
 $items = [];
-while ($row = $res->fetch_assoc()) { $items[] = $row; }
+while ($row = $res->fetch_assoc()) {
+    // Ensure the response always contains the design-related keys so the client
+    // can rely on their presence (null when no design is attached).
+    $designDefaults = [
+        'designoption_id' => null,
+        'design_color' => null,
+        'design_meta' => null,
+        'design_request' => null,
+        'designfilepath' => null
+    ];
+    foreach ($designDefaults as $k => $v) {
+        if (!array_key_exists($k, $row)) $row[$k] = $v;
+    }
+    $items[] = $row;
+}
 $stmt->close();
 echo json_encode(['items'=>$items]);
 ?>

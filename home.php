@@ -204,7 +204,7 @@
     </section>
     <section id="featured" class="section5">
         <?php if (empty($servicesHome)): ?>
-            <div style="padding:10px 15px;font-size:.9rem;color:#555;font-style:italic;">No services added yet.</div>
+            <div class="muted-italic no-services">No services added yet.</div>
         <?php else: ?>
             <?php foreach ($servicesHome as $srv): 
                 $name = $srv['name'];
@@ -261,7 +261,7 @@
                             $slug = strtolower(preg_replace('/\s+/', '-', $name)); ?>
                             <li><a href="products.php#<?= htmlspecialchars($slug) ?>"><?= htmlspecialchars($name) ?></a></li>
                         <?php endforeach; else: ?>
-                            <li style="font-style:italic;color:#666;">No services yet</li>
+                            <li class="muted-italic">No services yet</li>
                     <?php endif; ?>
                 </ul>
             </div>

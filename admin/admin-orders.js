@@ -96,10 +96,10 @@ else {
                 escapeHtml(o.customer_name||''),
                 // design cell: show thumbnail/swatch or product name fallback
                 (function(){
-                    if(o.designoption_id){
-                        const thumb = o.designfilepath ? '<img src="'+escapeHtml(o.designfilepath)+'" alt="design" style="width:48px;height:48px;border-radius:6px;object-fit:cover" />' : '';
-                        const sw = o.design_color ? '<div style="width:48px;height:48px;border-radius:6px;background:'+escapeHtml(o.design_color)+'"></div>' : '';
-                        return (thumb || sw) + '<div style="display:inline-block;vertical-align:top;margin-left:8px;">' + escapeHtml(o.product_name||'') + '<div style="font-size:12px;color:#666">' + escapeHtml(o.design_note||o.request_design||'') + '</div></div>';
+            if(o.designoption_id){
+                const thumb = o.designfilepath ? '<img class="admin-design-thumb" src="'+escapeHtml(o.designfilepath)+'" alt="design" />' : '';
+                const sw = o.design_color ? '<div class="admin-design-swatch" style="background:'+escapeHtml(o.design_color)+'"></div>' : '';
+                return (thumb || sw) + '<div class="admin-design-meta">' + escapeHtml(o.product_name||'') + '<div class="admin-design-note">' + escapeHtml(o.design_note||o.request_design||'') + '</div></div>';
                     }
                     return escapeHtml(o.product_name||'');
                 })(),

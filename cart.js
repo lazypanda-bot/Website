@@ -123,7 +123,42 @@ document.addEventListener('DOMContentLoaded', () => {
         subtotal += line;
             if(cartItemsContainer){
             const idAttr = p.id ? `data-id="${p.id}"` : '';
-            const designHtml = '';
+            // Build a small preview thumbnail if available. Normalize paths that
+            // may be saved as filesystem paths (Windows backslashes or full local
+            // paths) into web-relative `uploads/...` URLs so the browser can load them.
+            let designHtml = '';
+            try {
+                function resolveDesignSrc(item) {
+                    // prefer explicit data URL
+                    if (item.design_png && String(item.design_png).startsWith('data:')) return item.design_png;
+                    const candidates = [item.designfilepath, item.design_file, item.designpath, item.design];
+                    for (let c of candidates) {
+                        if (!c) continue;
+                        let s = String(c).trim();
+                        if (!s) continue;
+                        // already a usable url/data or absolute path
+                        if (s.startsWith('data:') || /^https?:\/\//i.test(s) || s.startsWith('/')) return s;
+                        // normalize backslashes -> forward slashes
+                        s = s.replace(/\\/g, '/').replace(/\\/g, '/').replace(/\\/g, '/');
+                        // find uploads/ segment and return the relative path from there
+                        const m = s.match(/(uploads\/.*)/i);
+                        if (m && m[1]) return m[1].replace(/\\/g, '/');
+                        // fallback: if it already contains 'uploads' anywhere, return that substring
+                        const idx = s.toLowerCase().indexOf('uploads/');
+                        if (idx !== -1) return s.slice(idx).replace(/\\/g, '/');
+                        // otherwise return the raw string (may still work if it's already web-relative)
+                        return s;
+                    }
+                    return null;
+                }
+
+                const src = resolveDesignSrc(p);
+                if (src) {
+                    const safe = escapeHtml(src);
+                    designHtml = `<div class="cart-thumb"><img src="${safe}" alt="design" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-right:8px;"/></div>`;
+                }
+            } catch(e){ console.warn('Failed to build design preview', e); designHtml = ''; }
+
             cartItemsContainer.innerHTML += `
             <div class="cart-item cart-item-card" data-line-index="${idx}">
                 <label class="cart-item-label">
