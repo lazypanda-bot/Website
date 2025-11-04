@@ -35,12 +35,12 @@ window.addEventListener('DOMContentLoaded', () => {
             tbody.innerHTML = '<tr><td colspan="6" class="empty-row">No products yet</td></tr>';
             return;
         }
-        // Collect service types for datalist
-        const serviceTypes = new Set();
-        list.forEach(p=>{ 
-            if(p.service_type) serviceTypes.add(p.service_type); 
-          });
-        serviceTypeList.innerHTML = Array.from(serviceTypes).map(s=>`<option value="${escapeHtml(s)}"></option>`).join('');
+                // Collect service types for datalist and filter select
+                const serviceTypes = new Set();
+                list.forEach(p=>{ if(p.service_type) serviceTypes.add(p.service_type); });
+                serviceTypeList.innerHTML = Array.from(serviceTypes).map(s=>`<option value="${escapeHtml(s)}"></option>`).join('');
+                // populate service filter select as well (if present)
+                if(typeof populateServiceFilter === 'function') populateServiceFilter(Array.from(serviceTypes));
 
         list.forEach(p=>{
         const tr = document.createElement('tr');
@@ -356,6 +356,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     renderServices(d.services);
                     if (refreshDatalist) syncServiceDatalist(d.services);
                     else if (serviceTypeList.children.length === 0) syncServiceDatalist(d.services);
+                    // also populate the header filter select
+                    if (typeof populateServiceFilter === 'function') populateServiceFilter((d.services||[]).map(s=>s.name));
                 } else {
                     if (servicesListEl) servicesListEl.innerHTML = '<div class="msg msg-error">Failed to load services</div>';
                     console.error('services list failed', d);
@@ -491,14 +493,74 @@ window.addEventListener('DOMContentLoaded', () => {
     // initial services load for datalist
     loadServices();
 
-    // Search filter
-    const searchInput = document.querySelector('.search-input');
-    searchInput?.addEventListener('input', () => {
-        const term = searchInput.value.toLowerCase();
-        Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
-            const text = tr.innerText.toLowerCase();
-            tr.style.display = text.includes(term) ? '' : 'none';
+    // Service filter UI
+    const toggleFilterBtn = document.getElementById('toggleFilterBtn');
+    const serviceFilterDropdown = document.getElementById('serviceFilterDropdown');
+    const serviceFilterList = document.getElementById('serviceFilterList');
+    let currentServiceFilter = '';
+
+    function populateServiceFilter(options){
+        if(!serviceFilterList) return;
+        // Do not remove existing items; merge the provided options into the list.
+        const existing = new Set();
+        Array.from(serviceFilterList.children).forEach(li=> existing.add(li.getAttribute('data-value')||''));
+        options.forEach(opt => {
+            const v = String(opt || '').trim();
+            if(!v) return;
+            if(!existing.has(v)){
+                const li = document.createElement('li'); li.setAttribute('data-value', v); li.textContent = v; serviceFilterList.appendChild(li); existing.add(v);
+            }
         });
+    }
+
+    function applyServiceFilter(){
+        const val = (currentServiceFilter||'').toLowerCase();
+        Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+            if(!val) { tr.style.display = ''; return; }
+            // service cell is the first td
+            const svc = (tr.querySelector('td')?.textContent || '').toLowerCase();
+            tr.style.display = svc === val ? '' : 'none';
+        });
+    }
+
+    // Toggle dropdown visibility
+    toggleFilterBtn?.addEventListener('click', (ev)=>{
+        if(!serviceFilterDropdown) return;
+        const isHidden = serviceFilterDropdown.hasAttribute('hidden');
+        if(isHidden){
+            serviceFilterDropdown.removeAttribute('hidden');
+            serviceFilterDropdown.setAttribute('aria-hidden','false');
+            toggleFilterBtn.setAttribute('aria-expanded','true');
+        } else {
+            serviceFilterDropdown.setAttribute('hidden','');
+            serviceFilterDropdown.setAttribute('aria-hidden','true');
+            toggleFilterBtn.setAttribute('aria-expanded','false');
+        }
+    });
+
+    // Handle option clicks in the dropdown (event delegation)
+    serviceFilterList?.addEventListener('click', (e)=>{
+        const li = e.target.closest('li');
+        if(!li) return;
+        const val = li.getAttribute('data-value') || '';
+        currentServiceFilter = val;
+        applyServiceFilter();
+        // close dropdown
+        if(serviceFilterDropdown){ serviceFilterDropdown.setAttribute('hidden',''); serviceFilterDropdown.setAttribute('aria-hidden','true'); }
+        if(toggleFilterBtn) toggleFilterBtn.setAttribute('aria-expanded','false');
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e)=>{
+        if(!serviceFilterDropdown) return;
+        const isOpen = !serviceFilterDropdown.hasAttribute('hidden');
+        if(!isOpen) return;
+        const inside = e.target.closest('#serviceFilterDropdown') || e.target.closest('#toggleFilterBtn');
+        if(!inside){
+            serviceFilterDropdown.setAttribute('hidden','');
+            serviceFilterDropdown.setAttribute('aria-hidden','true');
+            if(toggleFilterBtn) toggleFilterBtn.setAttribute('aria-expanded','false');
+        }
     });
 
     // Initial load

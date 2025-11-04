@@ -56,7 +56,13 @@ require_once '../database.php';
 				<div class="dashboard-header">
 					<h1>All Products</h1>
 					<div class="controls">
-						<input type="text" placeholder="Search product" class="search-input" />
+						<!-- Filter button toggles a small service filter select -->
+						<button class="filter-btn" id="toggleFilterBtn" aria-expanded="false"><i class="fas fa-filter"></i> Filter</button>
+						<div id="serviceFilterDropdown" class="filter-dropdown" hidden aria-hidden="true">
+							<ul id="serviceFilterList">
+								<li data-value="">All services</li>
+							</ul>
+						</div>
 						<button class="filter-btn" id="openServiceModal"><i class="fas fa-plus"></i> Add Service</button>
 						<button class="add-btn" id="openProductModal"><i class="fas fa-plus"></i> Add Product</button>
 					</div>
