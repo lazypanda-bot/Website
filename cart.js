@@ -41,10 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
       const body = document.body;
       if(body && body.dataset) {
-          window.isAuthenticated = body.dataset.userAuth === '1';
-          window.userAddress = body.dataset.userAddress || '';
-          window.userPhone = body.dataset.userPhone || '';
-          window.userName = body.dataset.userName || '';
+          // Do not overwrite an existing window.isAuthenticated value set by server-side templates.
+          if (typeof window.isAuthenticated === 'undefined') {
+              window.isAuthenticated = body.dataset.userAuth === '1';
+          }
+          // Populate user meta only when not already present
+          if (typeof window.userAddress === 'undefined') window.userAddress = body.dataset.userAddress || '';
+          if (typeof window.userPhone === 'undefined') window.userPhone = body.dataset.userPhone || '';
+          if (typeof window.userName === 'undefined') window.userName = body.dataset.userName || '';
       }
   } catch(e) { /* ignore */ }
   // Profile shortcut button

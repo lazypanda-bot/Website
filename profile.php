@@ -234,7 +234,7 @@ if ($isAuthenticated) {
                 <button type="button" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
             <?php include_once 'nav-avatar.php'; ?>
-            <li><a href="#" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
+            <li><a href="<?php echo $isAuthenticated ? 'cart.php' : '#'; ?>" id="cart-icon" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a></li>
             <li><a href="profile.php" class="auth-link" id="profile-icon"><?= $NAV_AVATAR_HTML ?></a></li>
             <div id="navbar">
                 <button id="close-menu" aria-label="Close Menu">x</button>
@@ -439,6 +439,35 @@ if ($isAuthenticated) {
     <script src="cart.js"></script>
 
     <script src="profile.js?v=<?= time() ?>"></script>
+    <!-- Address edit modal -->
+    <div id="addressModal" class="custom-modal" hidden aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-content" role="document">
+            <div class="modal-header">
+                <span class="modal-title">Edit Address</span>
+                <button type="button" class="modal-close-btn" id="closeAddressModal" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addressModalForm" class="address-modal-form">
+                    <div class="form-group">
+                        <label for="addr_street">Street Address</label>
+                        <input id="addr_street" name="addr_street" type="text" class="modal-input" placeholder="123 Main St" />
+                    </div>
+                    <div class="form-group">
+                        <label for="addr_city">City</label>
+                        <input id="addr_city" name="addr_city" type="text" class="modal-input" placeholder="City" />
+                    </div>
+                    <div class="form-group">
+                        <label for="addr_province">Province / State</label>
+                        <input id="addr_province" name="addr_province" type="text" class="modal-input" placeholder="Province" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="design-btn alt-btn" id="cancelAddressBtn">Cancel</button>
+                <button type="button" class="design-btn primary-btn" id="saveAddressBtn">Save Address</button>
+            </div>
+        </div>
+    </div>
     <script>
         (function(){
             const btn = document.getElementById('ordersToggleBtn');
@@ -520,6 +549,73 @@ if ($isAuthenticated) {
                 const panel=document.getElementById('ordersPanel'); if(panel) panel.scrollIntoView({behavior:'smooth'});
             }
         })();
+    </script>
+    <script>
+        // Ensure DOM is ready before querying modal elements — defensive to avoid nulls
+        document.addEventListener('DOMContentLoaded', function(){
+            const addressModal = document.getElementById('addressModal');
+            if (!addressModal) return;
+            const editAddressBtn = document.getElementById('edit-address-btn');
+            const closeAddressModal = document.getElementById('closeAddressModal');
+            const cancelAddressBtn = document.getElementById('cancelAddressBtn');
+            const saveAddressBtn = document.getElementById('saveAddressBtn');
+            const addressField = document.getElementById('address');
+            const saveProfileBtn = document.getElementById('saveProfileBtn');
+
+            function openModal(){
+                // query inputs at open time to ensure they exist
+                const addrStreet = document.getElementById('addr_street');
+                const addrCity = document.getElementById('addr_city');
+                const addrProvince = document.getElementById('addr_province');
+                if (!addrStreet || !addrCity || !addrProvince) return;
+
+                // prefill modal fields from existing address if possible
+                const cur = (addressField && addressField.value) ? addressField.value.trim() : '';
+                if (cur) {
+                    const parts = cur.split(',').map(p=>p.trim()).filter(p=>p!=='');
+                    addrStreet.value = parts[0] || '';
+                    addrCity.value = parts[1] || '';
+                    const rest = parts.slice(2).join(', ');
+                    addrProvince.value = rest || '';
+                } else {
+                    addrStreet.value = '';
+                    addrCity.value = '';
+                    addrProvince.value = '';
+                }
+
+                addressModal.hidden = false;
+                addressModal.setAttribute('aria-hidden','false');
+                document.body.style.overflow='hidden';
+                addrStreet.focus();
+            }
+
+            function closeModal(){ addressModal.hidden = true; addressModal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+            if (editAddressBtn) editAddressBtn.addEventListener('click', function(e){ e.preventDefault(); openModal(); });
+            if (closeAddressModal) closeAddressModal.addEventListener('click', closeModal);
+            if (cancelAddressBtn) cancelAddressBtn.addEventListener('click', closeModal);
+
+            if (saveAddressBtn) {
+                saveAddressBtn.addEventListener('click', function(){
+                    const addrStreet = document.getElementById('addr_street');
+                    const addrCity = document.getElementById('addr_city');
+                    const addrProvince = document.getElementById('addr_province');
+                    if (!addrStreet || !addrCity || !addrProvince) return;
+                    const s = (addrStreet.value||'').trim();
+                    const c = (addrCity.value||'').trim();
+                    const p = (addrProvince.value||'').trim();
+                    let out = '';
+                    if (s) out += s;
+                    if (c) out += (out? ', ' : '') + c;
+                    if (p) out += (out? ', ' : '') + p;
+                    if (addressField) addressField.value = out;
+                    try { if (saveProfileBtn) { saveProfileBtn.disabled = false; saveProfileBtn.focus(); } } catch(e){}
+                    closeModal();
+                });
+            }
+
+            document.addEventListener('keydown', function(e){ if (e.key==='Escape' && addressModal && !addressModal.hidden) closeModal(); });
+        });
     </script>
 </body>
 </html>

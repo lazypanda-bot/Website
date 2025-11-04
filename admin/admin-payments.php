@@ -75,26 +75,7 @@ require_once '../database.php';
                     <tbody id="paymentsTbody"></tbody>
                 </table>
 
-        <style>
-            /* Payment status as a styled select (pill) */
-            .payment-cell { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
-            .payment-select-wrap { position:relative; display:inline-block; }
-            .payment-select-wrap:after { content:'\25BE'; /* down arrow */ position:absolute; top:50%; right:10px; transform:translateY(-52%); font-size:.7rem; color:rgba(0,0,0,.55); pointer-events:none; transition:.25s color; }
-            .payment-select-wrap:hover:after { color:rgba(0,0,0,.75); }
-            .payment-status-select { 
-                appearance:none; -webkit-appearance:none; -moz-appearance:none;
-                padding:4px 26px 5px 14px; border:1px solid transparent; border-radius:999px;
-                font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; cursor:pointer;
-                background:#f3f3f3; color:#333; line-height:1.1; position:relative; outline:none; transition:.25s background,.25s color,.25s box-shadow,.25s transform; 
-            }
-            .payment-status-select:focus { box-shadow:0 0 0 3px rgba(112,99,255,0.25); }
-            .payment-status-select:hover { transform:translateY(-1px); }
-            .payment-status-select.ps-Paid { background:#c8f7d0; color:#1b6e2a; }
-            .payment-status-select.ps-Unpaid { background:#ffe0e0; color:#8f1b1b; }
-            .payment-status-select.ps-Partial { background:#fff7c2; color:#7a5a00; }
-            .payment-status-select::-ms-expand { display:none; }
-            .saving-text { font-size:.55rem; color:#666; font-weight:500; }
-        </style>
+        <!-- Styles for payment status select moved to admin-payments.css -->
         <script src="admin-payments.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

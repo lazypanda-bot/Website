@@ -17,15 +17,22 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("sim.js is running");
 
     let shirtMeshList = [];
+    // expose for debugging in the console
+    try { window.shirtMeshList = shirtMeshList; } catch(e){}
     // keep a reference to the currently-applied design texture so user can flip/adjust it at runtime
     window.currentDesignTexture = null;
     let viewerInitialized = false;
+    // Promise that resolves when a model has been loaded and shirtMeshList populated
+    let _modelReadyResolve = null;
+    const modelReady = new Promise((res) => { _modelReadyResolve = res; });
     let pickrInstance = null;
     let lastScrollY = 0;
 
     // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf4f4f4);
+    // expose scene for debugging
+    try { window.simScene = scene; } catch(e){}
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -215,6 +222,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let dragPlane = new THREE.Plane();
     let dragOffset = new THREE.Vector3();
     let intersection = new THREE.Vector3();
+    // decal dragging state
+    let draggingDecal = false;
+    let dragDecal = null;
+    let lastDecalMove = 0;
+    // preview mesh used while dragging (cheap plane); reused across drags
+    let previewDecalPlane = null;
+    let previewDecalMaterial = null;
 
     // Viewer initialization
     function initViewer() {
@@ -239,14 +253,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const loader = new GLTFLoaderCtor();
     // show loading overlay while the model downloads and parses
     try { showViewerSpinner(); } catch(e){}
-    // Try a list of plausible GLB paths to match where the React app and repo place the file.
-    // The React client uses '/shirt_baked.glb' (served from its public/), so try that first,
-    // then local repository paths, then fall back to the older t-shirt/scene.gltf.
-    // Prefer the threejs-react-TDesigner model used by the React demo in the repo.
-    // Try multiple likely served locations so the loader works whether assets are served
-    // from the project root, a public folder, or kept inside the React src tree.
-    // Prefer the t-shirt folder assets as requested by the user
+    // Shirt 3d models
     const modelCandidates = [
+        //defaults
         't-shirt/scene.gltf',
         '/t-shirt/scene.gltf',
         't-shirt/scene.glb',
@@ -341,6 +350,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!scene.getObjectByName('loadedShirt')) {
             shirt.name = 'loadedShirt';
             scene.add(shirt);
+            // signal that a model is ready for decals
+            try { if (typeof _modelReadyResolve === 'function') _modelReadyResolve(true); } catch(e){}
         }
 
         // enable pointer cursor
@@ -360,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (child.isMesh) {
                 try { child.material.color.set('#ffffff'); } catch(e){}
                 shirtMeshList.push(child);
+                try { window.shirtMeshList = shirtMeshList; } catch(e){}
             }
         });
 
@@ -409,6 +421,55 @@ document.addEventListener('DOMContentLoaded', function() {
             pointer.x = ((p.x - rect.left) / rect.width) * 2 - 1;
             pointer.y = -((p.y - rect.top) / rect.height) * 2 + 1;
             raycaster.setFromCamera(pointer, camera);
+
+            // Prioritize decal selection for dragging if user clicked a decal
+            try {
+                const decalHits = raycaster.intersectObjects(logoDecals, true);
+                if (decalHits && decalHits.length) {
+                    // begin decal drag: create a lightweight preview plane to follow the pointer
+                    draggingDecal = true;
+                    dragDecal = decalHits[0].object;
+                    // compute a drag plane using the local surface normal if available
+                    let dNormal = null;
+                    if (decalHits[0].face) {
+                        dNormal = decalHits[0].face.normal.clone();
+                        dNormal.applyMatrix3(new THREE.Matrix3().getNormalMatrix(decalHits[0].object.matrixWorld)).normalize();
+                    } else {
+                        dNormal = camera.getWorldDirection(new THREE.Vector3()).clone().negate().normalize();
+                    }
+                    dragPlane.setFromNormalAndCoplanarPoint(dNormal, decalHits[0].point);
+
+                    // Create or reuse preview plane material (use existing decal texture if available)
+                    try {
+                        const existingTex = decalHits[0].object.material && decalHits[0].object.material.map ? decalHits[0].object.material.map : null;
+                        if (!previewDecalMaterial) {
+                            previewDecalMaterial = new THREE.MeshBasicMaterial({ transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide });
+                        }
+                        if (existingTex) {
+                            previewDecalMaterial.map = existingTex;
+                            previewDecalMaterial.needsUpdate = true;
+                        } else if (window.lastDecalDataURL) {
+                            // lazy load the texture for preview
+                            const tloader = new THREE.TextureLoader();
+                            tloader.load(window.lastDecalDataURL, (t) => { try { previewDecalMaterial.map = t; previewDecalMaterial.needsUpdate = true; } catch(e){} });
+                        }
+
+                        if (!previewDecalPlane) {
+                            const planeGeom = new THREE.PlaneGeometry(0.5, 0.2);
+                            previewDecalPlane = new THREE.Mesh(planeGeom, previewDecalMaterial);
+                            previewDecalPlane.renderOrder = 2000;
+                            scene.add(previewDecalPlane);
+                        }
+                    } catch (err) { console.warn('Failed to create preview plane', err); }
+
+                    controls.enabled = false;
+                    viewerCanvas.style.cursor = 'grabbing';
+                    try { if (e.pointerId) renderer.domElement.setPointerCapture(e.pointerId); } catch(err){}
+                    e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                    return;
+                }
+            } catch(err) { /* continue to shirt dragging fallback */ }
+
             const intersects = raycaster.intersectObjects(shirtMeshList, true);
             if (intersects.length) {
                 dragging = true;
@@ -431,6 +492,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function onPointerMove(e) {
+            // Handle decal dragging separately
+            if (draggingDecal) {
+                // Move preview plane only (cheap). We do not recreate DecalGeometry until drop.
+                const now = Date.now();
+                if (now - lastDecalMove < 40) return; // throttle update for smoothness
+                lastDecalMove = now;
+                const p = getPointerClient(e);
+                const rect = renderer.domElement.getBoundingClientRect();
+                pointer.x = ((p.x - rect.left) / rect.width) * 2 - 1;
+                pointer.y = -((p.y - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(pointer, camera);
+                const hits = raycaster.intersectObjects(shirtMeshList, true);
+                if (hits && hits.length) {
+                    const hit = hits[0];
+                    const pos = hit.point.clone();
+                    let normal = null;
+                    if (hit.face) {
+                        normal = hit.face.normal.clone();
+                        normal.applyMatrix3(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).normalize();
+                    } else {
+                        normal = camera.getWorldDirection(new THREE.Vector3()).clone().negate().normalize();
+                    }
+
+                    // position and orient preview plane
+                    if (previewDecalPlane) {
+                        previewDecalPlane.position.copy(pos.clone().add(normal.clone().multiplyScalar( (window.lastDecalOpts && window.lastDecalOpts.offset) || 0.01 )));
+                        previewDecalPlane.lookAt(previewDecalPlane.position.clone().add(normal));
+                        // scale plane based on lastDecalOpts.scale or approximate texture aspect
+                        try {
+                            const w = (window.lastDecalOpts && window.lastDecalOpts.scale) ? window.lastDecalOpts.scale : Math.max(hit.object.geometry?.boundingBox?.getSize(new THREE.Vector3()).x * 0.4 || 0.4, 0.3);
+                            // try to set plane size using material texture aspect
+                            const tex = previewDecalMaterial && previewDecalMaterial.map;
+                            const aspect = tex && tex.image ? (tex.image.width / Math.max(1, tex.image.height)) : 2;
+                            previewDecalPlane.scale.set(w * aspect, w, 1);
+                        } catch(e) { /* ignore scaling errors */ }
+                    }
+                }
+                e.preventDefault(); e.stopPropagation();
+                return;
+            }
+
             if (!dragging) return;
             const p = getPointerClient(e);
             const rect = renderer.domElement.getBoundingClientRect();
@@ -448,6 +550,74 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function onPointerUp(e) {
+            // If we were dragging a decal, finalize using the preview plane's world position
+            if (draggingDecal) {
+                try {
+                    const p = getPointerClient(e);
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    pointer.x = ((p.x - rect.left) / rect.width) * 2 - 1;
+                    pointer.y = -((p.y - rect.top) / rect.height) * 2 + 1;
+                    raycaster.setFromCamera(pointer, camera);
+                    const hits = raycaster.intersectObjects(shirtMeshList, true);
+                    let finalPos, finalNormal;
+                    if (hits && hits.length) {
+                        const hit = hits[0];
+                        finalPos = hit.point.clone();
+                        if (hit.face) {
+                            finalNormal = hit.face.normal.clone();
+                            finalNormal.applyMatrix3(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).normalize();
+                        } else {
+                            finalNormal = camera.getWorldDirection(new THREE.Vector3()).clone().negate().normalize();
+                        }
+                        // nudge out a touch to avoid z-fighting
+                        finalPos.add(finalNormal.clone().multiplyScalar((window.lastDecalOpts && window.lastDecalOpts.offset) || 0.01));
+                    } else {
+                        // fallback: place on shirt center facing camera
+                        try {
+                            const box = new THREE.Box3().setFromObject(scene.getObjectByName('loadedShirt') || scene);
+                            const center = box.getCenter(new THREE.Vector3());
+                            finalNormal = camera.getWorldDirection(new THREE.Vector3()).clone().negate().normalize();
+                            finalPos = center.clone().add(finalNormal.clone().multiplyScalar((window.lastDecalOpts && window.lastDecalOpts.offset) || 0.01));
+                        } catch (e) {
+                            finalNormal = camera.getWorldDirection(new THREE.Vector3()).clone().negate().normalize();
+                            finalPos = camera.position.clone().add(finalNormal.clone().multiplyScalar(1.0));
+                        }
+                    }
+
+                    // remove preview plane and release its resources (plane geometry is recreated later as decal)
+                    try {
+                        if (previewDecalPlane) {
+                            scene.remove(previewDecalPlane);
+                            try { previewDecalPlane.geometry.dispose(); } catch(e){}
+                            previewDecalPlane = null;
+                        }
+                        if (previewDecalMaterial) {
+                            previewDecalMaterial.map = null;
+                            previewDecalMaterial.needsUpdate = true;
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    // finalize: create decal(s) at the computed world position/normal
+                    try {
+                        const opts = Object.assign({}, window.lastDecalOpts || {}, { position: finalPos, normal: finalNormal });
+                        if (window.lastDecalDataURL) {
+                            window.applyLogoDecalFromDataURL(window.lastDecalDataURL, opts);
+                        }
+                    } catch (err) { console.warn('Finalizing decal creation failed', err); }
+
+                } catch (err) { console.warn('Pointer up decal finalize error', err); }
+                draggingDecal = false;
+                dragDecal = null;
+                controls.enabled = true;
+                viewerCanvas.style.cursor = 'grab';
+                try {
+                    if (e.pointerId) renderer.domElement.releasePointerCapture(e.pointerId);
+                } catch (err) {}
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
             if (dragging) {
                 dragging = false;
                 // release pointer capture if set
@@ -494,14 +664,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const saveBtn = document.getElementById('saveDesignBtn');
         if (!saveBtn) return;
 
-        // helper to create a toast (if toast container exists, otherwise alert)
         function showToast(msg){
             const c = document.getElementById('toast-container');
             if (c) {
                 const t = document.createElement('div'); t.className='toast-msg'; t.textContent=msg; c.appendChild(t);
                 setTimeout(()=>{ t.classList.add('toast-hide'); setTimeout(()=>t.remove(),300); }, 1800);
             } else {
-                // fallback
                 try { console.info(msg); } catch(e){}
             }
         }
@@ -513,18 +681,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const product_id = (function(){ try { const url = new URL(window.location.href); return parseInt(url.searchParams.get('product_id') || url.searchParams.get('id') || '0',10) || 0; } catch(e){ return 0; } })();
                 const meta = JSON.stringify({ camera: camera.position.toArray(), rotation: (scene.getObjectByName('loadedShirt') ? scene.getObjectByName('loadedShirt').rotation.toArray() : [0,0,0]) });
 
-                // Capture canvas snapshot
                 const canvas = renderer.domElement;
 
-                // If user is authenticated, send to server with PNG blob
                 if (window.isAuthenticated) {
-                    // Ensure we render the latest frame to the drawing buffer before capture
                     try {
                         renderer.render(scene, camera);
                         await new Promise((res) => requestAnimationFrame(res));
                     } catch (e) { /* continue even if render timing fails */ }
 
-                    // canvas.toBlob is async callback, wrap in promise
                     const blob = await new Promise((resolve) => {
                         try {
                             canvas.toBlob(function(b){ resolve(b); }, 'image/png');
@@ -544,13 +708,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         const data = await res.json();
                         if (data && data.status === 'ok') {
                             showToast('Design saved');
-                            // If the save produced a thumbnail path, try to make the cart
-                            // preview update immediately. If the current page shows the
-                            // cart (element #cart-items exists) simply reload so cart.js
-                            // re-queries the API and will render the thumbnail.
                             try {
                                 if (document.getElementById('cart-items')) {
-                                    // Reload the page so cart UI reflects the new item
                                     window.location.reload();
                                     return;
                                 }
@@ -570,7 +729,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (err) { console.error('Server save failed', err); }
                 }
 
-                // Fallback: save an entry in localStorage including a PNG dataURL
                 let pngData = null;
                 try { pngData = canvas.toDataURL('image/png'); } catch(e) { pngData = null; }
                 const item = { id:null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta), design_png: pngData, designoption_id: null };
@@ -644,13 +802,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Keep track of decal meshes so we can remove/replace them
     const logoDecals = [];
+    try { window.logoDecals = logoDecals; } catch(e){}
 
     // Apply a logo decal to the shirt using DecalGeometry (requires DecalGeometry script)
     window.applyLogoDecalFromDataURL = function(dataURL, opts){
         if (!dataURL) return;
         try {
-            // find target mesh (first mesh in the shirtMeshList)
-            const target = shirtMeshList && shirtMeshList.length ? shirtMeshList[0] : null;
+            // remember last applied decal so interactive dragging can reapply at a new position
+            try { window.lastDecalDataURL = dataURL; window.lastDecalOpts = opts || {}; } catch(e){}
+            // choose a target mesh. prefer the largest/front-most mesh instead of the simple first element
+            let target = null;
+            if (shirtMeshList && shirtMeshList.length) {
+                let best = null;
+                let bestArea = -Infinity;
+                shirtMeshList.forEach(m => {
+                    try {
+                        const b = new THREE.Box3().setFromObject(m);
+                        const s = new THREE.Vector3(); b.getSize(s);
+                        const area = Math.abs(s.x * s.y);
+                        if (area > bestArea) { bestArea = area; best = m; }
+                    } catch(e) { /* ignore malformed meshes */ }
+                });
+                target = best || shirtMeshList[0];
+            }
             if (!target) { console.warn('No shirt mesh available to add decal'); return; }
 
             // remove previous decals
@@ -663,31 +837,183 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const loader = new THREE.TextureLoader();
+            console.debug('applyLogoDecalFromDataURL: loading texture from dataURL (len=' + (dataURL && dataURL.length) + ')');
             loader.load(dataURL, function(tex){
                 tex.flipY = false; // match GLTF texture orientation
                 tex.needsUpdate = true;
+                // make decal material double-sided and use polygon offset to avoid z-fighting
                 const decalMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: false });
-
-                // default options: align defaults to the threejs-react-TDesigner demo
-                const scale = (opts && typeof opts.scale !== 'undefined') ? opts.scale : parseFloat(document.getElementById('logoScale')?.value || 0.12);
-                // position the decal on front chest area (approx) — TDesigner uses [genP(), 0.08, 0.13]
-                const position = (opts && opts.position) ? new THREE.Vector3(opts.position.x, opts.position.y, opts.position.z) : new THREE.Vector3(0, 0.08, 0.13);
-                const orientation = (opts && opts.rotation) ? new THREE.Euler(opts.rotation.x, opts.rotation.y, opts.rotation.z) : new THREE.Euler(0,0,0);
-                const size = new THREE.Vector3(scale, scale, scale);
-
                 try {
-                    // create decal geometry projecting onto the target mesh
-                    const decalGeom = new THREE.DecalGeometry(target, position, orientation, size);
-                    const decalMesh = new THREE.Mesh(decalGeom, decalMat);
-                    decalMesh.renderOrder = 999;
-                    scene.add(decalMesh);
-                    logoDecals.push(decalMesh);
-                } catch(e){ console.error('Decal creation failed', e); }
+                    decalMat.side = THREE.DoubleSide;
+                    decalMat.polygonOffset = true;
+                    decalMat.polygonOffsetFactor = -4;
+                    decalMat.polygonOffsetUnits = -4;
+                } catch(e) { /* ignore if constants missing */ }
+                // Determine an automatic placement and scale so the decal appears front-center
+                try {
+                    // compute bounding box of the target mesh in world space
+                    const box = new THREE.Box3().setFromObject(target);
+                    const boxSize = new THREE.Vector3(); box.getSize(boxSize);
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    // attempt a raycast from camera through the screen center (visible front-most surface)
+                    // this is more likely to hit the visible chest area than raycasting to the mesh geometric center
+                    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+                    const intersects = raycaster.intersectObjects(shirtMeshList, true);
+
+                    // derive outward normal roughly pointing toward the camera as fallback
+                    const camNormal = camera.getWorldDirection(new THREE.Vector3()).clone().negate().normalize();
+
+                    // small offset along normal to avoid z-fighting with the mesh surface
+                    const defaultOffset = (opts && typeof opts.offset !== 'undefined') ? opts.offset : Math.max(boxSize.length() * 0.01, 0.01);
+
+                    let position, normal;
+                    if (intersects && intersects.length) {
+                        position = intersects[0].point.clone();
+                        // compute world-space normal from face (if available)
+                        if (intersects[0].face) {
+                            normal = intersects[0].face.normal.clone();
+                            // transform to world
+                            normal.applyMatrix3(new THREE.Matrix3().getNormalMatrix(intersects[0].object.matrixWorld)).normalize();
+                        } else {
+                            normal = camNormal;
+                        }
+                        // push out a touch to avoid z-fighting
+                        position.add(normal.clone().multiplyScalar(defaultOffset));
+                        // choose the actual object we hit as the decal target so it projects onto the visible surface
+                        if (intersects[0].object) target = intersects[0].object;
+                    } else {
+                        normal = camNormal;
+                        position = center.clone().add(normal.clone().multiplyScalar(defaultOffset));
+                    }
+
+                    // decide decal orientation so its Z axis aligns with the computed normal
+                    const quat = new THREE.Quaternion();
+                    quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+                    const orientation = new THREE.Euler().setFromQuaternion(quat, 'XYZ');
+
+                    // compute scale from mesh box so decal fits chest area while respecting texture aspect
+                    // coverage multipliers to make text clearly visible on the chest
+                    let maxWidth = boxSize.x * 0.7;   // use ~70% of mesh width
+                    let maxHeight = boxSize.y * 0.55; // limit height to ~55% of mesh height
+                    // fallback if box sizes are zero-ish
+                    if (!isFinite(maxWidth) || maxWidth <= 0) maxWidth = (opts && opts.scale) ? opts.scale : 0.4;
+                    if (!isFinite(maxHeight) || maxHeight <= 0) maxHeight = (opts && opts.scale) ? opts.scale : 0.15;
+
+                    // texture aspect
+                    const img = tex.image || {};
+                    const texW = img.width || 256;
+                    const texH = img.height || 128;
+                    const aspect = texW / Math.max(1, texH);
+
+                    let width, height;
+                    if (aspect >= 1) {
+                        width = Math.min(maxWidth, maxHeight * aspect);
+                        height = width / aspect;
+                    } else {
+                        height = Math.min(maxHeight, maxWidth / aspect);
+                        width = height * aspect;
+                    }
+
+                    // slight depth for decal projection
+                    const depth = Math.max(boxSize.z * 0.02, 0.01);
+
+                    const size = new THREE.Vector3(width, height, depth);
+
+                    // If caller provided an explicit world position/normal, prefer that instead of raycast placement
+                    if (opts && opts.position && opts.normal) {
+                        try {
+                            // accept either arrays or Vector3-like objects
+                            const p = opts.position;
+                            const n = opts.normal;
+                            const posVec = (p.isVector3) ? p.clone() : new THREE.Vector3((p.x !== undefined) ? p.x : p[0], (p.y !== undefined) ? p.y : p[1], (p.z !== undefined) ? p.z : p[2]);
+                            const normVec = (n.isVector3) ? n.clone() : new THREE.Vector3((n.x !== undefined) ? n.x : n[0], (n.y !== undefined) ? n.y : n[1], (n.z !== undefined) ? n.z : n[2]);
+                            // apply offset if requested
+                            const off = (opts && typeof opts.offset !== 'undefined') ? opts.offset : defaultOffset;
+                            position = posVec.add(normVec.clone().multiplyScalar(off));
+                            normal = normVec.normalize();
+                        } catch (e) { /* fall back to computed placement below */ }
+                    }
+
+                    // Project the decal onto nearby shirt meshes so it conforms to the model topology
+                    let createdAny = false;
+                    try {
+                        const proximityRadius = Math.max(boxSize.length() * 0.6, 0.25);
+                        const candidates = (shirtMeshList || []).filter(m => {
+                            try {
+                                const mb = new THREE.Box3().setFromObject(m);
+                                const mc = mb.getCenter(new THREE.Vector3());
+                                const dist = mc.distanceTo(position);
+                                return dist <= proximityRadius;
+                            } catch(e) { return false; }
+                        });
+
+                        // If no nearby candidates found, fallback to using the chosen target only
+                        const useList = (candidates && candidates.length) ? candidates : [target];
+
+                        useList.forEach(m => {
+                            try {
+                                const dGeom = new THREE.DecalGeometry(m, position, orientation, size);
+                                const dMesh = new THREE.Mesh(dGeom, decalMat);
+                                dMesh.renderOrder = 999;
+                                // store metadata so we can recreate/move the decal later if needed
+                                try { dMesh.userData = { size: size.clone(), texW: tex.image?.width || 0, texH: tex.image?.height || 0, planeMode: false }; } catch(e){}
+                                scene.add(dMesh);
+                                logoDecals.push(dMesh);
+                                createdAny = true;
+                            } catch(e) { /* ignore per-mesh failures */ }
+                        });
+                    } catch(e) { console.warn('Multi-mesh decal projection failed', e); }
+
+                    // If nothing was created (degenerate), create a single decal on target as fallback
+                    if (!createdAny) {
+                        try {
+                            let decalGeom = new THREE.DecalGeometry(target, position, orientation, size);
+                            let decalMesh = new THREE.Mesh(decalGeom, decalMat);
+                            decalMesh.renderOrder = 999;
+                            scene.add(decalMesh);
+                            logoDecals.push(decalMesh);
+                        } catch(e) { console.error('Decal creation failed fallback', e); }
+                    }
+                    // if the generated decal geometry is unexpectedly tiny, retry with a bigger multiplier
+                    try {
+                        const db = new THREE.Box3().setFromObject(decalMesh);
+                        const ds = new THREE.Vector3(); db.getSize(ds);
+                        const minDim = Math.min(ds.x, ds.y);
+                        const threshold = Math.max(boxSize.length() * 0.02, 0.02);
+                        if (minDim > 0 && minDim < threshold) {
+                            // remove tiny decal
+                            scene.remove(decalMesh);
+                            try { decalGeom.dispose(); } catch(e){}
+                            try { decalMesh.material && decalMesh.material.dispose(); } catch(e){}
+                            logoDecals.pop();
+                            // fallback: create a flat plane slightly in front of the hit point so the design is visible
+                            try {
+                                const planeW = Math.max(width * 1.6, boxSize.x * 0.15, 0.05);
+                                const planeH = Math.max(height * 1.6, boxSize.y * 0.12, 0.03);
+                                const planeGeom = new THREE.PlaneGeometry(planeW, planeH);
+                                const planeMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide });
+                                    const plane = new THREE.Mesh(planeGeom, planeMat);
+                                    plane.position.copy(position);
+                                // orient plane to face the normal/camera
+                                plane.lookAt(position.clone().add(normal));
+                                // push out a bit more so it is not occluded
+                                plane.position.add(normal.clone().multiplyScalar(defaultOffset * 0.6));
+                                plane.renderOrder = 1000;
+                                    try { plane.userData = { planeMode: true, texW: tex.image?.width || 0, texH: tex.image?.height || 0 }; } catch(e){}
+                                    scene.add(plane);
+                                    logoDecals.push(plane);
+                            } catch(e) { console.warn('Plane fallback failed', e); }
+                        }
+                    } catch(e){ /* ignore fallback failures */ }
+                    try { window.logoDecals = logoDecals; } catch(e){}
+                    console.debug('applyLogoDecalFromDataURL: decal added (auto-centered/raycast)', { decal: decalMesh, position, size, boxSize, texW, texH, usedRaycast: !!(intersects && intersects.length) }, 'logoDecals.length=', logoDecals.length);
+                } catch(e){
+                    console.error('Decal creation failed', e);
+                }
             }, undefined, function(err){ console.error('Logo texture load failed', err); });
         } catch(e){ console.warn('applyLogoDecalFromDataURL failed', e); }
     };
-
-    // No flip UI by default (removed non-functional Flip buttons)
 
     // View in 3D button: read design data from hidden input or editor canvas and apply
     const view3DBtn = document.getElementById('view3DBtn');
@@ -731,39 +1057,75 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Wire the new Apply to 3D UI control (keeps UI but adds decal/full modes)
+    // Real-time text wiring: reflect changes in the font text controls immediately on the 3D shirt
     try {
-        const applyBtn = document.getElementById('applyTo3DBtn');
-        if (applyBtn) {
-            applyBtn.addEventListener('click', function(){
-                // decide mode
-                const mode = (document.getElementById('applyModeLogo')?.checked) ? 'logo' : 'full';
-                // get current canvas PNG
-                const canvas = document.getElementById('editor2dCanvas');
-                if (!canvas) { alert('No 2D editor canvas available'); return; }
-                const png = canvas.toDataURL('image/png');
-                try { initViewer(); } catch(e) { console.warn('initViewer failed', e); }
-                try { updateRendererSize(); } catch(e){}
-                if (mode === 'full') {
-                    window.applyDesignTextureFromDataURL(png);
-                } else {
-                    const scale = parseFloat(document.getElementById('logoScale')?.value || 0.15);
-                    window.applyLogoDecalFromDataURL(png, { scale: scale });
+        // Expose a helper to clear existing decals
+        function clearLogoDecals() {
+            try {
+                while (logoDecals.length) {
+                    const d = logoDecals.pop();
+                    try { scene.remove(d); } catch(e){}
+                    try { if (d.geometry) d.geometry.dispose(); } catch(e){}
+                    try { if (d.material && d.material.map) d.material.map.dispose(); } catch(e){}
+                    try { if (d.material) d.material.dispose(); } catch(e){}
                 }
-                // show viewer controls
-                try { document.getElementById('view3DBtn').style.display = 'none'; } catch(e){}
-                try { document.getElementById('backTo2DBtn').style.display = 'inline-block'; } catch(e){}
-                try { movePickerIntoViewer(); } catch(e) { console.warn('movePickerIntoViewer call failed', e); }
-            });
+            } catch (e) { console.warn('clearLogoDecals failed', e); }
         }
-        // toggle logo controls show/hide
-        const logoRadio = document.getElementById('applyModeLogo');
-        const fullRadio = document.getElementById('applyModeFull');
-        function updateLogoControls(){ const show = !!(logoRadio && logoRadio.checked); const c = document.getElementById('logoControls'); if (c) c.style.display = show ? 'flex' : 'none'; }
-        if (logoRadio) logoRadio.addEventListener('change', updateLogoControls);
-        if (fullRadio) fullRadio.addEventListener('change', updateLogoControls);
-        updateLogoControls();
-    } catch(e) { console.warn('Apply-to-3D wiring failed', e); }
+        window.clearLogoDecals = clearLogoDecals;
+
+        function synthTextPNG(text, color, size, fontFamily) {
+            const cw = Math.min(2048, Math.max(256, Math.round(size * Math.max(3, text.length))));
+            const ch = Math.min(1024, Math.max(128, Math.round(size * 1.6)));
+            const tmp = document.createElement('canvas'); tmp.width = cw; tmp.height = ch;
+            const ctx = tmp.getContext('2d');
+            ctx.clearRect(0,0,cw,ch);
+            let ff = fontFamily || 'Poppins';
+            if (ff.indexOf(',') === -1) ff = '"' + ff + '"';
+            ctx.fillStyle = color || '#000000';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.font = size + 'px ' + ff;
+            try {
+                ctx.lineWidth = Math.max(2, Math.round(size / 18));
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.strokeText(text, cw/2, ch/2);
+            } catch(e){}
+            ctx.fillText(text, cw/2, ch/2);
+            try { return tmp.toDataURL('image/png'); } catch(e) { console.error('synthTextPNG failed', e); return null; }
+        }
+
+        async function applyTextLive() {
+            const text = (document.getElementById('fontText')?.value || '').trim();
+            const color = document.getElementById('fontColor')?.value || '#000000';
+            const size = parseInt(document.getElementById('fontSize')?.value || '72', 10) || 72;
+            const fontFamily = (document.getElementById('fontFamily')?.value || 'Poppins').trim();
+            if (!text) { clearLogoDecals(); return; }
+            const png = synthTextPNG(text, color, size, fontFamily);
+            if (!png) return;
+                try { initViewer(); } catch(e) { /* ignore */ }
+                // wait briefly for model to be ready (resolve occurs when onModelLoaded adds the shirt)
+                try { await Promise.race([modelReady, new Promise(res=>setTimeout(res,3000))]); } catch(e){}
+                try { updateRendererSize(); } catch(e) {}
+            const scale = Math.min(0.9, Math.max(0.02, size / 320));
+            try { 
+                // remove previous decals so updates replace instead of stacking
+                try { clearLogoDecals(); } catch(e){}
+                window.applyLogoDecalFromDataURL(png, { scale: scale }); 
+            } catch(e) { console.warn('applyLogoDecalFromDataURL failed', e); }
+            try { document.getElementById('view3DBtn').style.display = 'none'; } catch(e){}
+            try { document.getElementById('backTo2DBtn').style.display = 'inline-block'; } catch(e){}
+            try { movePickerIntoViewer(); } catch(e) { /* ignore */ }
+        }
+
+        const debouncedApply = (function(){ let t; return function(){ clearTimeout(t); t = setTimeout(()=>{ applyTextLive().catch?applyTextLive():applyTextLive(); }, 220); }; })();
+
+        const fontTextEl = document.getElementById('fontText'); if (fontTextEl) fontTextEl.addEventListener('input', debouncedApply);
+        const fontColorEl = document.getElementById('fontColor'); if (fontColorEl) fontColorEl.addEventListener('input', debouncedApply);
+        const fontSizeEl = document.getElementById('fontSize'); if (fontSizeEl) fontSizeEl.addEventListener('input', debouncedApply);
+        const fontFamEl = document.getElementById('fontFamily'); if (fontFamEl) fontFamEl.addEventListener('change', debouncedApply);
+
+        // initial apply if text already present
+        setTimeout(function(){ if ((document.getElementById('fontText')?.value || '').trim()) debouncedApply(); }, 300);
+    } catch(e) { console.warn('Real-time text wiring failed', e); }
 
     // Keep track of the color picker original location so we can move it into the viewer
     let colorPickerOriginalParent = null;

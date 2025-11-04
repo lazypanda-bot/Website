@@ -490,6 +490,26 @@ section {
         gap: 2.8rem; 
     }
 }
+/* Address modal styles extracted from profile.php */
+.custom-modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); z-index:1200; }
+.custom-modal[hidden] { display:none; }
+.modal-content { background:#fff; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.2); width:100%; max-width:640px; overflow:hidden; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid #f2f2f2; }
+.modal-title { font-size:20px; font-weight:700; }
+.modal-body { padding:16px 20px; }
+.modal-input { width:100%; padding:10px 12px; border:1px solid #e6e6e6; border-radius:8px; font-size:14px; }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; }
+.modal-actions .design-btn { min-width:100px; }
+/* Accent color for this site's theme */
+:root { --site-accent: #a02b2b; }
+/* Style the modal action buttons to match site color */
+#addressModal .design-btn.primary-btn { background: var(--site-accent); color: #fff; border: 0; }
+#addressModal .design-btn.primary-btn:hover { filter:brightness(0.95); }
+#addressModal .design-btn.alt-btn { background:#fff; color: var(--site-accent); border:1px solid var(--site-accent); }
+#addressModal .design-btn.alt-btn:hover { background: rgba(160,43,43,0.06); }
+/* Style the close X to match accent */
+#addressModal .modal-close-btn { background:transparent; border:0; color:var(--site-accent); font-size:22px; line-height:1; padding:6px 10px; cursor:pointer; }
+#addressModal .modal-close-btn:hover { color:#7f2222; }
 @media (max-width: 1050px) {
     .account-flex { 
         gap: 2.2rem; 

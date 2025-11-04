@@ -1295,3 +1295,56 @@ input[type="number"]::-webkit-outer-spin-button {
     cursor:pointer; 
     font-size:.75rem; 
 }
+
+/* Upload modal and client-side preview styles extracted from product-details.php */
+.upload-drop {
+    border: 2px dashed #eee;
+    padding: 24px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    background: #fbfbfb;
+}
+.upload-drop.drag-over {
+    border-color: #a02b2b;
+    background: #fffaf9;
+    box-shadow: 0 6px 20px rgba(160,43,43,0.06);
+}
+.upload-svg { opacity: 0.95; }
+.upload-drop h3 { margin: 4px 0 0 0; color: #222; font-size: 18px; }
+.upload-sub { margin: 0; color: #666; font-size: 13px; }
+.browse-btn { margin-top: 8px; background: #a02b2b; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; border: 0; }
+.upload-list { margin-top: 12px; max-height: 220px; overflow: auto; border-radius: 8px; background: #fff; border: 1px solid #f3f3f3; padding: 8px; }
+.upload-list .item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; background: #fff; border: 1px solid #f5f5f5; margin-bottom: 10px; }
+.upload-list .item .left { display: flex; align-items: center; gap: 12px; }
+.upload-list .thumb { width: 56px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; background: #fafafa; display: flex; align-items: center; justify-content: center; }
+.upload-list .meta { display: flex; flex-direction: column; min-width: 160px; }
+.upload-list .meta .name { font-weight: 600; color: #333; font-size: 14px; }
+.upload-list .meta .size { color: #888; font-size: 13px; margin-top: 4px; }
+.upload-list .actions { display: flex; align-items: center; gap: 8px; margin-left: 12px; }
+.upload-list .remove-btn { background: transparent; border: 1px solid #eee; padding: 6px 10px; border-radius: 8px; cursor: pointer; color: #a02b2b; }
+.modal-actions .design-btn { margin-left: 8px; }
+.design-btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+/* Selected design preview (client-side) */
+.selected-design-preview { position: relative; display: block; background: #fff; border: 1px solid #f3f3f3; border-radius: 8px; padding: 12px; padding-bottom: 64px; margin-top: 12px; }
+.selected-design-preview .design-btn.small { padding: 6px 10px; font-size: 13px; border-radius: 8px; background: #fff; color: #a02b2b; border: 1px solid #a02b2b; position: absolute; right: 12px; bottom: 12px; }
+.selected-design-preview .sd-note { display: none; }
+
+/* helper when upload list is empty */
+.upload-empty { padding: 8px; color: #666; }
+
+/* file icon and file-box used for non-image files in upload preview */
+.file-icon { color: var(--site-accent, #a02b2b); font-size: 18px; }
+.file-icon-lg { font-size: 20px; }
+.file-box { display: flex; align-items: center; justify-content: center; }
+
+/* client preview thumbnail list */
+.saved-design-thumb-list { display: flex; gap: 8px; align-items: center; }
+.sd-thumb-item { width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; background: #fff; display: flex; align-items: center; justify-content: center; }
+.sd-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.preview-toprow { display: flex; align-items: center; gap: 12px; }
+.preview-meta { display: inline-block; margin-left: 12px; }

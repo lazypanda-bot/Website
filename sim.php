@@ -24,7 +24,7 @@ require_once __DIR__ . '/nav-avatar.php';
             <a href="home.php"><img src="img/Icons/printing logo.webp" class="logo" alt=""></a>
             <ul class="desktop-nav">
                 <li><a href="home.php" class="nav-link">Home</a></li>
-                <li><a href="products.php" class="nav-link">Products</a></li>
+                <li><a href="products.php" class="nav-link active">Products</a></li>
                 <li><a href="about.php" class="nav-link">About</a></li>
                 <li><a href="contact.php" class="nav-link">Contact</a></li>
             </ul>
@@ -43,7 +43,7 @@ require_once __DIR__ . '/nav-avatar.php';
                 </div>
                 <ul class="mobile-nav">
                     <li><a href="home.php" class="nav-link">Home</a></li>
-                    <li><a href="products.php" class="nav-link">Products</a></li>
+                    <li><a href="products.php" class="nav-link active">Products</a></li>
                     <li><a href="about.php" class="nav-link">About</a></li>
                     <li><a href="contact.php" class="nav-link">Contact</a></li>
                 </ul>
@@ -52,99 +52,76 @@ require_once __DIR__ . '/nav-avatar.php';
         </div>
     </section>
 
-    <main class="sim-viewer-container" style="padding:18px;">
+    <main class="sim-viewer-container">
         <div class="back-container">
             <button onclick="history.back()" class="back-btn">← Back</button>
         </div>
         <!-- Heading and save button row -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h2 class="sim-title" style="margin:0;">Customize</h2>
+        <div class="sim-header-row">
+            <h2 class="sim-title">Customize</h2>
             <div>
-                <button id="saveDesignBtn" class="save-design-btn" style="position:absolute;top:24px;right:24px;z-index:2000;">Save Design</button>
+                <button id="saveDesignBtn" class="save-design-btn save-float">Save Design</button>
             </div>
         </div>
 
         <!-- Two-column layout: left controls, right editor + 3D viewer -->
-        <div class="sim-twocol" style="display:flex;gap:18px;align-items:flex-start;">
+        <div class="sim-twocol">
             <!-- LEFT: controls (upload, color swatches, color picker) -->
-                <aside class="sim-left" style="width:460px;background:#fbf8ff;border-radius:12px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-                <!-- Upload area removed — 3D-only editor uses model assets and decals -->
-                <div style="font-weight:700;margin-top:6px;margin-bottom:8px;">Shirt Color</div>
-                <div id="colorPickerContainer" style="margin-bottom:6px;"></div>
-                <!-- Inline text input removed (2D-only) -->
-                <div style="margin-top:12px;">
-                    <div style="font-size:13px;font-weight:600;margin-bottom:6px;">3D Apply Mode</div>
-                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-                        <label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="applyMode" value="full" id="applyModeFull" checked /> Full</label>
-                        <label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="applyMode" value="logo" id="applyModeLogo" /> Logo</label>
+                <aside class="sim-left">
+                <div class="control-heading">Shirt Color</div>
+                <div id="colorPickerContainer"></div>
+                    <div class="mt-12">
+                        <div class="control-label bold">Text to Apply</div>
+                        <div class="sim-control-block vstack">
+                            <input id="fontText" type="text" placeholder="Enter text to apply" />
+                            <div class="hstack">
+                                <label class="control-label">Color</label>
+                                <input id="fontColor" type="color" value="#000000" />
+                                <label class="control-label ml-8">Size</label>
+                                <input id="fontSize" type="number" min="8" max="400" value="72" />
+                            </div>
+                            <div class="mt-4">
+                                <div class="muted-note">Text updates in real-time on the 3D shirt as you type.</div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="logoControls" style="display:none;align-items:center;gap:8px;">
-                        <div style="font-size:12px;color:#666;margin-bottom:4px;">Logo scale</div>
-                        <input id="logoScale" type="range" min="0.05" max="0.6" step="0.01" value="0.15" style="width:100%;" />
-                    </div>
-                    <div style="margin-top:8px;display:flex;gap:8px;">
-                        <button id="applyTo3DBtn" class="editor2d-btn" style="flex:1;background:#2b7aeb;color:#fff;border-radius:6px;padding:8px 10px;border:none;">Apply to 3D</button>
-                    </div>
+                <div class="control-label subtle">Font family</div>
+                <div class="select-wrap">
+                    <select id="fontFamily">
+                        <option value="Poppins">Poppins</option>
+                        <option value="Arial, Helvetica, sans-serif">Arial</option>
+                        <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="Times New Roman, Times, serif">Times New Roman</option>
+                        <option value="Impact, Charcoal, sans-serif">Impact</option>
+                        <option value="Courier New, monospace">Courier New</option>
+                    </select>
                 </div>
-                <div style="margin-top:10px;font-size:13px;color:#666;">Material</div>
-                <div style="background:#fff;border-radius:8px;padding:10px;border:1px solid #eee;margin-top:6px;">Cotton base</div>
             </aside>
 
             <!-- RIGHT: editor canvas + 3D viewer (toggle) -->
-            <section class="sim-right" style="flex:1;display:flex;flex-direction:column;gap:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-                    <div style="font-weight:700;font-size:16px;">Design your shirt</div>
+            <section class="sim-right">
+                <div class="section-header">
+                    <div class="section-title">Design your shirt</div>
                 </div>
 
-                <div id="editor-area" style="background:#fff;border-radius:10px;padding:14px;border:1px solid #f0f0f0;min-height:520px;display:flex;flex-direction:column;">
-                    <div id="shirt3d-wrapper" style="flex:1;position:relative;background:#ffffff;border-radius:6px;padding:8px;display:flex;align-items:center;justify-content:center;">
-                        <div id="viewerCanvas" style="display:block;position:absolute;inset:0;border-radius:6px;overflow:hidden;background:#fff;"></div>
-                        <div class="rotate-hint" id="rotateHint" style="display:block;">Drag left / right to rotate</div>
+                <div id="editor-area" class="editor-area">
+                    <div id="shirt3d-wrapper">
+                        <div id="viewerCanvas"></div>
+                        <div class="rotate-hint" id="rotateHint">Drag left / right to rotate</div>
                     </div>
-                    <div style="margin-top:10px;color:#666;font-size:13px;text-align:center;"></div>
+                    <div class="editor-note"></div>
                 </div>
             </section>
         </div>
     </main>
 
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-column">
-                <h4>Customer Service</h4>
-                <p>Available 7am to 12pm</p>
-                <p>+63 917 123 4567</p>
-                <p>Zamoras St., Ozamis City, Misamis Occidental</p>
-            </div>
-            <div class="footer-column">
-                <h4>Information</h4>
-                <ul>
-                    <li><a href="about.php">About</a></li>
-                    <li><a href="contact.php">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Services</h4>
-                <ul>
-                    <li>Tarpaulin Printing</li>
-                    <li>Apparel Printing</li>
-                    <li>Personalized Items</li>
-                    <li>Stickers</li>
-                    <li>Signages</li>
-                    <li>Tailoring</li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Follow Us</h4>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <?php
+        // Use the central footer so services list and links remain consistent across pages
+        include __DIR__ . '/footer.php';
+    ?>
     <div id="login-container"></div>
 
-    <!-- 3D-only viewer: no 2D export fields -->
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>

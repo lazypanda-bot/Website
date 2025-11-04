@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let modal;
 
     function openLoginModal(redirectPath) {
+        // Defensive: do not open the login modal when already authenticated.
+        if (window.isAuthenticated) {
+            try { console.debug('openLoginModal suppressed: user already authenticated'); } catch(e){}
+            return;
+        }
         // Always use the current page as the redirect path
         const path = redirectPath || window.location.href;
         sessionStorage.setItem('redirect_after_auth', path);
@@ -14,6 +19,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     window.openLoginModal = openLoginModal;
+
+    // Early capture: ensure cart/profile clicks never open the login modal when user is authenticated.
+    // This listener runs in the capture phase and stops other handlers from opening the modal.
+    document.addEventListener('click', function(evt) {
+        try {
+            const target = evt.target;
+            if (!target || !target.closest) return;
+            const anchor = target.closest('a#cart-icon, a#profile-icon, a#mobile-profile-icon');
+            if (!anchor) return;
+            // If user is authenticated, force native navigation / reload and stop other handlers
+            if (window.isAuthenticated) {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+                const id = anchor.id;
+                if (id === 'cart-icon') {
+                    window.location.href = 'cart.php';
+                } else if (id === 'profile-icon' || id === 'mobile-profile-icon') {
+                    const path = window.location.pathname || '';
+                    if (path.indexOf('/profile.php') !== -1 || path.endsWith('profile.php')) {
+                        window.location.reload();
+                    } else {
+                        window.location.href = 'profile.php';
+                    }
+                }
+            }
+        } catch (e) {
+            // silent
+        }
+    }, true);
 
     function setRedirectInput() {
         const loginRedirectInput = document.getElementById('login-redirect-after-auth');
@@ -27,7 +61,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleProfileClick(e) {
         e.preventDefault();
         if (window.isAuthenticated) {
-            window.location.href = 'profile.php';
+            // If already on profile page, just reload to refresh state; otherwise navigate there.
+            try {
+                const path = window.location.pathname || '';
+                if (path.indexOf('/profile.php') !== -1 || path.endsWith('profile.php')) {
+                    window.location.reload();
+                } else {
+                    window.location.href = 'profile.php';
+                }
+            } catch (err) {
+                window.location.href = 'profile.php';
+            }
         } else {
             openLoginModal(window.location.href);
         }
@@ -35,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleCartClick(e) {
         e.preventDefault();
+        // Always navigate to cart when clicked and authenticated; otherwise prompt login
         if (window.isAuthenticated) {
             window.location.href = 'cart.php';
         } else {

@@ -47,7 +47,6 @@ if (!isset($servicesFooter)) {
             <h4>Follow Us</h4>
             <div class="social-icons">
                 <a href="#"><i class="fab fa-facebook"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
             </div>
         </div>
     </div>

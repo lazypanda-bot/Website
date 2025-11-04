@@ -135,23 +135,23 @@ require_once '../database.php';
 					<label>Service Name</label>
 					<input type="text" name="service_name" id="service_name" required />
 				</div>
-							<div class="form-row">
-								<label>Upload Image</label>
-								<div class="file-chooser">
-									<label class="file-btn">Choose File
-										<input type="file" name="service_image" id="service_image" accept="image/*" />
-									</label>
-									<div class="file-info" id="serviceFileInfo" aria-live="polite"></div>
-								</div>
-								<div id="serviceImagePreview" class="image-preview"></div>
-							</div>
-							<div class="form-actions">
-								<button type="submit" class="add-btn">Add</button>
-							</div>
-							<hr />
-							<div id="servicesList" class="services-list">
-								<!-- service cards rendered here by admin-products.js -->
-							</div>
+				<div class="form-row">
+					<label>Upload Image</label>
+					<div class="file-chooser">
+						<label class="file-btn">Choose File
+							<input type="file" name="service_image" id="service_image" accept="image/*" />
+						</label>
+						<div class="file-info" id="serviceFileInfo" aria-live="polite"></div>
+					</div>
+					<div id="serviceImagePreview" class="image-preview"></div>
+				</div>
+				<div class="form-actions">
+					<button type="submit" class="add-btn">Add</button>
+				</div>
+				<hr />
+				<div id="servicesList" class="services-list">
+					<!-- service cards rendered here by admin-products.js -->
+				</div>
 			</form>
 		</div>
 	</div>

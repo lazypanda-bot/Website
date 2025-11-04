@@ -595,7 +595,7 @@ function pd_first_image($imagesField) {
                 </div>
             </div>
 
-            <!-- Upload Design Modal -->
+            <!-- Upload Design Modal (drag/drop + browse) -->
             <div id="uploadModal" class="custom-modal" hidden>
                 <div class="modal-content">
                     <div class="modal-header">
@@ -603,18 +603,22 @@ function pd_first_image($imagesField) {
                         <button type="button" class="modal-close-btn" id="closeUploadModalBtn">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <form id="uploadDesignForm">
-                            <div class="file-label-wrapper">
-                                <label for="uploadFile" class="file-label">
-                                    <span class="file-label-text">Choose file</span>
-                                    <input type="file" id="uploadFile" accept="image/*,application/pdf" class="modal-file-input" required />
-                                </label>
-                                <span id="fileNameDisplay" class="file-name-display"></span>
-                            </div>
-                            <div class="modal-actions">
-                                <button type="submit" class="design-btn">Upload</button>
-                            </div>
-                        </form>
+                        <div id="dropZone" class="upload-drop" aria-label="File drop zone">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="upload-svg">
+                                <path d="M12 3v10" stroke="#a02b2b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 7l4-4 4 4" stroke="#a02b2b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="3" y="13" width="18" height="8" rx="2" stroke="#a02b2b" stroke-width="1.2"/>
+                            </svg>
+                            <h3>Select Files to Upload</h3>
+                            <p class="upload-sub">or Drag and Drop, Copy and Paste Files</p>
+                            <label class="browse-btn" for="uploadFile">Browse Files</label>
+                            <input type="file" id="uploadFile" accept="image/*,application/pdf" class="modal-file-input" multiple />
+                        </div>
+                        <div id="uploadList" class="upload-list" aria-live="polite"></div>
+                        <div class="modal-actions">
+                            <button type="button" class="design-btn" id="cancelUploadBtn">Cancel</button>
+                            <button type="button" class="design-btn" id="confirmUploadBtn" disabled>Select</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -631,6 +635,183 @@ function pd_first_image($imagesField) {
     <script src="OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="sim.js"></script>
+</script>
+    <script>
+        (function(){
+            const uploadBtn = document.getElementById('uploadDesignBtn');
+            const uploadModal = document.getElementById('uploadModal');
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('uploadFile');
+            const uploadList = document.getElementById('uploadList');
+            const closeBtn = document.getElementById('closeUploadModalBtn');
+            const cancelBtn = document.getElementById('cancelUploadBtn');
+            const confirmBtn = document.getElementById('confirmUploadBtn');
+            let selectedFiles = [];
 
+            function humanFileSize(size){ if (size === 0) return '0 B'; const i = Math.floor(Math.log(size)/Math.log(1024)); const sizes=['B','KB','MB','GB']; return (size/Math.pow(1024,i)).toFixed(i?1:0)+' '+sizes[i]; }
+
+            function openModal(){ if(!uploadModal) return; uploadModal.hidden = false; document.body.style.overflow='hidden'; selectedFiles=[]; fileInput.value=''; renderList(); confirmBtn.disabled=true; }
+            function closeModal(){ if(!uploadModal) return; uploadModal.hidden = true; document.body.style.overflow=''; }
+
+            // keep track of object URLs to revoke when items removed
+            const _objectURLs = new Map();
+
+            function renderList(){
+                uploadList.innerHTML = '';
+                if (!selectedFiles.length) {
+                    uploadList.innerHTML = '<div class="upload-empty">No files selected</div>';
+                    confirmBtn.disabled = true;
+                    return;
+                }
+
+                selectedFiles.forEach((f, idx) => {
+                    const item = document.createElement('div'); item.className = 'item';
+                    const left = document.createElement('div'); left.className = 'left';
+
+                    // thumbnail (images) or placeholder
+                    const thumb = document.createElement('div');
+                    if (f.type && f.type.indexOf('image/') === 0) {
+                        const img = document.createElement('img');
+                        img.className = 'thumb';
+                        let url = _objectURLs.get(f) || URL.createObjectURL(f);
+                        if (!_objectURLs.has(f)) _objectURLs.set(f, url);
+                        img.src = url;
+                        thumb.appendChild(img);
+                    } else {
+                        // simple file icon box
+                        const box = document.createElement('div');
+                        box.className = 'thumb file-box';
+                        box.innerHTML = '<i class="fa-solid fa-file file-icon"></i>';
+                        thumb.appendChild(box);
+                    }
+
+                    const meta = document.createElement('div'); meta.className = 'meta';
+                    const name = document.createElement('div'); name.className = 'name'; name.textContent = f.name;
+                    const sizeEl = document.createElement('div'); sizeEl.className = 'size'; sizeEl.textContent = humanFileSize(f.size);
+                    meta.appendChild(name); meta.appendChild(sizeEl);
+
+                    left.appendChild(thumb); left.appendChild(meta);
+                    item.appendChild(left);
+
+                    const actions = document.createElement('div'); actions.className = 'actions';
+                    const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-btn'; removeBtn.textContent = 'Remove';
+                    removeBtn.addEventListener('click', () => {
+                        // revoke object URL if any
+                        const url = _objectURLs.get(f);
+                        try { if (url) URL.revokeObjectURL(url); } catch(e){}
+                        _objectURLs.delete(f);
+                        selectedFiles.splice(idx, 1);
+                        renderList();
+                    });
+                    actions.appendChild(removeBtn);
+                    item.appendChild(actions);
+
+                    uploadList.appendChild(item);
+                });
+                confirmBtn.disabled = false;
+            }
+
+            function handleFiles(files){
+                // merge incoming FileList/array with existing selection
+                const arr = Array.from(files || []);
+                // simple concat - keep order (you can dedupe by name+size if desired)
+                selectedFiles = selectedFiles.concat(arr);
+                renderList();
+            }
+
+            function escapeHtml(s){ return s.replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+            if (uploadBtn) uploadBtn.addEventListener('click', function(e){ e.preventDefault(); openModal(); });
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+            ['dragenter','dragover','dragleave','drop'].forEach(evt=>{ dropZone.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); }); });
+            dropZone.addEventListener('dragover', ()=> dropZone.classList.add('drag-over'));
+            dropZone.addEventListener('dragleave', ()=> dropZone.classList.remove('drag-over'));
+            dropZone.addEventListener('drop', (e)=>{ dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
+            fileInput.addEventListener('change', (e)=>{ handleFiles(e.target.files); });
+
+            confirmBtn.addEventListener('click', ()=>{
+                if (!selectedFiles.length) return;
+                // Render a preview in the Design Option area (mimic saved-design-preview)
+                try {
+                    const designSection = document.querySelector('.design-option-section');
+                    if (designSection) {
+                        // remove any previous client-side preview (keep server-side saved preview intact)
+                        const existing = designSection.querySelector('.selected-design-preview');
+                        if (existing) existing.remove();
+
+                        const previewWrap = document.createElement('div');
+                        previewWrap.className = 'selected-design-preview saved-design-preview';
+
+                        // Thumbnail container
+                        const thumbContainer = document.createElement('div');
+                        thumbContainer.className = 'saved-design-thumb-list';
+
+                        selectedFiles.forEach((f, i) => {
+                            const box = document.createElement('div');
+                            box.className = 'sd-thumb-item';
+
+                            if (f.type && f.type.indexOf('image/') === 0) {
+                                const img = document.createElement('img');
+                                img.className = 'sd-thumb-img';
+                                let url = _objectURLs.get(f) || URL.createObjectURL(f);
+                                if (!_objectURLs.has(f)) _objectURLs.set(f, url);
+                                img.src = url;
+                                box.appendChild(img);
+                            } else {
+                                const icon = document.createElement('div');
+                                icon.innerHTML = '<i class="fa-solid fa-file file-icon file-icon-lg"></i>';
+                                box.appendChild(icon);
+                            }
+                            thumbContainer.appendChild(box);
+                        });
+
+                        // Meta / actions
+                        const meta = document.createElement('div');
+                        meta.className = 'saved-design-meta preview-meta';
+                        // show only the heading — hide the preview note to keep the UI compact
+                        meta.innerHTML = '<strong>Selected design</strong>';
+
+                        // Remove (clear selection) button
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        // smaller variant for inline preview
+                        removeBtn.className = 'design-btn small';
+                        removeBtn.textContent = 'Remove Design';
+                        removeBtn.addEventListener('click', function(){
+                            // revoke any object URLs created
+                            selectedFiles.forEach(f => { const u = _objectURLs.get(f); try{ if(u) URL.revokeObjectURL(u); }catch(e){} _objectURLs.delete(f); });
+                            selectedFiles = [];
+                            // remove preview element
+                            previewWrap.remove();
+                        });
+
+                        const topRow = document.createElement('div');
+                        topRow.className = 'preview-toprow';
+                        topRow.appendChild(thumbContainer);
+                        topRow.appendChild(meta);
+                        topRow.appendChild(removeBtn);
+
+                        previewWrap.appendChild(topRow);
+
+                        // insert preview after the design buttons area
+                        const insertAfter = designSection.querySelector('.design-buttons') || designSection;
+                        insertAfter.parentNode.insertBefore(previewWrap, insertAfter.nextSibling);
+                    }
+                } catch (err) {
+                    console.error('Failed to render selected preview', err);
+                }
+
+                // keep the files in memory for further integration (upload or editor); close modal
+                console.log('Selected design files:', selectedFiles);
+                closeModal();
+            });
+
+            document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeModal(); });
+
+        })();
+    </script>
 </body>
 </html>

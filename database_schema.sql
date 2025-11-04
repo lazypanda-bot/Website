@@ -1,17 +1,15 @@
 -- =============================================================
 -- Website Application Database Schema
--- Generated: 2025-10-07
--- Purpose: Full schema (improved) for import via phpMyAdmin / CLI.
+-- Purpose: Full schema
 -- Notes:
 --  * Keeps existing column names used by current PHP code (mixed case in orders columns).
 --  * Adds missing columns (created_at, phone_number in orders) and indexes.
 --  * Leaves product_id/size/quantity in orders for backward compatibility.
 --  * Provides improved/normalized alternatives for reports & reviews.
 --  * MySQL (InnoDB, utf8mb4) compatible; run:  mysql -u root -p < database_schema.sql
---  * If you already have data, REMOVE the DROP statements or back up first.
 -- =============================================================
 
--- Safety: Disable FK checks during (re)creation
+-- Safety: Disable FK checks during creation
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- (Optional) Create database
