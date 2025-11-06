@@ -932,6 +932,18 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 if(!prod){ alert('Product not found'); return; }
+                // Optimization paths: send only sub-items when only one kind is provided.
+                if(activeTab==='attributes' && attrEntries.length>0 && varEntries.length===0 && typeEntries.length===0 && sizeEntries.length===0){
+                    const fd2 = new FormData();
+                    fd2.append('action','quick_add_sub');
+                    fd2.append('product_id', pid);
+                    fd2.append('sub_attrs', JSON.stringify(attrEntries.map(a=>({name:a.aName, price:a.aPrice}))));
+                    const resp2 = await fetch('products-api.php', { method:'POST', body: fd2 });
+                    const text2 = await resp2.text();
+                    let d2; try{ d2 = JSON.parse(text2); } catch(_){ alert('Save failed; server returned unexpected response.'); return; }
+                    if(d2.status==='ok'){ if(quickVariantModal) closeModal(quickVariantModal); fetchProducts(); return; }
+                    else { alert(d2.message || 'Save failed'); return; }
+                }
                 // If user is only adding types or only sizes, hit quick_add_sub for a minimal insert
                 if(activeTab==='types' && typeEntries.length>0 && varEntries.length===0 && attrEntries.length===0){
                     const fd2 = new FormData();

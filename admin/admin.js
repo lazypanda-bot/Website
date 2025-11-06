@@ -56,17 +56,29 @@ if (monthYear && calendarDays) renderCalendar(currentDate);
 
 // Fetch order stats for dashboard boxes
 function fetchOrderStats(){
-    fetch('orders-stats-api.php').then(r=>r.json()).then(d=>{
-        if(d.status==='ok'){
-            const c = d.counts || {}; 
-            const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
-            set('countPending', c.Pending||0);
-            set('countDelivered', c.Delivered||0);
-            set('countCompleted', c.Completed||0);
-            set('countCancelled', c.Cancelled||0);
-        }
-    })
-    .catch(console.error);
+    fetch('orders-stats-api.php', {cache:'no-store'})
+        .then(async r => {
+            const ct = r.headers.get('Content-Type')||'';
+            if(!r.ok) {
+                throw new Error('HTTP '+r.status);
+            }
+            if(!ct.includes('application/json')) {
+                const text = await r.text();
+                throw new Error('Non-JSON response: '+text.slice(0,120));
+            }
+            return r.json();
+        })
+        .then(d => {
+            if(d && d.status==='ok'){
+                const c = d.counts || {}; 
+                const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+                set('countPending', c.Pending||0);
+                set('countDelivered', c.Delivered||0);
+                set('countCompleted', c.Completed||0);
+                set('countCancelled', c.Cancelled||0);
+            }
+        })
+        .catch(err => { console.error('fetchOrderStats error:', err); });
 }
 fetchOrderStats();
 // refresh every 10s

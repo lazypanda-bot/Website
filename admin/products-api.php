@@ -31,6 +31,10 @@ try {
             $conn->query("CREATE UNIQUE INDEX IF NOT EXISTS uniq_prod_kind_val ON products_sub (product_id, kind, value)");
             $conn->query("CREATE INDEX IF NOT EXISTS idx_prod ON products_sub (product_id)");
             $conn->query("CREATE INDEX IF NOT EXISTS idx_kind ON products_sub (kind)");
+            // Detect optional wide columns (types/sizes/attributes) for compatibility with existing DBs
+            $GLOBALS['PS_HAS_TYPES'] = isset($have['types']);
+            $GLOBALS['PS_HAS_SIZES'] = isset($have['sizes']);
+            $GLOBALS['PS_HAS_ATTRS'] = isset($have['attributes']);
         } catch (Exception $e) { /* ignore */ }
     } else {
         // try create
@@ -45,7 +49,12 @@ try {
             INDEX idx_prod (product_id),
             INDEX idx_kind (kind)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        if ($conn->query($sqlCreate) === TRUE) { $hasProductsSub = true; }
+        if ($conn->query($sqlCreate) === TRUE) { 
+            $hasProductsSub = true; 
+            $GLOBALS['PS_HAS_TYPES'] = false;
+            $GLOBALS['PS_HAS_SIZES'] = false;
+            $GLOBALS['PS_HAS_ATTRS'] = false;
+        }
     }
 } catch (Exception $e) { /* ignore; optional table */ }
 
@@ -61,6 +70,22 @@ try {
     $res2 = $conn->query("SHOW COLUMNS FROM products LIKE 'wherepricedepends'");
     if ($res2 && $res2 instanceof mysqli_result && $res2->num_rows > 0) $hasWherePrice = true;
 } catch (Exception $e) { /* ignore */ }
+
+// Inspect available product columns so queries adapt to different schemas
+$productCols = [];
+try{
+    $colRes = $conn->query("SHOW COLUMNS FROM products");
+    if($colRes instanceof mysqli_result){ while($cr=$colRes->fetch_assoc()){ $productCols[strtolower($cr['Field'])] = $cr['Field']; } $colRes->free(); }
+}catch(Exception $e){ /* ignore */ }
+
+// Helper flags for common columns
+$hasProductId = isset($productCols['product_id']);
+$hasProductName = isset($productCols['product_name']);
+$hasPriceCol = isset($productCols['price']);
+$hasServiceType = isset($productCols['service_type']);
+$hasServiceId = isset($productCols['service_id']);
+$hasImages = isset($productCols['images']);
+$hasCreatedAt = isset($productCols['created_at']);
 
 function flush_json($arr, $code = 200){
     http_response_code($code);
@@ -87,10 +112,24 @@ $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 // Utility: fetch products list
 if ($method === 'GET' && $action === 'list') {
     $data = [];
-    $selectFields = "product_id, product_name, price, service_type, product_details, images, created_at";
-    if ($hasVariants) $selectFields .= ", variants";
-    if ($hasWherePrice) $selectFields .= ", wherepricedepends";
-    $q = $conn->query("SELECT " . $selectFields . " FROM products ORDER BY created_at DESC");
+    // Build a compatible SELECT list based on available columns
+    if (!$hasProductId) { flush_json(['status'=>'error','message'=>'products table missing product_id'],500); }
+    $parts = [];
+    $parts[] = 'product_id';
+    $parts[] = $hasProductName ? 'product_name' : (isset($productCols['name']) ? 'name as product_name' : "'' as product_name");
+    $parts[] = $hasPriceCol ? 'price' : "0 as price";
+    // prefer service_type text; if absent fall back to service_id (numeric)
+    if ($hasServiceType) $parts[] = 'service_type';
+    elseif ($hasServiceId) $parts[] = 'service_id as service_type';
+    else $parts[] = "'' as service_type";
+    $parts[] = isset($productCols['product_details']) ? 'product_details' : "'' as product_details";
+    $parts[] = $hasImages ? 'images' : "'' as images";
+    if ($hasVariants) $parts[] = 'variants';
+    if ($hasWherePrice) $parts[] = 'wherepricedepends';
+    // Order by created_at if available, otherwise by product_id desc
+    $orderBy = $hasCreatedAt ? 'created_at DESC' : 'product_id DESC';
+    $selectFields = implode(', ', $parts);
+    $q = $conn->query("SELECT " . $selectFields . " FROM products ORDER BY $orderBy");
     if ($q instanceof mysqli_result) {
         while($r=$q->fetch_assoc()) { $data[] = $r; }
     }
@@ -397,6 +436,93 @@ if ($method === 'POST' && $action === 'add_service') {
     exit;
 }
 
+// Migration: backfill products_sub from existing products (variants / wherepricedepends)
+if ($method === 'GET' && $action === 'migrate_sub') {
+    if(!$hasProductsSub) fail('products_sub not available on this DB', 500);
+    $inserted = ['types'=>0,'sizes'=>0,'attributes'=>0];
+    // Track seen values case-insensitively per (kind, product_id) to avoid double inserts within this run
+    $seen = ['type'=>[], 'size'=>[], 'attribute'=>[]];
+    $selectFields = 'product_id';
+    if ($hasVariants) $selectFields .= ', variants';
+    if ($hasWherePrice) $selectFields .= ', wherepricedepends';
+    $q = $conn->query("SELECT $selectFields FROM products");
+    if ($q instanceof mysqli_result) {
+        $stmt = $conn->prepare("INSERT INTO products_sub (product_id, kind, value, price) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE price=VALUES(price)");
+        $hasTypesCol = !empty($GLOBALS['PS_HAS_TYPES']);
+        $hasSizesCol = !empty($GLOBALS['PS_HAS_SIZES']);
+        $hasAttrsCol = !empty($GLOBALS['PS_HAS_ATTRS']);
+        $updType = $hasTypesCol ? $conn->prepare("UPDATE products_sub SET types=? WHERE product_id=? AND kind='type' AND value=?") : null;
+        $updSize = $hasSizesCol ? $conn->prepare("UPDATE products_sub SET sizes=? WHERE product_id=? AND kind='size' AND value=?") : null;
+        $updAttr = $hasAttrsCol ? $conn->prepare("UPDATE products_sub SET attributes=? WHERE product_id=? AND kind='attribute' AND value=?") : null;
+        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+        while($r=$q->fetch_assoc()){
+            $pid = (int)$r['product_id'];
+            // Parse variants for types / sizes if present
+            if ($hasVariants && !empty($r['variants'])) {
+                $vRaw = $r['variants'];
+                $decoded = json_decode($vRaw, true);
+                $items = [];
+                if ($decoded !== null) {
+                    $items = $decoded;
+                } else {
+                    // Fallback: comma-separated list -> treat as types
+                    $items = array_filter(array_map('trim', explode(',', $vRaw)));
+                }
+                if (is_array($items)) {
+                    if (!empty($items) && isset($items[0]) && is_array($items[0])) {
+                        // Array of objects each possibly containing type/size
+                        foreach($items as $it){
+                            if(!is_array($it)) continue;
+                            $tp = isset($it['type']) ? trim((string)$it['type']) : '';
+                            $sz = isset($it['size']) ? trim((string)$it['size']) : '';
+                            if($tp!==''){ $lc = strtolower($tp); if(!isset($seen['type'][$pid])) $seen['type'][$pid]=[]; if(!isset($seen['type'][$pid][$lc])){ $kind='type'; $price=0.0; $stmt->bind_param('issd',$pid,$kind,$tp,$price); $stmt->execute(); if($updType){ $updType->bind_param('sis',$tp,$pid,$tp); $updType->execute(); } $seen['type'][$pid][$lc]=true; $inserted['types']++; } }
+                            if($sz!==''){ $lc = strtolower($sz); if(!isset($seen['size'][$pid])) $seen['size'][$pid]=[]; if(!isset($seen['size'][$pid][$lc])){ $kind='size'; $price=0.0; $stmt->bind_param('issd',$pid,$kind,$sz,$price); $stmt->execute(); if($updSize){ $updSize->bind_param('sis',$sz,$pid,$sz); $updSize->execute(); } $seen['size'][$pid][$lc]=true; $inserted['sizes']++; } }
+                        }
+                    } else {
+                        // Array of scalars -> treat as types
+                        foreach($items as $sv){ if(!is_scalar($sv)) continue; $val = trim((string)$sv); if($val==='') continue; $lc = strtolower($val); if(!isset($seen['type'][$pid])) $seen['type'][$pid]=[]; if(!isset($seen['type'][$pid][$lc])){ $kind='type'; $price=0.0; $stmt->bind_param('issd',$pid,$kind,$val,$price); $stmt->execute(); if($updType){ $updType->bind_param('sis',$val,$pid,$val); $updType->execute(); } $seen['type'][$pid][$lc]=true; $inserted['types']++; } }
+                    }
+                }
+            }
+            // Parse wherepricedepends for attributes (others[] list with name/price)
+            if ($hasWherePrice && !empty($r['wherepricedepends'])) {
+                $wRaw = $r['wherepricedepends'];
+                $w = json_decode($wRaw, true);
+                if (is_array($w)) {
+                    $others = [];
+                    // Patterns: either top-level has 'others', or nested arrays have 'others'
+                    if (isset($w['others']) && is_array($w['others'])) {
+                        $others = $w['others'];
+                    } else {
+                        foreach($w as $entry){ if(is_array($entry) && isset($entry['others']) && is_array($entry['others'])){ foreach($entry['others'] as $o){ $others[]=$o; } } }
+                    }
+                    foreach($others as $o){
+                        if(!is_array($o)) continue;
+                        $nm = isset($o['name']) ? trim((string)$o['name']) : '';
+                        if($nm==='') continue;
+                        $pr = isset($o['price']) ? (float)$o['price'] : 0.0;
+                        $lc = strtolower($nm);
+                        if(!isset($seen['attribute'][$pid])) $seen['attribute'][$pid]=[];
+                        if(!isset($seen['attribute'][$pid][$lc])){
+                            $kind='attribute';
+                            $stmt->bind_param('issd',$pid,$kind,$nm,$pr);
+                            $stmt->execute();
+                            if($updAttr){ $updAttr->bind_param('sis',$nm,$pid,$nm); $updAttr->execute(); }
+                            $seen['attribute'][$pid][$lc]=true;
+                            $inserted['attributes']++;
+                        }
+                    }
+                }
+            }
+        }
+        $stmt->close();
+        if($updType) $updType->close();
+        if($updSize) $updSize->close();
+        if($updAttr) $updAttr->close();
+    }
+    flush_json(['status'=>'ok','migrated'=>$inserted]);
+}
+
 fail('Unsupported action',400);
 
 // Helpers
@@ -407,9 +533,16 @@ function save_sub_items($conn, $pid, $post){
     if(isset($post['sub_sizes'])){ $t = json_decode($post['sub_sizes'], true); if(is_array($t)) $sizes = $t; }
     if(isset($post['sub_attrs'])){ $t = json_decode($post['sub_attrs'], true); if(is_array($t)) $attrs = $t; }
     if(empty($types) && empty($sizes) && empty($attrs)) return;
-    // Prepare statements
+    // Prepare statements for base upsert
     $stmt = $conn->prepare("INSERT INTO products_sub (product_id, kind, value, price) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE price=VALUES(price)");
     if(!$stmt) return;
+    // Optional updates for wide columns if they exist
+    $hasTypesCol = !empty($GLOBALS['PS_HAS_TYPES']);
+    $hasSizesCol = !empty($GLOBALS['PS_HAS_SIZES']);
+    $hasAttrsCol = !empty($GLOBALS['PS_HAS_ATTRS']);
+    $updType = $hasTypesCol ? $conn->prepare("UPDATE products_sub SET types=? WHERE product_id=? AND kind='type' AND value=?") : null;
+    $updSize = $hasSizesCol ? $conn->prepare("UPDATE products_sub SET sizes=? WHERE product_id=? AND kind='size' AND value=?") : null;
+    $updAttr = $hasAttrsCol ? $conn->prepare("UPDATE products_sub SET attributes=? WHERE product_id=? AND kind='attribute' AND value=?") : null;
     // types
     foreach($types as $tv){
         $val = trim((string)$tv);
@@ -417,6 +550,7 @@ function save_sub_items($conn, $pid, $post){
         $kind='type'; $price = 0.0;
         $stmt->bind_param('issd', $pid, $kind, $val, $price);
         $stmt->execute();
+        if($updType){ $updType->bind_param('sis', $val, $pid, $val); $updType->execute(); }
     }
     // sizes
     foreach($sizes as $sv){
@@ -425,6 +559,7 @@ function save_sub_items($conn, $pid, $post){
         $kind='size'; $price = 0.0;
         $stmt->bind_param('issd', $pid, $kind, $val, $price);
         $stmt->execute();
+        if($updSize){ $updSize->bind_param('sis', $val, $pid, $val); $updSize->execute(); }
     }
     // attributes with price
     foreach($attrs as $av){
@@ -435,7 +570,11 @@ function save_sub_items($conn, $pid, $post){
         $kind='attribute';
         $stmt->bind_param('issd', $pid, $kind, $val, $pr);
         $stmt->execute();
+        if($updAttr){ $updAttr->bind_param('sis', $val, $pid, $val); $updAttr->execute(); }
     }
     $stmt->close();
+    if($updType) $updType->close();
+    if($updSize) $updSize->close();
+    if($updAttr) $updAttr->close();
 }
 ?>

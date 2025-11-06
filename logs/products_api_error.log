@@ -87,3 +87,18 @@ Stack trace:
 #1 C:\xampp\htdocs\Website\admin\products-api.php(263): save_sub_items(Object(mysqli), 8, Array)
 #2 {main}
   thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 371
+[06-Nov-2025 23:22:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:93
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(93): mysqli->query('SELECT product_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 93
+[06-Nov-2025 23:28:28 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:93
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(93): mysqli->query('SELECT product_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 93
+[06-Nov-2025 23:48:31 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:93
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(93): mysqli->query('SELECT product_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 93
