@@ -1,17 +1,35 @@
-// Avatar Preview
+// Avatar chooser (match customer profile behavior)
 const avatarInput = document.getElementById('avatarInput');
 const avatarPreview = document.getElementById('avatarPreview');
+const adminAvatarEditBtn = document.getElementById('adminAvatarEditBtn');
+const avatarRing = avatarPreview ? avatarPreview.closest('.profile-avatar-ring') : null;
 
-avatarInput.addEventListener('change', function () {
-    const file = this.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            avatarPreview.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
+function previewSelectedFile(file){
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { alert('Please select an image file.'); return; }
+    if (file.size > 2 * 1024 * 1024) { alert('Image must be <= 2MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = e => { if (avatarPreview) avatarPreview.src = e.target.result; };
+    reader.readAsDataURL(file);
+}
+
+if (adminAvatarEditBtn && avatarInput) {
+    adminAvatarEditBtn.addEventListener('click', () => avatarInput.click());
+}
+
+if (avatarInput) {
+    avatarInput.addEventListener('change', function(){ previewSelectedFile(this.files[0]); });
+}
+
+// Drag & drop support on ring
+if (avatarRing && avatarInput) {
+    ['dragenter','dragover'].forEach(evt => avatarRing.addEventListener(evt, e => { e.preventDefault(); avatarRing.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(evt => avatarRing.addEventListener(evt, e => { e.preventDefault(); avatarRing.classList.remove('drag-over'); }));
+    avatarRing.addEventListener('drop', e => {
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) { previewSelectedFile(file); }
+    });
+}
 
 // Tab Switching Logic
 const tabLinks = document.querySelectorAll('.settings-nav a');

@@ -397,10 +397,61 @@ function pd_first_image($imagesField) {
                             </div>
                             <div class="form-group price-group grid-col-2">
                                 <label for="product-price">Price</label>
-                                <div class="product-static-box price-box">
-                                    <span class="peso-sign">₱</span>
-                                    <?php echo htmlspecialchars($productPrice); ?>
-                                </div>
+                                <?php
+                                    $variants = [];
+                                        if (!empty($productRow['variants'])) {
+                                            $raw = $productRow['variants'];
+                                            $dec = json_decode($raw, true);
+                                            if (is_array($dec)) $variants = $dec;
+                                            else if (is_string($raw) && trim($raw) !== '') {
+                                                // tolerate comma-separated stored strings
+                                                $parts = array_map('trim', explode(',', $raw));
+                                                $parts = array_values(array_filter($parts, function($x){ return $x !== ''; }));
+                                                if (count($parts)>0) $variants = $parts;
+                                            }
+                                        }
+                                ?>
+                                <?php if (!empty($variants)): ?>
+                                    <div class="product-static-box price-box">
+                                        <label for="variantSelect" style="display:block;font-weight:600;margin-bottom:6px;color:#752525;">Choose option</label>
+                                        <select id="variantSelect" name="variant" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+                                            <?php foreach($variants as $vi => $vv):
+                                                // Support both simple string variants and structured entries with nested colors
+                                                if (is_array($vv)) {
+                                                    $vname = htmlspecialchars($vv['name'] ?? 'Option');
+                                                    // If this variant contains a 'colors' array, emit one option per color
+                                                    if (!empty($vv['colors']) && is_array($vv['colors'])){
+                                                        foreach($vv['colors'] as $ci => $cinfo){
+                                                            $colorLabel = htmlspecialchars($cinfo['color'] ?? ($cinfo['name'] ?? ''));
+                                                            $vprice_raw = isset($cinfo['price']) ? floatval($cinfo['price']) : null;
+                                                            $vprice_str = $vprice_raw !== null ? number_format($vprice_raw, 2) : '';
+                                                            $dataPrice = $vprice_raw !== null ? ' data-price="' . htmlspecialchars($vprice_str) . '"' : '';
+                                                            $dataColor = ' data-color="' . $colorLabel . '"';
+                                                            $dataVid = ' data-vid="' . intval($vi) . '" data-cid="' . intval($ci) . '"';
+                                                            $label = $vname . ($colorLabel ? (' — ' . $colorLabel) : '');
+                                                            echo "<option value=\"". htmlspecialchars($label) ."\"". $dataPrice . $dataColor . $dataVid .">" . htmlspecialchars($label) . ($vprice_str !== '' ? ' — ₱' . $vprice_str : '') . "</option>";
+                                                        }
+                                                    } else {
+                                                        // fallback: single price on the variant object
+                                                        $vprice_raw = isset($vv['price']) ? floatval($vv['price']) : null;
+                                                        $vprice_str = $vprice_raw !== null ? number_format($vprice_raw, 2) : '';
+                                                        $dataPrice = $vprice_raw !== null ? ' data-price="' . htmlspecialchars($vprice_str) . '"' : '';
+                                                        $dataVid = ' data-vid="' . intval($vi) . '"';
+                                                        echo "<option value=\"". $vname ."\"". $dataPrice . $dataVid .">" . $vname . ($vprice_str !== '' ? ' — ₱' . $vprice_str : '') . "</option>";
+                                                    }
+                                                } else {
+                                                    $vname = htmlspecialchars((string)$vv);
+                                                    echo "<option value=\"". $vname ."\">" . $vname . "</option>";
+                                                }
+                                            endforeach; ?>
+                                        </select>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="product-static-box price-box">
+                                        <span class="peso-sign">₱</span>
+                                        <?php echo htmlspecialchars($productPrice); ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </form>
                     </div>
@@ -497,6 +548,7 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="form_size" value="12oz" />
                     <input type="hidden" name="color" id="form_color" value="" />
+                    <input type="hidden" name="variant_index" id="form_variant_index" value="" />
                     <input type="hidden" name="quantity" id="form_quantity" value="1" />
                     
                     <input type="hidden" name="TotalAmount" id="form_totalAmount" value="<?php echo htmlspecialchars($productPrice); ?>" />
@@ -510,6 +562,7 @@ function pd_first_image($imagesField) {
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
                     <input type="hidden" name="size" id="cart_size" value="12oz" />
                     <input type="hidden" name="color" id="cart_color" value="" />
+                    <input type="hidden" name="variant_index" id="cart_variant_index" value="" />
                     <input type="hidden" name="quantity" id="cart_quantity" value="1" />
                     <button type="button" class="addcart-btn" <?php echo $productNotFound ? 'disabled' : ''; ?>>Add to Cart</button>
                 </form>
@@ -636,6 +689,62 @@ function pd_first_image($imagesField) {
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="sim.js"></script>
 </script>
+    <script>
+        // Wire variant selection to update hidden total and visible price display
+        document.addEventListener('DOMContentLoaded', function(){
+            try{
+                var variantSelect = document.getElementById('variantSelect');
+                var formTotal = document.getElementById('form_totalAmount');
+                var priceBox = document.querySelector('.price-box');
+                var buyBtn = document.querySelector('.buy-btn');
+                function updatePriceFromSelect(){
+                    if(!variantSelect || !formTotal) return;
+                    // If the option provides a data-price attribute (structured variant), use that.
+                    var opt = variantSelect.selectedOptions && variantSelect.selectedOptions[0];
+                    var val = 0;
+                    if (opt && opt.dataset && opt.dataset.price) {
+                        val = parseFloat(opt.dataset.price.replace(/,/g,'')) || 0;
+                    } else {
+                        // no structured price available — keep original product price
+                        val = parseFloat(formTotal.value || '0') || 0;
+                    }
+                    formTotal.value = val.toFixed(2);
+                    // update selected variant and color hidden inputs when available
+                    try{
+                        var fVar = document.getElementById('form_variant_index');
+                        var cVar = document.getElementById('cart_variant_index');
+                        var fColor = document.getElementById('form_color');
+                        var cColor = document.getElementById('cart_color');
+                        if(opt && opt.dataset){
+                            if(fVar) fVar.value = opt.dataset.vid || '';
+                            if(cVar) cVar.value = opt.dataset.vid || '';
+                            if(opt.dataset.color){ if(fColor) fColor.value = opt.dataset.color; if(cColor) cColor.value = opt.dataset.color; }
+                        }
+                    }catch(e){/* ignore */}
+                    // render a small price display inside the price-box so existing parsers can pick it up
+                    if(priceBox){
+                        var disp = priceBox.querySelector('.variant-price-display');
+                        if(!disp){
+                            disp = document.createElement('div');
+                            disp.className = 'variant-price-display';
+                            disp.style.marginTop = '8px';
+                            disp.style.fontWeight = '700';
+                            disp.innerHTML = '<span class="peso-sign">₱</span><span class="amount"></span>';
+                            priceBox.appendChild(disp);
+                        }
+                        disp.querySelector('.amount').textContent = val.toFixed(2);
+                        // also set data-price for alternative access
+                        priceBox.setAttribute('data-price', val.toFixed(2));
+                    }
+                    if(buyBtn) buyBtn.setAttribute('data-price', val.toFixed(2));
+                }
+                if(variantSelect){
+                    updatePriceFromSelect();
+                    variantSelect.addEventListener('change', function(){ updatePriceFromSelect(); });
+                }
+            }catch(e){ console.error('Variant wiring failed', e); }
+        });
+    </script>
     <script>
         (function(){
             const uploadBtn = document.getElementById('uploadDesignBtn');

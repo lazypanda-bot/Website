@@ -46,6 +46,56 @@ require_once '../database.php';
 							<a href="#" class="auth-link"><i class="fas fa-bell"></i></a>
 						</div>
 					</div>
+
+						<!-- Quick Add Variant Modal -->
+						<div class="modal" id="quickVariantModal">
+							<div class="modal-content" style="max-width:760px;width:760px;">
+								<div class="modal-header">
+									<h2>Quick Add</h2>
+									<button type="button" class="close-modal" data-close>&times;</button>
+								</div>
+								<form id="quickVariantForm">
+									<input type="hidden" id="qv_product_id" />
+									<div class="form-row" style="margin-bottom:6px;">
+										<div class="qv-tabs" style="display:flex;gap:8px;">
+											<button type="button" class="qv-tab active" data-qv-tab="types">Types</button>
+											<button type="button" class="qv-tab" data-qv-tab="sizes">Sizes</button>
+											<button type="button" class="qv-tab" data-qv-tab="attributes">Attributes (with price)</button>
+										</div>
+									</div>
+
+									<!-- Types panel -->
+									<div id="qv_types_panel" class="qv-panel">
+										<label>Add one or more types</label>
+										<div id="qv_type_list" class="qv-list"></div>
+										<div style="margin-top:8px;">
+											<button type="button" id="qv_add_type_row" class="inline-mini-btn"><i class="fas fa-plus"></i> Add type</button>
+										</div>
+									</div>
+
+									<!-- Sizes panel -->
+									<div id="qv_sizes_panel" class="qv-panel" hidden>
+										<label>Add one or more sizes</label>
+										<div id="qv_size_list" class="qv-list"></div>
+										<div style="margin-top:8px;">
+											<button type="button" id="qv_add_size_row" class="inline-mini-btn"><i class="fas fa-plus"></i> Add size</button>
+										</div>
+									</div>
+
+									<!-- Attributes panel -->
+									<div id="qv_attrs_panel" class="qv-panel" hidden>
+										<label>Add attributes that carry price</label>
+										<div id="qv_attr_list" class="qv-list"></div>
+										<div style="margin-top:8px;">
+											<button type="button" id="qv_add_attr_row" class="inline-mini-btn"><i class="fas fa-plus"></i> Add attribute</button>
+										</div>
+									</div>
+									<div class="form-actions">
+										<button type="submit" class="add-btn">Add</button>
+									</div>
+								</form>
+							</div>
+						</div>
 					<div class="user-profile">
 						<a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
 					</div>
@@ -68,12 +118,15 @@ require_once '../database.php';
 					</div>
 				</div>
 
-			<table class="product-table">
+				<table class="product-table">
 				<thead>
 					<tr>
 						<th>Service</th>
 						<th>Image</th>
 						<th>Product Name</th>
+						<th>Type <button type="button" class="qv-head-add" data-kind="types" title="Add type to hovered product">+</button></th>
+						<th>Size <button type="button" class="qv-head-add" data-kind="sizes" title="Add size to hovered product">+</button></th>
+						<th>Attribute <button type="button" class="qv-head-add" data-kind="attributes" title="Add attribute to hovered product">+</button></th>
 						<th>Price</th>
 						<th>Description</th>
 						<th>Actions</th>
@@ -81,8 +134,6 @@ require_once '../database.php';
 				</thead>
 			<tbody id="productsTbody"></tbody>
 		</table>
-
-
 	</section>
 
 	<!-- Product Modal -->
@@ -95,23 +146,19 @@ require_once '../database.php';
 			<form id="productForm">
 				<input type="hidden" name="product_id" id="product_id" />
 				<div class="form-row">
-					<label>Name</label>
-					<input type="text" name="product_name" id="product_name" required />
-				</div>
-				<div class="form-row">
 					<label>Service Type</label>
 					<input type="text" name="service_type" id="service_type" list="serviceTypeList" />
 					<datalist id="serviceTypeList"></datalist>
 				</div>
 				<div class="form-row">
-					<label>Price (₱)</label>
-					<input type="number" name="price" id="price" min="0" step="0.01" required />
+					<label>Name</label>
+					<input type="text" name="product_name" id="product_name" required />
 				</div>
 				<div class="form-row">
 					<label>Description</label>
 					<textarea name="product_details" id="product_details" rows="3"></textarea>
 				</div>
-				<div class="form-row">
+				<!-- <div class="form-row">
 					<label>Add image/s</label>
 					<div class="file-chooser">
 						<label class="file-btn">Add image/s
@@ -121,6 +168,10 @@ require_once '../database.php';
 					</div>
 					<div id="imagePreview" class="image-preview"></div>
 				</div>
+				<div class="form-row">
+					<label>Price (₱)</label>
+					<input type="number" name="price" id="price" min="0" step="0.01" required />
+				</div> -->
 				<div class="form-actions">
 					<button type="submit" class="add-btn" id="saveProductBtn">Save</button>
 				</div>

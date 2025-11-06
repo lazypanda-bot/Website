@@ -673,6 +673,30 @@ body.loaded .cart-progress-bar {
 .mt-0 {
     margin-top:0 !important;
 }
+/* GCash modal styling */
+.pay-modal { position:fixed; inset:0; background:rgba(0,0,0,.45); display:block; z-index:3000; }
+.pay-modal[hidden] { display:none !important; }
+.pay-modal-content { background:#fff; width:min(560px,95vw); border-radius:14px; margin:6vh auto; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.pay-modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.pay-modal-title { margin:0; color:#7c1b1b; font-size:1.25rem; }
+.pay-modal-close { background:none; border:none; font-size:1.6rem; cursor:pointer; color:#7c1b1b; }
+.pay-modal-body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; }
+.qr-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.qr-wrap img { width:220px; height:220px; object-fit:cover; border:1px solid #eee; border-radius:12px; box-shadow:0 6px 16px -6px rgba(0,0,0,.2); }
+.qr-note { font-size:.9rem; color:#555; text-align:center; padding-bottom: 20px;}
+.upload-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:220px; width:100%; text-align:left; }
+.upload-btn { display:inline-block; background:#7c1b1b; color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; width:max-content; }
+.upload-preview { display:flex; gap:10px; flex-wrap:wrap; }
+.upload-preview .thumb { width:120px; height:120px; border-radius:10px; object-fit:cover; border:1px solid #eee; box-shadow:0 4px 12px -6px rgba(0,0,0,.18); }
+.pay-modal-footer { display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; justify-content:space-between; }
+.pay-modal-footer .primary-btn { margin-left:auto; }
+.pay-amount-wrap { display:flex; align-items:center; gap:10px; margin-right:auto; }
+.pay-amount-wrap label { font-weight:600; color:#7c1b1b; }
+.pay-amount-wrap input { width:160px; padding:10px 12px; border:1.5px solid #e7d2d2; border-radius:10px; font-size:0.95rem; }
+@media (max-width:560px){ .pay-amount-wrap { width:100%; justify-content:space-between; } .pay-amount-wrap input { flex:0 0 160px; } }
+.primary-btn { background:#7c1b1b; color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
+.secondary-btn { background:#fff; color:#7c1b1b; border:1px solid #e7d2d2; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
+@media (max-width:560px){ .pay-modal-content { margin:4vh auto; } .pay-modal-body { flex-direction:column; align-items:center; } }
 .mt-8 {
     margin-top:8px !important;
 }

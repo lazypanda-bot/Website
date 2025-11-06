@@ -10,6 +10,58 @@ if(!ini_get('output_buffering')) @ob_start(); else @ob_start();
 header('Content-Type: application/json');
 require_once '../database.php';
 
+// Ensure auxiliary table products_sub exists for per-product Types/Sizes/Attributes (with optional price)
+$hasProductsSub = false;
+try {
+    $res3 = $conn->query("SHOW TABLES LIKE 'products_sub'");
+    if ($res3 && $res3 instanceof mysqli_result && $res3->num_rows > 0) {
+        $hasProductsSub = true;
+        // Validate required columns; add any missing to be compatible with older schemas
+        try {
+            $colsRes = $conn->query("SHOW COLUMNS FROM products_sub");
+            $have = [];
+            if ($colsRes && $colsRes instanceof mysqli_result) {
+                while($c=$colsRes->fetch_assoc()) { $have[strtolower($c['Field'])] = true; }
+            }
+            if (!isset($have['product_id'])) { $conn->query("ALTER TABLE products_sub ADD COLUMN product_id INT NOT NULL DEFAULT 0"); }
+            if (!isset($have['kind'])) { $conn->query("ALTER TABLE products_sub ADD COLUMN kind VARCHAR(20) NOT NULL DEFAULT ''"); }
+            if (!isset($have['value'])) { $conn->query("ALTER TABLE products_sub ADD COLUMN value VARCHAR(255) NOT NULL DEFAULT ''"); }
+            if (!isset($have['price'])) { $conn->query("ALTER TABLE products_sub ADD COLUMN price DECIMAL(10,2) NULL"); }
+            // Add helpful indexes if missing
+            $conn->query("CREATE UNIQUE INDEX IF NOT EXISTS uniq_prod_kind_val ON products_sub (product_id, kind, value)");
+            $conn->query("CREATE INDEX IF NOT EXISTS idx_prod ON products_sub (product_id)");
+            $conn->query("CREATE INDEX IF NOT EXISTS idx_kind ON products_sub (kind)");
+        } catch (Exception $e) { /* ignore */ }
+    } else {
+        // try create
+        $sqlCreate = "CREATE TABLE IF NOT EXISTS products_sub (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            product_id INT NOT NULL,
+            kind VARCHAR(20) NOT NULL,
+            value VARCHAR(255) NOT NULL,
+            price DECIMAL(10,2) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_prod_kind_val (product_id, kind, value),
+            INDEX idx_prod (product_id),
+            INDEX idx_kind (kind)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        if ($conn->query($sqlCreate) === TRUE) { $hasProductsSub = true; }
+    }
+} catch (Exception $e) { /* ignore; optional table */ }
+
+// Detect whether products table has a 'variants' column so we can persist it safely
+$hasVariants = false;
+try {
+    $res = $conn->query("SHOW COLUMNS FROM products LIKE 'variants'");
+    if ($res && $res instanceof mysqli_result && $res->num_rows > 0) $hasVariants = true;
+} catch (Exception $e) { /* ignore */ }
+// Detect whether products table has a 'wherepricedepends' column so we can persist price-dependency data
+$hasWherePrice = false;
+try {
+    $res2 = $conn->query("SHOW COLUMNS FROM products LIKE 'wherepricedepends'");
+    if ($res2 && $res2 instanceof mysqli_result && $res2->num_rows > 0) $hasWherePrice = true;
+} catch (Exception $e) { /* ignore */ }
+
 function flush_json($arr, $code = 200){
     http_response_code($code);
     // clear any buffered output (warnings, HTML) so client gets clean JSON
@@ -35,11 +87,32 @@ $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 // Utility: fetch products list
 if ($method === 'GET' && $action === 'list') {
     $data = [];
-    $q = $conn->query("SELECT product_id, product_name, price, service_type, product_details, images, created_at FROM products ORDER BY created_at DESC");
+    $selectFields = "product_id, product_name, price, service_type, product_details, images, created_at";
+    if ($hasVariants) $selectFields .= ", variants";
+    if ($hasWherePrice) $selectFields .= ", wherepricedepends";
+    $q = $conn->query("SELECT " . $selectFields . " FROM products ORDER BY created_at DESC");
     if ($q instanceof mysqli_result) {
         while($r=$q->fetch_assoc()) { $data[] = $r; }
     }
     flush_json(['status'=>'ok','products'=>$data]);
+}
+
+// List all sub-options grouped by product
+if ($method === 'GET' && $action === 'sub_list_all') {
+    if(!$hasProductsSub) flush_json(['status'=>'ok','byProduct'=>new stdClass()]);
+    $q = $conn->query("SELECT product_id, kind, value, COALESCE(price,0) as price FROM products_sub ORDER BY product_id, kind, value");
+    $map = [];
+    if ($q instanceof mysqli_result) {
+        while($r=$q->fetch_assoc()){
+            $pid = (string)$r['product_id'];
+            if(!isset($map[$pid])) $map[$pid] = ['types'=>[], 'sizes'=>[], 'attributes'=>[]];
+            $k = strtolower($r['kind']);
+            if($k==='type') $map[$pid]['types'][] = $r['value'];
+            elseif($k==='size') $map[$pid]['sizes'][] = $r['value'];
+            else $map[$pid]['attributes'][] = ['name'=>$r['value'], 'price'=>(float)$r['price']];
+        }
+    }
+    flush_json(['status'=>'ok','byProduct'=>$map]);
 }
 
 // Create / Update product (supports current images + uploaded files for admin UI)
@@ -54,6 +127,44 @@ if ($method === 'POST' && $action === 'save') {
     if (!empty($_POST['images_current'])) {
         $decoded = json_decode($_POST['images_current'], true);
         if (is_array($decoded)) $images_current = $decoded;
+    }
+    // Variants: accept JSON array, or comma-separated string. We'll normalize to JSON array string when saving.
+    $variants_raw = '';
+    if ($hasVariants && isset($_POST['variants'])) {
+        $v = trim($_POST['variants']);
+        if ($v !== '') {
+            // Try decoding any JSON first (supports arrays or associative objects)
+            $decoded = json_decode($v, true);
+            if ($decoded === null) {
+                // Not JSON — treat as comma-separated string and convert to simple array
+                $parts = array_map('trim', explode(',', $v));
+                $parts = array_values(array_filter($parts, function($x){ return $x !== ''; }));
+                $variants_raw = json_encode(array_values($parts));
+            } else {
+                // Valid JSON (can be numeric array or associative object). Preserve structure.
+                $variants_raw = json_encode($decoded);
+            }
+            if (strlen($variants_raw) > 200000) fail('Variants payload too large',413);
+        } else {
+            $variants_raw = json_encode([]);
+        }
+    }
+    // wherepricedepends: optional JSON structure describing which attributes affect price (colors, box, pockets, others)
+    $wherepriced_raw = '';
+    if ($hasWherePrice && isset($_POST['wherepricedepends'])) {
+        $w = trim($_POST['wherepricedepends']);
+        if ($w !== '') {
+            $decoded = json_decode($w, true);
+            if ($decoded === null) {
+                // if not valid JSON, save empty array instead of raw string
+                $wherepriced_raw = json_encode([]);
+            } else {
+                $wherepriced_raw = json_encode($decoded);
+            }
+        } else {
+            $wherepriced_raw = json_encode([]);
+        }
+        if (strlen($wherepriced_raw) > 200000) fail('wherepricedepends payload too large',413);
     }
     // Sanitize images_current: drop any data: URIs or extremely long values which may indicate
     // an in-browser data URL accidentally included (these can blow up DB packet size).
@@ -143,20 +254,53 @@ if ($method === 'POST' && $action === 'save') {
         if (strlen($images_json) > 200000) {
             fail('Images payload too large. Remove inline/data images and try again.', 413);
         }
-        $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=? WHERE product_id=?");
-        if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-        $stmt->bind_param('ssdssi', $name,$service,$price,$details,$images_json,$id);
+        // Choose prepared statement based on which optional columns exist
+        if ($hasVariants && $hasWherePrice) {
+            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=?, variants=?, wherepricedepends=? WHERE product_id=?");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdssssi', $name,$service,$price,$details,$images_json,$variants_raw,$wherepriced_raw,$id);
+        } elseif ($hasVariants) {
+            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=?, variants=? WHERE product_id=?");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdsssi', $name,$service,$price,$details,$images_json,$variants_raw,$id);
+        } elseif ($hasWherePrice) {
+            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=?, wherepricedepends=? WHERE product_id=?");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdsssi', $name,$service,$price,$details,$images_json,$wherepriced_raw,$id);
+        } else {
+            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=? WHERE product_id=?");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdssi', $name,$service,$price,$details,$images_json,$id);
+        }
         if(!$stmt->execute()) fail('Update failed: ' . $stmt->error,500);
         $stmt->close();
-    flush_json(['status'=>'ok','action'=>'updated','id'=>$id,'images'=>$final_images,'upload_errors'=>$upload_errors]);
+        // Optionally persist sub-items if provided
+        if ($hasProductsSub) {
+            save_sub_items($conn, $id, $_POST);
+        }
+        flush_json(['status'=>'ok','action'=>'updated','id'=>$id,'images'=>$final_images,'upload_errors'=>$upload_errors]);
     } else {
         // New product: if files uploaded, save to tmp first, then insert product to get id, then move tmp files to final folder
         $processFilesToFolder('tmp');
         // Insert product with empty images placeholder for now
         $initial_images_json = json_encode($images_current);
-        $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images) VALUES (?,?,?,?,?)");
-        if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-        $stmt->bind_param('ssdss', $name,$service,$price,$details,$initial_images_json);
+        if ($hasVariants && $hasWherePrice) {
+            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images, variants, wherepricedepends) VALUES (?,?,?,?,?,?,?)");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdssss', $name,$service,$price,$details,$initial_images_json,$variants_raw,$wherepriced_raw);
+        } elseif ($hasVariants) {
+            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images, variants) VALUES (?,?,?,?,?,?)");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdsss', $name,$service,$price,$details,$initial_images_json,$variants_raw);
+        } elseif ($hasWherePrice) {
+            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images, wherepricedepends) VALUES (?,?,?,?,?,?)");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdsss', $name,$service,$price,$details,$initial_images_json,$wherepriced_raw);
+        } else {
+            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images) VALUES (?,?,?,?,?)");
+            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+            $stmt->bind_param('ssdss', $name,$service,$price,$details,$initial_images_json);
+        }
         if(!$stmt->execute()) fail('Insert failed: ' . $stmt->error,500);
         $newId = $stmt->insert_id;
         $stmt->close();
@@ -198,9 +342,37 @@ if ($method === 'POST' && $action === 'save') {
             $stmt2->execute();
             $stmt2->close();
         }
-    flush_json(['status'=>'ok','action'=>'inserted','id'=>$newId,'images'=>$final_images,'upload_errors'=>$upload_errors]);
+        // Optionally persist sub-items for new product
+        if ($hasProductsSub) {
+            save_sub_items($conn, $newId, $_POST);
+        }
+        flush_json(['status'=>'ok','action'=>'inserted','id'=>$newId,'images'=>$final_images,'upload_errors'=>$upload_errors]);
     }
     exit;
+}
+
+// Quick add sub-items only (types, sizes, attributes) without touching product fields
+if ($method === 'POST' && $action === 'quick_add_sub') {
+    $pid = isset($_POST['product_id']) && ctype_digit($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    if ($pid <= 0) fail('Invalid product id');
+    if (!$hasProductsSub) fail('products_sub not available on this DB', 500);
+    save_sub_items($conn, $pid, $_POST);
+    flush_json(['status'=>'ok','action'=>'saved_sub']);
+}
+
+// Delete a single sub item (type/size/attribute) for a product
+if ($method === 'POST' && $action === 'delete_sub') {
+    if (!$hasProductsSub) fail('products_sub not available on this DB', 500);
+    $pid = isset($_POST['product_id']) && ctype_digit($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    $kind = strtolower(trim($_POST['kind'] ?? ''));
+    $value = trim($_POST['value'] ?? '');
+    if ($pid<=0 || !$kind || $value==='') fail('Invalid parameters');
+    $stmt = $conn->prepare("DELETE FROM products_sub WHERE product_id=? AND kind=? AND value=? LIMIT 1");
+    if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+    $stmt->bind_param('iss', $pid, $kind, $value);
+    if(!$stmt->execute()) fail('Delete failed: '.$stmt->error,500);
+    $stmt->close();
+    flush_json(['status'=>'ok','action'=>'deleted']);
 }
 
 // Delete product
@@ -226,4 +398,44 @@ if ($method === 'POST' && $action === 'add_service') {
 }
 
 fail('Unsupported action',400);
+
+// Helpers
+function save_sub_items($conn, $pid, $post){
+    // Expect JSON arrays in sub_types, sub_sizes, sub_attrs (name, price)
+    $types = [];$sizes=[];$attrs=[];
+    if(isset($post['sub_types'])){ $t = json_decode($post['sub_types'], true); if(is_array($t)) $types = $t; }
+    if(isset($post['sub_sizes'])){ $t = json_decode($post['sub_sizes'], true); if(is_array($t)) $sizes = $t; }
+    if(isset($post['sub_attrs'])){ $t = json_decode($post['sub_attrs'], true); if(is_array($t)) $attrs = $t; }
+    if(empty($types) && empty($sizes) && empty($attrs)) return;
+    // Prepare statements
+    $stmt = $conn->prepare("INSERT INTO products_sub (product_id, kind, value, price) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE price=VALUES(price)");
+    if(!$stmt) return;
+    // types
+    foreach($types as $tv){
+        $val = trim((string)$tv);
+        if($val==='') continue;
+        $kind='type'; $price = 0.0;
+        $stmt->bind_param('issd', $pid, $kind, $val, $price);
+        $stmt->execute();
+    }
+    // sizes
+    foreach($sizes as $sv){
+        $val = trim((string)$sv);
+        if($val==='') continue;
+        $kind='size'; $price = 0.0;
+        $stmt->bind_param('issd', $pid, $kind, $val, $price);
+        $stmt->execute();
+    }
+    // attributes with price
+    foreach($attrs as $av){
+        if(!is_array($av)) continue;
+        $val = trim((string)($av['name'] ?? ''));
+        if($val==='') continue;
+        $pr = isset($av['price']) ? (float)$av['price'] : 0.0;
+        $kind='attribute';
+        $stmt->bind_param('issd', $pid, $kind, $val, $pr);
+        $stmt->execute();
+    }
+    $stmt->close();
+}
 ?>

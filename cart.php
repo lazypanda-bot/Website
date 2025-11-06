@@ -127,6 +127,33 @@ if ($isAuthenticated && !$conn->connect_error) {
     </div>
 
     <?php include 'footer.php'; ?>
+    <!-- GCash Payment Modal -->
+    <div id="gcashModal" class="pay-modal" hidden aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="pay-modal-content" role="document">
+            <div class="pay-modal-header">
+                <h3 class="pay-modal-title">Pay with GCash</h3>
+                <button type="button" class="pay-modal-close" id="gcashCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="pay-modal-body">
+                <div class="qr-wrap">
+                    <img alt="GCash QR Code" id="gcashQrImg" src="https://via.placeholder.com/220x220.png?text=GCash+QR" />
+                    <div class="qr-note">Scan this QR code in your GCash app to pay.</div>
+                </div>
+                <div class="pay-amount-wrap">
+                    <label for="gcashPaidAmount">Amount paid (₱)</label>
+                    <input type="number" id="gcashPaidAmount" min="0" step="0.01" placeholder="0.00" />
+                </div>
+            </div>
+            <div class="pay-modal-footer">
+                <div class="upload-wrap">
+                    <label class="upload-btn" for="gcashReceipt">Upload receipt photo</label>
+                    <input type="file" id="gcashReceipt" accept="image/*" hidden />
+                    <div id="gcashReceiptPreview" class="upload-preview" aria-live="polite"></div>
+                </div>
+                <button type="button" class="primary-btn" id="gcashDoneBtn">Done</button>
+            </div>
+        </div>
+    </div>
     <div class="floating-chat">
         <div class="chat-tooltip">Need help? Chat with us!</div>
         <div class="chat-icon">

@@ -5,7 +5,7 @@
 }
 .settings {
     background-color: #fff;
-    padding: 20px;
+    padding: 30px;
     margin-bottom: 30px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -44,6 +44,78 @@
 }
 .settings-tab.active {
     display: block;
+}
+.account-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 22px;
+    align-items: start;
+}
+.admin-avatar-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+/* Bigger circular avatar ring, matching customer profile styling */
+.profile-avatar-ring.admin-avatar-ring {
+    --ring-size: 240px;
+    width: var(--ring-size);
+    height: var(--ring-size);
+    padding: 4px;
+    background: conic-gradient(from 180deg, #dcd7d7, #ebe9e9, #dcd7d7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    mask: radial-gradient(circle calc(50% - 6px), #000 95%, transparent 100%);
+}
+.profile-avatar-ring.admin-avatar-ring img.profile-avatar {
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+.avatar-edit-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(58,13,13,0.9);
+    color: #fff;
+    border: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px -5px rgba(58,13,13,.45), 0 2px 6px rgba(0,0,0,.25);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .3s ease, transform .3s ease, filter .3s ease;
+}
+.profile-avatar-ring.admin-avatar-ring:hover .avatar-edit-btn,
+.avatar-edit-btn:focus-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.profile-avatar-ring.admin-avatar-ring.drag-over {
+    outline: 3px dashed #9a4141;
+    outline-offset: 4px;
+}
+.account-details .form-group input {
+    width: 100%;
+    max-width: clamp(680px, 55vw, 860px);
+}
+.account-details .section-header h3 { 
+    font-size: 18px; 
+}
+.account-details .edit-btn { 
+    margin-right: 0; 
 }
 .avatar-upload {
     display: flex;
@@ -148,6 +220,14 @@
 .shop-info .edit-btn {
     margin-left: auto;
     margin-right: 70px;
+}
+/* Responsive: stack avatar above form */
+@media (max-width: 900px) {
+    .account-grid {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+    .account-details { width: 100%; }
 }
 .manage-services {
     background-color: #f7f4f4;

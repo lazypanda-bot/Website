@@ -13,6 +13,9 @@ body {
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+/* Allow horizontal scroll if table grows wider so right columns (Actions) remain reachable */
+html, body { overflow-x: auto; }
+.main-panel { overflow-x: auto; }
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -84,19 +87,31 @@ body {
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 15px;
+    table-layout: fixed;
 }
 .product-table th, .product-table td {
     padding: 12px 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     vertical-align: middle;
+    box-sizing: border-box;
 }
+/* Make row divider a single continuous line per row */
+.product-table tbody td { border-bottom: none; }
+.product-table tbody tr { border-bottom: 1px solid #ddd; }
 .product-table td:nth-child(2) { text-align:center; }
 .product-table th {
     background-color: #f2f2f2;
     color: #752525;
     font-weight: 600;
 }
+.product-table th .qv-head-add {
+    margin-left: 8px;
+    width: 22px; height: 22px;
+    border: 1px solid #e0cfcf; border-radius: 6px; background:#fff; color:#752525;
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; font-weight:700;
+}
+.product-table th .qv-head-add:hover { background:#f9efef; }
 .product-thumb {
     width: 60px;
     height: 60px;
@@ -148,7 +163,10 @@ body {
     background:#fff; 
     padding:20px 24px; 
     border-radius:12px; 
-    width:420px; 
+    /* make modal wider so variant blocks can form two columns on desktop */
+    width:720px; 
+    max-width:95vw;
+    box-sizing:border-box;
     max-height:90vh; 
     overflow:auto; 
     box-shadow:0 10px 30px rgba(0,0,0,.25); 
@@ -191,7 +209,9 @@ body {
     font-weight:600; 
     color:#752525; 
 }
-.form-row input[type=text], .form-row input[type=number], .form-row textarea { 
+.form-row input[type=text], 
+.form-row input[type=number], 
+.form-row textarea { 
     padding:8px 10px; 
     font-size:.9rem; 
     border:1px solid #ccc; 
@@ -279,6 +299,8 @@ body {
 .action-icon-btn.delete { 
     color:#c62828; 
 }
+.action-icon-btn.variants { color:#4a4a9c; }
+.action-icon-btn.variants:hover { color:#2a2a78; }
 .badge { display:inline-block; 
     background:#752525; 
     color:#fff; 
@@ -318,6 +340,220 @@ body {
 .image-preview { 
     margin-top:8px; 
 }
+/* Variants UI */
+.form-separator { border: 0; height:1px; background: #eee; margin: 12px 0; }
+.show-variants-row { margin-bottom: 6px; }
+.hidden { display: none !important; }
+.variants-section .variants-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, minmax(0, 1fr)); 
+    gap: 12px; 
+    align-items: start; 
+    width:100%;
+    box-sizing:border-box;
+}
+.variant-block { 
+    border: 1px solid #f0e0e0; 
+    padding: 12px; 
+    border-radius: 10px; 
+    background: #fffaf9; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-start; 
+    min-height: 86px; /* keep consistent block heights */
+    box-sizing:border-box;
+}
+
+/* Responsive: fall back to single column on small screens */
+@media (max-width: 780px) {
+    .modal-content { width: 95vw; }
+    .variants-section .variants-grid { grid-template-columns: 1fr; }
+}
+.variant-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.variant-header strong { font-size:1.05rem; }
+.variants-container { display:flex; flex-direction:column; gap:8px; }
+.variant-row { display:flex; gap:8px; align-items:center; }
+.variant-row input[type=text] { flex:1; }
+.variant-row input[type=number] { width:110px; }
+.variant-row .remove-variant { background:#fff; border:1px solid #e0cfcf; padding:6px 8px; border-radius:6px; cursor:pointer; color:#752525; }
+.file-btn.small { padding:6px 8px; font-size:0.85rem; }
+/* Variants table styles */
+.variants-table-wrap { width:100%; box-sizing:border-box; }
+.variants-table { width:100%; border-collapse:collapse; margin-top:8px; }
+.variants-table thead th { text-align:left; padding:10px; background:#fff7f5; border:1px solid #f3e6e6; color:#752525; }
+.variants-table tbody td { padding:8px; border:1px solid #f3e6e6; vertical-align:middle; }
+.variants-table input[type=text], .variants-table input[type=number] { width:100%; padding:6px 8px; border:1px solid #e6dede; border-radius:6px; box-sizing:border-box; }
+.variants-table .remove-variant { padding:6px 8px; border-radius:6px; border:1px solid #e6dede; background:#fff; cursor:pointer; color:#752525; }
+.variants-table .remove-variant:hover { background:#f9efef; }
+.variants-table input.invalid { border-color: #d9534f !important; box-shadow: 0 0 0 3px rgba(217,83,79,0.06); }
+.variant-attr { display:inline-block; margin-right:10px; margin-bottom:6px; }
+.variant-attr label { display:block; font-weight:600; margin-bottom:6px; color:#752525; }
+/* Attributes UI inside variant row */
+.variant-attrs-wrap { margin-top:6px; }
+.variant-attrs-wrap input[type=number], .variant-attrs-wrap input[type=text] { padding:6px 8px; border:1px solid #e6dede; border-radius:6px; box-sizing:border-box; }
+.variant-card { display: grid; grid-template-columns: 1fr; gap: 10px; align-items:start; padding:12px; border:1px solid #f3e6e6; border-radius:10px; background:#fffaf9; margin-bottom:10px; }
+.variant-card label { display:block; font-weight:600; font-size:0.9rem; color:#752525; margin-bottom:6px; }
+.variant-box { display:flex; flex-direction:column; gap:6px; }
+.variant-box .variant-name, .variant-box .variant-type, .variant-box .variant-size, .variant-box input { width:100%; padding:6px 8px; border:1px solid #e6dede; border-radius:6px; box-sizing:border-box; }
+.variant-box-actions { display:flex; align-items:flex-start; justify-content:flex-start; }
+.variant-attrs-container { margin-top:8px; }
+.variant-attr-wrap { display:flex; gap:8px; align-items:center; }
+@media (max-width: 820px) {
+    .variant-card { grid-template-columns: 1fr; }
+    .variant-box-actions { justify-content:flex-start; }
+}
+.colors-list, .others-list { width:100%; display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.color-row, .other-row { display:flex; gap:8px; align-items:center; }
+.color-col { flex:1; }
+.price-col { width:140px; }
+.color-row input, .other-row input { width:100%; padding:6px 8px; border:1px solid #e6dede; border-radius:6px; box-sizing:border-box; }
+.color-act, .other-act { width:40px; }
+.other-col { flex:1; }
+.other-price-col { width:140px; }
+.add-other-btn { margin-top:6px; }
+.remove-other, .remove-color { padding:4px 8px; border-radius:6px; border:1px solid #e6dede; background:#fff; cursor:pointer; color:#752525; }
+.remove-other:hover, .remove-color:hover { background:#f9efef; }
+/* Nested colors table inside a variant row */
+.variant-colors-table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+.variant-colors-table thead th { font-weight:700; font-size:0.95rem; color:#752525; padding:6px; background:transparent; border-bottom:1px solid #f3e6e6; }
+.variant-colors-table td { padding:6px; border-bottom:1px dashed #f3e6e6; }
+.variant-colors-table input[type=text], .variant-colors-table input[type=number] { width:100%; padding:6px 8px; border:1px solid #e6dede; border-radius:6px; box-sizing:border-box; }
+.add-color-btn { margin-top:6px; }
+.remove-color { padding:4px 8px; border-radius:6px; border:1px solid #e6dede; background:#fff; cursor:pointer; color:#752525; }
+.remove-color:hover { background:#f9efef; }
+/* Simple lists for name/type/size */
+.simple-list { width:100%; display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.simple-row { display:flex; gap:8px; align-items:center; }
+.simple-col { flex:1; }
+.simple-row input { width:100%; padding:6px 8px; border:1px solid #e6dede; border-radius:6px; box-sizing:border-box; }
+.simple-act { width:40px; }
+.remove-simple { padding:4px 8px; border-radius:6px; border:1px solid #e6dede; background:#fff; cursor:pointer; color:#752525; }
+.remove-simple:hover { background:#f9efef; }
+/* Cards container */
+.variants-cards { display:flex; flex-direction:column; gap:12px; }
+/* Box headers inside variant cards */
+.box-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+.box-header .title { font-weight:600; color:#752525; font-size:0.95rem; }
+.box-actions { display:flex; gap:6px; }
+.box-actions .mini-btn { padding:4px 8px; border:1px solid #e0cfcf; border-radius:6px; background:#fff; color:#752525; cursor:pointer; font-size:0.8rem; }
+.box-actions .mini-btn:hover { background:#f9efef; }
+/* Ensure no header Add buttons for Variant Name/Type/Size (keep only Attributes add) */
+.variant-card .box-header:not(.header-left) .mini-btn { display:none !important; }
+/* Inline mini button within Variants column */
+.inline-mini-btn { padding:4px 8px; border:1px solid #e0cfcf; border-radius:6px; background:#fff; color:#752525; cursor:pointer; font-size:0.8rem; }
+.inline-mini-btn:hover { background:#f9efef; }
+/* left-align header content when only actions are present */
+.box-header.header-left { justify-content:flex-start; }
+/* Quick Add segmented tabs & lists */
+.qv-tabs { display:flex; gap:8px; }
+.qv-tab { 
+    padding:8px 12px; 
+    border:1px solid #e0cfcf; 
+    border-radius:8px; 
+    background:#fff; 
+    color:#752525; 
+    font-weight:600; 
+    cursor:pointer; 
+}
+.qv-tab:hover { background:#f9efef; }
+.qv-tab.active { 
+    background:#752525; 
+    color:#fff; 
+    border-color:#752525; 
+    box-shadow:0 0 0 2px rgba(117,37,37,0.08) inset; 
+}
+.qv-panel label { display:block; font-weight:600; color:#752525; margin-bottom:6px; }
+.qv-list { display:flex; flex-direction:column; gap:8px; }
+.qv-item { display:flex; gap:8px; align-items:flex-start; }
+.qv-item input[type=text], .qv-item input[type=number] { 
+    padding:8px 10px; 
+    border:1px solid #e6dede; 
+    border-radius:8px; 
+    font-family:inherit; 
+}
+.qv-item .qv_remove { 
+    padding:6px 8px; 
+    border-radius:8px; 
+    border:1px solid #e6dede; 
+    background:#fff; 
+    cursor:pointer; 
+    color:#752525; 
+}
+.qv-item .qv_remove:hover { background:#f9efef; }
+.td-variants .variants-wrap, .td-variants .types-wrap, .td-variants .attrs-wrap { margin-bottom:6px; }
+/* Themed selects for Type, Size, Attribute */
+.types-wrap, .sizes-wrap, .attrs-wrap { position:relative; display:block; }
+.type-select, .size-select, .attr-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    border: 1px solid #e0cfcf;
+    color: #4a2b2b;
+    padding: 8px 34px 8px 12px; /* space for caret & x */
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.2;
+    outline: none;
+    transition: box-shadow .15s ease, border-color .15s ease;
+}
+.type-select:hover, .size-select:hover, .attr-select:hover { border-color:#caa8a8; }
+.type-select:focus, .size-select:focus, .attr-select:focus { border-color:#752525; box-shadow:0 0 0 3px rgba(117,37,37,0.08); }
+/* small caret */
+/* Custom dropdown */
+.dd { position: relative; display:block; width:100%; }
+.dd-btn {
+    padding: 8px 30px 8px 12px;
+    border: 1px solid #e0cfcf; border-radius:10px; background:#fff; color:#4a2b2b;
+    font-size:14px; line-height:1.2; cursor:pointer; width:100%; min-width:0; max-width:100%; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.dd-btn::after { content:'\25BE'; position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:10px; color:#752525; }
+.dd.open .dd-btn { border-color:#752525; box-shadow:0 0 0 3px rgba(117,37,37,0.08); }
+.dd-menu { position:absolute; top:calc(100% + 4px); left:0; background:#fff; border:1px solid #e6e0e0; border-radius:10px; min-width:100%; z-index:1200; box-shadow:0 8px 20px rgba(0,0,0,0.08); max-height:240px; overflow:auto; display:none; }
+.dd.open .dd-menu { display:block; }
+.dd-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; cursor:pointer; }
+.dd-item:hover { background:#f9efef; }
+.dd-item .dd-label { pointer-events:none; color:#4a2b2b; }
+.dd-item .dd-x { border:1px solid #e0cfcf; background:#fff; color:#752525; border-radius:50%; width:20px; height:20px; line-height:18px; text-align:center; cursor:pointer; }
+.dd-item .dd-x:hover { background:#f1dede; }
+
+/* Actions column: align icons in a single row */
+.td-actions { display:flex; flex-direction:row; align-items:center; gap:4px; min-height:44px; overflow:visible; flex-wrap:nowrap; }
+.td-actions .actions-top { display:flex; flex-direction:row; align-items:center; gap:4px; flex-wrap:nowrap; justify-content:flex-start; }
+.td-actions .actions-bottom { display:none; }
+/* Fallback in case the td lacks .td-actions class */
+.product-table td:nth-child(9) { display:flex; align-items:center; gap:4px; flex-wrap:nowrap; justify-content:flex-start; }
+/* Ensure action icons are inline, not stacked */
+.td-actions .action-icon-btn,
+.product-table td:nth-child(9) .action-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; padding:0; margin:0; text-decoration:none; line-height:1; }
+.td-actions .actions-top { line-height:26px; }
+
+/* Fix actions column width to avoid horizontal overflow and misaligned borders */
+.product-table th:nth-child(1), .product-table td:nth-child(1) { width: 8%; }
+.product-table th:nth-child(2), .product-table td:nth-child(2) { width: 8%; }
+.product-table th:nth-child(3), .product-table td:nth-child(3) { width: 8%; } /* Product Name (smaller) */
+.product-table th:nth-child(4), .product-table td:nth-child(4) { width: 14%; } /* Type */
+.product-table th:nth-child(5), .product-table td:nth-child(5) { width: 14%; } /* Size */
+.product-table th:nth-child(6), .product-table td:nth-child(6) { width: 17%; } /* Attribute */
+.product-table th:nth-child(7), .product-table td:nth-child(7) { width: 7%; }
+.product-table th:nth-child(8), .product-table td:nth-child(8) { width: 10%; }
+.product-table th:nth-child(9), .product-table td:nth-child(9) { width: 11%; }
+
+/* Keep selects and buttons from pushing columns too wide */
+.td-type .dd, .td-size .dd, .td-attribute .dd { display:block; width:100%; }
+.td-type .dd-btn,
+.td-size .dd-btn,
+.td-attribute .dd-btn { width: 100%; max-width: none; min-width: 120px; }
+/* Limit dropdown button width so they don't crowd right-side columns */
+.td-type .dd-btn,
+.td-size .dd-btn,
+.td-attribute .dd-btn { width: 100%; max-width: 200px; }
+.types-wrap, .sizes-wrap, .attrs-wrap { padding-right: 4px; }
+.product-table td { overflow: visible; }
+.inline-mini-btn { max-width: 100%; }
+
+/* Inline + button beside dropdowns removed */
 /* Service card styles from add service */
 .services-list { 
     display:flex; 

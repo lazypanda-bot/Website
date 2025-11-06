@@ -335,7 +335,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if(checkoutForm) {
       // Delivery method changes (already handled) + new listeners for payment method and payment type
       checkoutForm.querySelectorAll('input[name="delivery_method"]').forEach(r=> r.addEventListener('change', ()=>{ updateShippingFee(); }));
-      checkoutForm.querySelectorAll('input[name="payment_method"]').forEach(r=> r.addEventListener('change', ()=>{ updateShippingFee(); }));
+      checkoutForm.querySelectorAll('input[name="payment_method"]').forEach(r=> r.addEventListener('change', ()=>{ 
+          updateShippingFee(); 
+          try{
+              const gcash = document.getElementById('payment_gcash');
+              if(gcash && gcash.checked){ openGcashModal(); }
+          }catch(e){}
+      }));
       checkoutForm.querySelectorAll('input[name="isPartialPayment"]').forEach(r=> r.addEventListener('change', ()=>{
           // Show or hide the partial amount input row
           const sel = checkoutForm.querySelector('input[name="isPartialPayment"]:checked');
@@ -369,6 +375,40 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update header info if user edits address/phone
       [deliveryAddressInput, deliveryPhoneInput].forEach(inp=>{ if(inp){ inp.addEventListener('blur', ()=>{ updateShippingFee(); }); } });
   }
+
+  // GCash modal wiring
+  const gcashModal = document.getElementById('gcashModal');
+  const gcashCloseBtn = document.getElementById('gcashCloseBtn');
+  const gcashDoneBtn = document.getElementById('gcashDoneBtn');
+  const gcashReceipt = document.getElementById('gcashReceipt');
+  const gcashPreview = document.getElementById('gcashReceiptPreview');
+    const gcashAmountEl = document.getElementById('gcashPaidAmount');
+  let gcashFile = null;
+
+  function openGcashModal(){ if(!gcashModal) return; gcashModal.hidden=false; gcashModal.setAttribute('aria-hidden','false'); }
+  function closeGcashModal(){ if(!gcashModal) return; gcashModal.hidden=true; gcashModal.setAttribute('aria-hidden','true'); }
+  gcashCloseBtn?.addEventListener('click', closeGcashModal);
+  gcashDoneBtn?.addEventListener('click', function(){
+      if(!gcashFile){
+          alert('Please upload your GCash receipt photo to continue.');
+          gcashReceipt?.click();
+          return;
+      }
+      closeGcashModal();
+  });
+  gcashReceipt?.addEventListener('change', function(){
+      try{
+          gcashPreview.innerHTML='';
+          const f = this.files && this.files[0];
+          if(!f){ gcashFile=null; return; }
+          gcashFile = f;
+          const img = document.createElement('img'); img.className='thumb';
+          const reader = new FileReader(); reader.onload = ev => img.src = ev.target.result; reader.readAsDataURL(f);
+          gcashPreview.appendChild(img);
+      }catch(e){ console.error('gcash receipt preview failed', e); }
+  });
+
+  // Optional: include the file in order payload in future. For now we keep it client-side only.
 
   // Autofill profile info
   if (checkoutForm && typeof window.userAddress !== 'undefined' && typeof window.userPhone !== 'undefined') {
@@ -413,6 +453,12 @@ document.addEventListener('DOMContentLoaded', () => {
           if(!phone){ alert('Please enter your phone number.'); return; }
           if(!dm){ alert('Please select a delivery method.'); return; }
           if(!pm){ alert('Please select a payment method.'); return; }
+          // Require GCash receipt when GCash is selected
+          if (pm && pm.value === 'gcash' && !gcashFile) {
+              alert('Please upload your GCash receipt photo.');
+              openGcashModal();
+              return;
+          }
           const selected = Array.from(document.querySelectorAll('.select-cart-item:checked'));
           if(!selected.length){ alert('Please select at least one item.'); return; }
           const src = useDb? items : JSON.parse(localStorage.getItem('cart')||'[]');
@@ -426,6 +472,12 @@ document.addEventListener('DOMContentLoaded', () => {
           fd.append('delivery_phone', phone);
           fd.append('isPartialPayment', partial ? partial.value : '0');
           if (partialAmount !== null) fd.append('partial', partialAmount.toFixed(2));
+          // Attach GCash receipt and paid amount if provided (server may ignore if not implemented yet)
+          if (gcashFile) { try { fd.append('gcash_receipt', gcashFile); } catch(e){} }
+          if (gcashAmountEl && gcashAmountEl.value) {
+              const amt = parseFloat(gcashAmountEl.value);
+              if (!isNaN(amt)) { try { fd.append('gcash_paid', amt.toFixed(2)); } catch(e){} }
+          }
           try {
               const btn = checkoutForm.querySelector('.place-order-btn');
               if(btn){ btn.disabled=true; btn.textContent='Placing'; }
