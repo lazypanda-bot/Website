@@ -50,12 +50,7 @@ if ($res = $conn->query('SHOW COLUMNS FROM products')) {
 foreach(['name','product_name','title'] as $c){ if(isset($productCols[$c])) { $productNameCol=$productCols[$c]; break; } }
 foreach(['price','unit_price','amount','cost'] as $c){ if(isset($productCols[$c])) { $productPriceCol=$productCols[$c]; break; } }
 
-$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity, p.".$productNameCol." AS name, p.".$productPriceCol." AS price
-        FROM ".CART_TABLE." c
-        LEFT JOIN products p ON p.".$productCols[strtolower($productCols[$productNameCol] ?? $productNameCol)] ?? $productNameCol." = p.".$productCols[strtolower($productNameCol)] ?? $productNameCol." 
-        WHERE c.".CART_USER_FK_COL."=?";
-// The above join simplifies to ON p.<product_id candidate> not implemented (no products PK mapping). We just join on product_id if exists.
-// Rebuild with correct join using product FK detection.
+// NOTE: A previous version built an invalid $sql here. We now construct it below after resolving columns safely.
 
 // Detect product PK for join (only if products table exists)
 $productPk = null;
@@ -77,24 +72,97 @@ $joinSql = '';
 $designSelect = '';
 if ($designColName) {
     $designSelect = ', c.' . $designColName . ' AS designoption_id';
-    // Join to designoption and customization if those tables/columns are present
-    // We'll attempt the common column names
-    $joinSql = ' LEFT JOIN designoption d ON d.designoption_id = c.' . $designColName . ' LEFT JOIN customization cu ON cu.customization_id = d.customization_id ';
-    $designSelect .= ', cu.color AS design_color, cu.note AS design_meta, d.request_design AS design_request, d.designfilepath AS designfilepath';
+    // Join to designoption and customization only if those tables exist
+    $hasDesign = false; $hasCust = false;
+    if ($t = $conn->query("SHOW TABLES LIKE 'designoption'")) { $hasDesign = ($t->num_rows>0); $t->free(); }
+    if ($t = $conn->query("SHOW TABLES LIKE 'customization'")) { $hasCust = ($t->num_rows>0); $t->free(); }
+    if ($hasDesign) {
+        $joinSql .= ' LEFT JOIN designoption d ON d.designoption_id = c.' . $designColName . ' ';
+        if ($hasCust) {
+            $joinSql .= ' LEFT JOIN customization cu ON cu.customization_id = d.customization_id ';
+            $designSelect .= ', cu.color AS design_color, cu.note AS design_meta';
+        }
+        $designSelect .= ', d.request_design AS design_request, d.designfilepath AS designfilepath';
+    }
 }
 
 // Build SELECT expressions with safe fallbacks
-$nameExpr = $productNameCol ? ('p.'.$productNameCol) : "''";
-$priceExpr = $productPriceCol ? ('p.'.$productPriceCol) : '0';
+// Only reference p.* when we actually join products with a valid PK
 $joinPart = ($productsTableExists && $productPk) ? (' LEFT JOIN products p ON p.'.$productPk.' = c.'.CART_PRODUCT_FK_COL.' ') : ' ';
+$nameExpr = ($productsTableExists && $productPk && $productNameCol) ? ('p.'.$productNameCol) : "''";
+$basePriceExpr = ($productsTableExists && $productPk && $productPriceCol) ? ('p.'.$productPriceCol) : '0';
 
-$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", $nameExpr AS name, $priceExpr AS price
-    FROM ".CART_TABLE." c" . $joinPart . $joinSql . " WHERE c.".CART_USER_FK_COL."=? ORDER BY c.".CART_PK_COL." DESC LIMIT 200";
+// Optional: derive price from products_sub using size/color when available
+$calcPriceExpr = $basePriceExpr;
+$subJoins = '';
+if ($resTbl = $conn->query("SHOW TABLES LIKE 'products_sub'")) {
+    if ($resTbl->num_rows > 0) {
+        $psCols = [];
+        if ($psC = $conn->query('SHOW COLUMNS FROM products_sub')) { while($r=$psC->fetch_assoc()){ $psCols[strtolower($r['Field'])]=$r['Field']; } $psC->free(); }
+        $psPrice = $psCols['price'] ?? ($psCols['amount'] ?? ($psCols['unit_price'] ?? ($psCols['cost'] ?? 'price')));
+        $psKind  = $psCols['kind'] ?? ($psCols['type'] ?? ($psCols['name'] ?? null));
+        $psValue = $psCols['value'] ?? ($psCols['values'] ?? ($psCols['val'] ?? ($psCols['option_value'] ?? ($psCols['option'] ?? null))));
+        $psSizes = $psCols['sizes'] ?? ($psCols['size'] ?? null);
+        $psAttrs = $psCols['attributes'] ?? ($psCols['attribute'] ?? ($psCols['color'] ?? ($psCols['colour'] ?? null)));
+        $psProdId = $psCols['product_id'] ?? ($psCols['products_id'] ?? ($psCols['prod_id'] ?? 'product_id'));
+        // Normalize comparison by forcing both operands to the same collation to avoid
+        // "Illegal mix of collations" when schema columns differ.
+        $cmpCollation = 'utf8mb4_general_ci';
+
+        // size-based price (wide column or kind/value fallback)
+        if ($psSizes) {
+            $subJoins .= ' LEFT JOIN products_sub ps_size ON ps_size.'.$psProdId.
+                " = c.".CART_PRODUCT_FK_COL.
+                " AND ps_size.$psSizes COLLATE $cmpCollation = c.".CART_SIZE_COL." COLLATE $cmpCollation ";
+        } elseif ($psKind && $psValue) {
+            $subJoins .= ' LEFT JOIN products_sub ps_size ON ps_size.'.$psProdId.
+                " = c.".CART_PRODUCT_FK_COL.
+                " AND ps_size.$psKind = 'size' AND ps_size.$psValue COLLATE $cmpCollation = c.".CART_SIZE_COL." COLLATE $cmpCollation ";
+        }
+        // attribute/color-based price (wide column or kind/value fallback)
+        if ($psAttrs) {
+            $subJoins .= ' LEFT JOIN products_sub ps_attr ON ps_attr.'.$psProdId.
+                " = c.".CART_PRODUCT_FK_COL.
+                " AND ps_attr.$psAttrs COLLATE $cmpCollation = c.".CART_COLOR_COL." COLLATE $cmpCollation ";
+        } elseif ($psKind && $psValue) {
+            $subJoins .= ' LEFT JOIN products_sub ps_attr ON ps_attr.'.$psProdId.
+                " = c.".CART_PRODUCT_FK_COL.
+                " AND ps_attr.$psKind IN ('attribute','attributes','color','colour') AND ps_attr.$psValue COLLATE $cmpCollation = c.".CART_COLOR_COL." COLLATE $cmpCollation ";
+        }
+        // combo (sizes + attributes) price when both wide columns exist
+        if ($psSizes && $psAttrs) {
+            $subJoins .= ' LEFT JOIN products_sub ps_combo ON ps_combo.'.$psProdId.
+                " = c.".CART_PRODUCT_FK_COL.
+                " AND ps_combo.$psSizes COLLATE $cmpCollation = c.".CART_SIZE_COL." COLLATE $cmpCollation".
+                " AND ps_combo.$psAttrs COLLATE $cmpCollation = c.".CART_COLOR_COL." COLLATE $cmpCollation ";
+        }
+
+        // Final price preference: combo > size > attr > any price for same product (fallback) > base product price
+        // Treat 0.00 as "no price" by using NULLIF so it won't override a valid non-zero price later in COALESCE
+        $anyJoin = ' LEFT JOIN (SELECT '.$psProdId.' AS pid, MAX(CASE WHEN '.$psPrice.' > 0 THEN '.$psPrice.' END) AS any_price FROM products_sub GROUP BY '.$psProdId.') ps_any ON ps_any.pid = c.'.CART_PRODUCT_FK_COL.' ';
+        $subJoins .= $anyJoin;
+
+        $psSizeExpr  = 'NULLIF(ps_size.'.$psPrice.',0)';
+        $psAttrExpr  = 'NULLIF(ps_attr.'.$psPrice.',0)';
+        $psComboExpr = 'NULLIF(ps_combo.'.$psPrice.',0)';
+        $psAnyExpr   = 'NULLIF(ps_any.any_price,0)';
+
+        if ($psSizes && $psAttrs) {
+            $calcPriceExpr = "COALESCE($psComboExpr, $psSizeExpr, $psAttrExpr, $psAnyExpr, $basePriceExpr)";
+        } else {
+            $calcPriceExpr = "COALESCE($psSizeExpr, $psAttrExpr, $psAnyExpr, $basePriceExpr)";
+        }
+    }
+    $resTbl->free();
+}
+
+$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", $nameExpr AS name, $calcPriceExpr AS price
+    FROM ".CART_TABLE." c" . $joinPart . $subJoins . $joinSql . " WHERE c.".CART_USER_FK_COL."=? ORDER BY c.".CART_PK_COL." DESC LIMIT 200";
 
 $stmt = $conn->prepare($sql);
-if(!$stmt){ echo json_encode(['items'=>[]]); exit; }
+if(!$stmt){ error_log('cart-items prepare failed: '.$conn->error.' SQL='.$sql); echo json_encode(['items'=>[]]); exit; }
 $stmt->bind_param('i', $userId);
-if(!$stmt->execute()){ $stmt->close(); echo json_encode(['items'=>[]]); exit; }
+if(!$stmt->execute()){ error_log('cart-items exec failed: '.$stmt->error); $stmt->close(); echo json_encode(['items'=>[]]); exit; }
 $res = $stmt->get_result();
 $items = [];
 while ($row = $res->fetch_assoc()) {

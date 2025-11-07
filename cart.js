@@ -70,7 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!cartItemsContainer || !cartSummary) return; // nothing to do
   if (cartIcon) cartIcon.classList.add('active');
 
-  const useDb = cartItemsContainer.getAttribute('data-source') === 'db' && window.isAuthenticated;
+    const useDb = cartItemsContainer.getAttribute('data-source') === 'db' && window.isAuthenticated;
+    // Track where the currently displayed items came from. Values: 'db' | 'local'
+    let currentSource = useDb ? 'db' : 'local';
   let items = [];
 
   function getKey(p){ return [p.name,p.size,p.design,p.price].join('|'); }
@@ -80,9 +82,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = await fetch('cart-items.php');
         if(!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
-        items = Array.isArray(data.items)? data.items : [];
-        // NOTE: preview merge removed — cart will not display saved-design previews
-    } catch(err){ console.error(err); items=[]; }
+        // If API returns auth error or empty, fallback to local cart so users still see items
+        if (data && Array.isArray(data.items) && data.items.length>0) {
+            items = data.items;
+            currentSource = 'db';
+        } else {
+            try {
+                const local = JSON.parse(localStorage.getItem('cart')||'[]');
+                if (Array.isArray(local) && local.length>0) {
+                    console.warn('[cart] DB cart empty; using local cart fallback');
+                    items = local;
+                    currentSource = 'local';
+                } else {
+                    items = [];
+                    currentSource = 'db';
+                }
+            } catch(e){ items = []; }
+        }
+        // preview merge intentionally omitted
+    } catch(err){ 
+        console.error(err);
+        // On fetch error, fallback to local cart instead of showing empty
+        try {
+            const local = JSON.parse(localStorage.getItem('cart')||'[]');
+            if (Array.isArray(local) && local.length>0) {
+                console.warn('[cart] Using local cart due to server error');
+                items = local;
+                currentSource = 'local';
+            } else {
+                items = [];
+                currentSource = 'db';
+            }
+        } catch(e){ items=[]; }
+    }
   }
 
   function groupLocalItems(raw){
@@ -101,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function renderCart(){
-    if(useDb) await fetchDbCart(); else items = JSON.parse(localStorage.getItem('cart')||'[]');
+    if(useDb) { await fetchDbCart(); } else { items = JSON.parse(localStorage.getItem('cart')||'[]'); currentSource='local'; }
     const grouped = useDb ? items.slice() : groupLocalItems(items);
     if(grouped.length===0) {
         if(cartItemsContainer){ cartItemsContainer.innerHTML = '<p class="empty-cart-msg">Your cart is currently empty.</p>'; cartItemsContainer.style.display=''; }
@@ -192,7 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.addEventListener('click', async e=> {
               e.preventDefault();
               if(!confirm('Remove this item from cart?')) return;
-              if(useDb && btn.dataset.id) {
+              // Use the actual source we rendered from, not just the intended mode
+              if(currentSource==='db' && btn.dataset.id) {
                   try {
                       const fd = new FormData(); fd.append('id', btn.dataset.id);
                       await fetch('delete-cart-item.php',{method:'POST',body:fd});
@@ -213,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.qty-input').forEach(inp=> {
           inp.addEventListener('change', async ()=> {
               let val = parseInt(inp.value,10); if(isNaN(val)||val<1) val=1; inp.value=val;
-              if(useDb && inp.dataset.id) {
+              if(currentSource==='db' && inp.dataset.id) {
                   try { const fd=new FormData(); fd.append('id', inp.dataset.id); fd.append('quantity', val); await fetch('update-cart-item.php',{method:'POST',body:fd}); } catch(e){ console.error(e);} }
               else {
                   let local = JSON.parse(localStorage.getItem('cart')||'[]');
@@ -233,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getSelectedSummaryData() {
       const selected = Array.from(document.querySelectorAll('.select-cart-item:checked'));
-      const source = useDb? items : JSON.parse(localStorage.getItem('cart')||'[]');
+    const source = currentSource==='db' ? items : JSON.parse(localStorage.getItem('cart')||'[]');
       let subtotal=0; let html='';
       selected.forEach(cb=> {
           const id = cb.getAttribute('data-id');

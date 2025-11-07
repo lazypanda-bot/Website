@@ -1,8 +1,15 @@
 <?php
 session_start();
-ini_set('display_errors',1);error_reporting(E_ALL);
+// Suppress direct HTML error output for production JSON endpoints
+// Use internal logging instead; allow verbose output only when ?debug=1
 $isDebug = isset($_GET['debug']);
-if(!$isDebug) header('Content-Type: application/json');
+if ($isDebug) {
+    ini_set('display_errors',1); error_reporting(E_ALL);
+    header('Content-Type: text/plain; charset=utf-8');
+} else {
+    ini_set('display_errors',0); ini_set('display_startup_errors',0); error_reporting(E_ALL);
+    header('Content-Type: application/json');
+}
 require_once __DIR__ . '/database.php';
 // Centralized auth helper (clears stale sessions and responds with JSON on failure)
 require_once __DIR__ . '/includes/auth.php';
@@ -68,28 +75,57 @@ $primaryName = '';
 if ($isMulti) {
     foreach ($multiItems as &$it) {
         $p = 0; $nm='';
-        if ($stmt = $conn->prepare('SELECT price, product_name FROM products WHERE product_id=? LIMIT 1')) {
-            $stmt->bind_param('i',$it['product_id']);
-            if($stmt->execute()) {
-                $stmt->bind_result($p,$nm);
-                if($stmt->fetch()) {
-                    $it['price']=$p; $it['name']=$nm; $total += ($p * $it['quantity']);
-                    if ($primaryName==='') $primaryName = $nm;
-                }
+        // Adaptive products table column discovery
+        $prodCols = [];
+        if ($res = $conn->query('SHOW COLUMNS FROM products')) { while($r=$res->fetch_assoc()){ $prodCols[strtolower($r['Field'])]=$r['Field']; } $res->free(); }
+        $prodPk = null; foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($prodCols[$c])){ $prodPk=$prodCols[$c]; break; } }
+        $prodPriceCol = null; foreach(['price','unit_price','amount','cost'] as $c){ if(isset($prodCols[$c])){ $prodPriceCol=$prodCols[$c]; break; } }
+        $prodNameCol = null; foreach(['product_name','name','title'] as $c){ if(isset($prodCols[$c])){ $prodNameCol=$prodCols[$c]; break; } }
+
+        // Fallback to products_sub price when base price column missing or 0
+        if ($prodPk && $prodNameCol) {
+            $sqlP = 'SELECT ' . ($prodPriceCol ? ('p.'.$prodPriceCol) : '0') . ' AS base_price, p.' . $prodNameCol . ' AS prod_name FROM products p WHERE p.' . $prodPk . '=? LIMIT 1';
+            if ($stmt = $conn->prepare($sqlP)) {
+                $stmt->bind_param('i',$it['product_id']);
+                if($stmt->execute()) {
+                    $stmt->bind_result($basePrice,$prodNameVal); $stmt->fetch(); $stmt->close();
+                    // Derive sub price (size/attribute) or fallback any non-zero price
+                    $subPrice = null; $anyPrice = null;
+                    if ($subChk = $conn->prepare("SELECT MAX(CASE WHEN price>0 THEN price END) FROM products_sub WHERE product_id=?")) {
+                        $subChk->bind_param('i',$it['product_id']);
+                        if($subChk->execute()){ $subChk->bind_result($anyPrice); $subChk->fetch(); }
+                        $subChk->close();
+                    }
+                    $effectivePrice = ($basePrice && $basePrice>0) ? $basePrice : ($anyPrice ?? 0);
+                    $p = $effectivePrice; $nm = $prodNameVal;
+                } else { $stmt->close(); }
             }
-            $stmt->close();
         }
+        $it['price']=$p; $it['name']=$nm; $total += ($p * $it['quantity']); if ($primaryName==='') $primaryName = $nm;
     }
     if ($total <= 0){ qlog('Zero total multi'); respond(['status'=>'error','message'=>'No valid items to order']); }
 } else {
     $price = 0.00; $nm=''; $prodExists=false;
-    if($stmt = $conn->prepare('SELECT price, product_name FROM products WHERE product_id=? LIMIT 1')) {
-        $stmt->bind_param('i',$product_id);
-        if($stmt->execute()) {
-            $stmt->bind_result($price,$nm);
-            if($stmt->fetch()) { $prodExists = true; $primaryName = $nm; }
+    $prodCols = [];
+    if ($res = $conn->query('SHOW COLUMNS FROM products')) { while($r=$res->fetch_assoc()){ $prodCols[strtolower($r['Field'])]=$r['Field']; } $res->free(); }
+    $prodPk = null; foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($prodCols[$c])){ $prodPk=$prodCols[$c]; break; } }
+    $prodPriceCol = null; foreach(['price','unit_price','amount','cost'] as $c){ if(isset($prodCols[$c])){ $prodPriceCol=$prodCols[$c]; break; } }
+    $prodNameCol = null; foreach(['product_name','name','title'] as $c){ if(isset($prodCols[$c])){ $prodNameCol=$prodCols[$c]; break; } }
+    if($prodPk && $prodNameCol){
+        $sqlP = 'SELECT ' . ($prodPriceCol ? ('p.'.$prodPriceCol) : '0') . ' AS base_price, p.' . $prodNameCol . ' AS prod_name FROM products p WHERE p.' . $prodPk . '=? LIMIT 1';
+        if($stmt = $conn->prepare($sqlP)){
+            $stmt->bind_param('i',$product_id);
+            if($stmt->execute()){
+                $stmt->bind_result($basePrice,$prodNameVal); if($stmt->fetch()){ $prodExists=true; $nm=$prodNameVal; }
+                $stmt->close();
+                $anyPrice = null;
+                if($subStmt = $conn->prepare('SELECT MAX(CASE WHEN price>0 THEN price END) FROM products_sub WHERE product_id=?')){
+                    $subStmt->bind_param('i',$product_id); if($subStmt->execute()){ $subStmt->bind_result($anyPrice); $subStmt->fetch(); } $subStmt->close();
+                }
+                $price = ($basePrice && $basePrice>0) ? $basePrice : ($anyPrice ?? 0);
+                $primaryName = $nm;
+            } else { $stmt->close(); }
         }
-        $stmt->close();
     }
     if(!$prodExists){ qlog('Product not found id='.$product_id); respond(['status'=>'error','message'=>'Product not found']); }
     $total = $price * $quantity;
