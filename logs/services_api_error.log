@@ -1,0 +1,15 @@
+[07-Nov-2025 14:18:29 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[07-Nov-2025 14:33:14 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[07-Nov-2025 22:44:46 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44

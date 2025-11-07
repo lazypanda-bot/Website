@@ -56,12 +56,9 @@ require_once __DIR__ . '/nav-avatar.php';
         <div class="back-container">
             <button onclick="history.back()" class="back-btn">← Back</button>
         </div>
-        <!-- Heading and save button row -->
+        <!-- Heading (button moved below viewer) -->
         <div class="sim-header-row">
             <h2 class="sim-title">Customize</h2>
-            <div>
-                <button id="saveDesignBtn" class="save-design-btn save-float">Save Design</button>
-            </div>
         </div>
 
         <!-- Two-column layout: left controls, right editor + 3D viewer -->
@@ -80,12 +77,12 @@ require_once __DIR__ . '/nav-avatar.php';
                                 <label class="control-label ml-8">Size</label>
                                 <input id="fontSize" type="number" min="8" max="400" value="72" />
                             </div>
-                            <div class="mt-4">
+                            <!-- <div class="mt-4">
                                 <div class="muted-note">Text updates in real-time on the 3D shirt as you type.</div>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
-                <div class="control-label subtle">Font family</div>
+                <!-- <div class="control-label subtle">Font family</div>
                 <div class="select-wrap">
                     <select id="fontFamily">
                         <option value="Poppins">Poppins</option>
@@ -96,7 +93,7 @@ require_once __DIR__ . '/nav-avatar.php';
                         <option value="Impact, Charcoal, sans-serif">Impact</option>
                         <option value="Courier New, monospace">Courier New</option>
                     </select>
-                </div>
+                </div> -->
             </aside>
 
             <!-- RIGHT: editor canvas + 3D viewer (toggle) -->
@@ -109,6 +106,10 @@ require_once __DIR__ . '/nav-avatar.php';
                     <div id="shirt3d-wrapper">
                         <div id="viewerCanvas"></div>
                         <div class="rotate-hint" id="rotateHint">Drag left / right to rotate</div>
+                    </div>
+                    <!-- Save Design button moved OUTSIDE viewer wrapper below -->
+                    <div class="save-design-row">
+                        <button id="saveDesignBtn" class="save-design-btn" aria-label="Save current design">Save Design</button>
                     </div>
                     <div class="editor-note"></div>
                 </div>
@@ -132,6 +133,8 @@ require_once __DIR__ . '/nav-avatar.php';
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="login.js"></script>
+    <!-- Toast container for save notifications -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
     <script src="sim.js"></script>
 </body>
 </html>

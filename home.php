@@ -32,16 +32,41 @@
                 // products reference services by name via `products.service_type` (not a numeric service_id)
                 // Use a safe subquery to grab one sample image for the service (if any) by matching the
                 // trimmed `service_type` value to the service name.
-                $sql = "SELECT s.service_id, s.name, s.image AS service_image, (
-                    SELECT pi.image_path
-                    FROM products p
-                    JOIN product_images pi ON pi.product_id = p.product_id
-                    WHERE TRIM(p.service_type) = s.name
-                    ORDER BY p.product_id DESC
-                    LIMIT 1
-                ) AS sample_images
-                FROM services s
-                ORDER BY s.service_id ASC";
+                // Discover product_images table & its image column (adaptive)
+                $imgSubquery = "SELECT ''"; // default empty string if table/column not available
+                if ($piTableChk = $conn->query("SHOW TABLES LIKE 'product_images'")) {
+                    if ($piTableChk->num_rows > 0) {
+                        $piCols = [];
+                        if ($piColRes = $conn->query('SHOW COLUMNS FROM product_images')) {
+                            while($r=$piColRes->fetch_assoc()){ $piCols[strtolower($r['Field'])] = $r['Field']; }
+                            $piColRes->free();
+                        }
+                        $imgCol = null;
+                        foreach(['image_path','image','path','file_path','filepath','img'] as $cand){ if(isset($piCols[$cand])) { $imgCol = $piCols[$cand]; break; } }
+                        if ($imgCol) {
+                            // Build adaptive subquery using discovered image column
+                            $imgSubquery = "SELECT pi.`$imgCol` FROM products p JOIN product_images pi ON pi.product_id = p.product_id WHERE TRIM(p.service_type) = s.name ORDER BY p.product_id DESC LIMIT 1";
+                        }
+                    }
+                    $piTableChk->free();
+                }
+                // Add secondary fallback: if product_images not usable, attempt direct products.image or products.images column
+                if (strpos($imgSubquery, "SELECT ''") === 0) {
+                    // Try products table for a generic image column
+                    $prodCols = [];
+                    if ($pChk = $conn->query("SHOW COLUMNS FROM products")) {
+                        while($pr=$pChk->fetch_assoc()){ $prodCols[strtolower($pr['Field'])]=$pr['Field']; }
+                        $pChk->free();
+                    }
+                    $candImg = null;
+                    foreach(['image','images','primary_image','thumbnail','thumb'] as $cand){ if(isset($prodCols[$cand])) { $candImg = $prodCols[$cand]; break; } }
+                    if ($candImg) {
+                        $imgSubquery = "SELECT p.`$candImg` FROM products p WHERE TRIM(p.service_type) = s.name AND p.`$candImg` IS NOT NULL AND p.`$candImg`<>'' ORDER BY p.product_id DESC LIMIT 1";
+                    }
+                }
+                $sql = "SELECT s.service_id, s.name, s.image AS service_image, ( $imgSubquery ) AS sample_images
+                        FROM services s
+                        ORDER BY s.service_id ASC";
                 if ($res = $conn->query($sql)) {
                     while ($row = $res->fetch_assoc()) { $servicesHome[] = $row; }
                     $res->free();
@@ -213,14 +238,12 @@
                 $svcImg = isset($srv['service_image']) ? trim($srv['service_image']) : '';
                 $img = '';
                 if ($svcImg !== '') {
-                    // If stored path is relative, check file exists on server
-                    $serverPath = __DIR__ . '/' . $svcImg;
-                    if (is_file($serverPath)) {
-                        $img = htmlspecialchars($svcImg);
-                    } else {
-                        // if file not present, fall back
-                        $img = htmlspecialchars(firstImageHome($srv['sample_images'] ?? ''));
+                    // Always attempt to use service image first, even if file missing (onerror attribute swaps to logo)
+                    $imgCandidate = $svcImg;
+                    if ($imgCandidate === '' || $imgCandidate === '0') {
+                        $imgCandidate = firstImageHome($srv['sample_images'] ?? '');
                     }
+                    $img = htmlspecialchars($imgCandidate);
                 } else {
                     $img = htmlspecialchars(firstImageHome($srv['sample_images'] ?? ''));
                 }

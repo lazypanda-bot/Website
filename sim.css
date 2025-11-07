@@ -364,7 +364,26 @@
 /* Extracted from inline styles in sim.php */
 .sim-header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; position:relative; }
 .sim-title { margin: 0; }
-.save-design-btn.save-float { position:absolute; top:24px; right:24px; z-index:2000; }
+/* New bottom-right positioning inside viewer wrapper */
+.save-design-btn.save-bottom {
+    position: absolute;
+    bottom: 18px;
+    right: 18px;
+    z-index: 2200;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    transition: background .2s, transform .2s;
+}
+.save-design-btn.save-bottom:hover { background:#7c1b1b; transform:translateY(-2px); }
+.save-design-btn.save-bottom:active { transform:translateY(0); }
+
+/* New row layout for save button when placed outside viewer */
+.save-design-row { display:flex; justify-content:flex-end; margin-top:14px; }
+
+/* Toast notifications */
+.toast-container { position: fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:4000; }
+.toast-msg { background:#a02b2b; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.14); font-size:14px; font-weight:500; opacity:0; animation:toastFadeIn .25s forwards; }
+.toast-msg.toast-hide { opacity:0 !important; transition:opacity .3s; }
+@keyframes toastFadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
 .sim-twocol { display:flex; gap:18px; align-items:flex-start; }
 .sim-left { width:460px; background:#fbf8ff; border-radius:12px; padding:18px; box-shadow:0 2px 6px rgba(0,0,0,0.04); box-sizing:border-box; }
 .control-heading { font-weight:700; margin-top:6px; margin-bottom:8px; }

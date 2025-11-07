@@ -17,16 +17,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchPayments(){
-    fetch('payments-api.php?action=list').then(r=>r.json()).then(d=>{
-            if(d.status==='ok') render(d.payments); else console.error(d);
-        })
-        .catch(e=>console.error(e));
+        tbody.innerHTML = '<tr><td colspan="10" class="table-msg">Loading payments...</td></tr>';
+        fetch('payments-api.php?action=list')
+            .then(r=>r.json())
+            .then(d=>{
+                if(d.status==='ok') render(d.payments); else { console.error(d); tbody.innerHTML='<tr><td colspan="10" class="table-msg">Failed to load payments</td></tr>'; }
+            })
+            .catch(e=>{ console.error(e); tbody.innerHTML='<tr><td colspan="10" class="table-msg">Error loading payments</td></tr>'; });
     }
 
     function render(list){
         tbody.innerHTML='';
         if(!list || list.length===0){ 
-            tbody.innerHTML='<tr><td colspan="8" class="table-msg">No payment records</td></tr>'; 
+            tbody.innerHTML='<tr><td colspan="10" class="table-msg">No payment records</td></tr>'; 
             return; 
         }
         list.forEach(p=>{
@@ -35,16 +38,21 @@ window.addEventListener('DOMContentLoaded', () => {
             const paymentStatus = p.payment_status || derivePaymentStatus(p);
             // Calculate balance
             const total = Number(p.TotalAmount)||0;
+            // AmountPaid comes from API aggregate; payment_amount is latest payment (may be partial)
             const paid = Number(p.AmountPaid)||0;
             const balance = total - paid;
+            const methodCell = buildMethodCell(p);
+            const receiptImg = (p.payment_method||'').toLowerCase()==='gcash' && p.receipt_url ? `<a href="${escapeHtml(p.receipt_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(p.receipt_url)}" alt="Receipt" class="receipt-thumb" /></a>` : '';
             tr.innerHTML=`
                 <td>${p.order_id}</td>
                 <td>${escapeHtml(p.customer_name||'')}</td>
-                <td>${escapeHtml(p.payment_date||'')}</td>
+                <td>${escapeHtml(p.payment_date||p.created_at||'')}</td>
+                <td>${methodCell}</td>
+                <td>${receiptImg}</td>
+                <td>${escapeHtml(p.payment_type||'')}</td>
                 <td>₱${total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
                 <td>₱${paid.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
                 <td>₱${balance.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-                <td>${escapeHtml(p.payment_method||'')}</td>
                 <td class="payment-cell" data-id="${p.order_id}">
                     ${buildPaymentSelect(paymentStatus)}
                     <div class="saving-text">Saving...</div>
@@ -60,6 +68,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function statusClass(s){ return 'ps-' + s; }
+
+    function buildMethodCell(p){
+        const m = (p.payment_method||'').toString().toLowerCase();
+        if(m==='gcash') return 'GCash';
+        if(m==='cash') return 'Cash';
+        return escapeHtml(p.payment_method||'');
+    }
 
     function derivePaymentStatus(p){
         // Placeholder logic; refine when dedicated payment status column exists
@@ -81,13 +96,20 @@ window.addEventListener('DOMContentLoaded', () => {
     function updatePaymentStatus(id, status, cell){
         const saving = cell.querySelector('.saving-text');
         saving.style.display='block';
-        setTimeout(()=>{
-            saving.style.display='none';
-            const sel = cell.querySelector('.payment-status-select');
-            sel.className = 'payment-status-select ' + statusClass(status);
-            sel.value = status;
-        setTimeout(()=>{ window.location.reload(); }, 600);
-        }, 400);
+        const fd = new FormData(); fd.append('action','update_status'); fd.append('order_id', id); fd.append('OrderStatus', status==='Paid' ? 'Completed' : (status==='Partial' ? 'Processing' : 'Pending'));
+        fetch('orders-api.php',{method:'POST',body:fd})
+            .then(r=>r.json())
+            .then(d=>{
+                saving.style.display='none';
+                if(d.status==='ok'){
+                    const sel = cell.querySelector('.payment-status-select');
+                    sel.className = 'payment-status-select ' + statusClass(status);
+                    sel.value = status;
+                } else {
+                    alert('Update failed: '+(d.message||'Unknown error'));
+                }
+            })
+            .catch(e=>{ saving.style.display='none'; console.error(e); alert('Network error updating status'); });
     }
     fetchPayments();
 });

@@ -43,9 +43,13 @@ if (!empty($orderIds)) {
         $tableExists = $res->num_rows > 0;
         $res->close();
         if ($tableExists) {
-            $oiSql = "SELECT oi.order_id, oi.product_id, oi.size, oi.quantity, oi.line_price, p.product_name
+            // Determine product name column dynamically
+            $pCols=[]; if($pc=$conn->query('SHOW COLUMNS FROM products')){ while($r=$pc->fetch_assoc()){ $pCols[strtolower($r['Field'])]=$r['Field']; } $pc->free(); }
+            $pName = $pCols['product_name'] ?? ($pCols['name'] ?? ($pCols['title'] ?? 'product_name'));
+            $pPk   = $pCols['product_id'] ?? ($pCols['id'] ?? ($pCols['prod_id'] ?? 'product_id'));
+            $oiSql = "SELECT oi.order_id, oi.product_id, oi.size, oi.quantity, oi.line_price, p.".$pName." AS product_name
                       FROM order_items oi
-                      LEFT JOIN products p ON p.product_id = oi.product_id
+                      LEFT JOIN products p ON p.".$pPk." = oi.product_id
                       WHERE oi.order_id IN ($idList)
                       ORDER BY oi.order_id DESC, oi.order_item_id ASC";
             if ($res2 = $conn->query($oiSql)) {
@@ -59,7 +63,95 @@ if (!empty($orderIds)) {
     }
 }
 // Fallback: if no order_items rows for an order but legacy columns present, synthesize a single line item
-foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) && !empty($or['product_id'])) { $itemsMap[$oid] = [[ 'order_id'=>$oid, 'product_id'=>$or['product_id'], 'product_name'=>'Product #'.$or['product_id'], 'size'=>$or['size'] ?? 'Default', 'quantity'=>$or['quantity'] ?? 1, 'line_price'=>$or['TotalAmount'] ]]; }}
+foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) && !empty($or['product_id'])) {
+    // Attempt to fetch product name dynamically for the fallback
+    $pCols=[]; if($pc=$conn->query('SHOW COLUMNS FROM products')){ while($r=$pc->fetch_assoc()){ $pCols[strtolower($r['Field'])]=$r['Field']; } $pc->free(); }
+    $pName = $pCols['product_name'] ?? ($pCols['name'] ?? ($pCols['title'] ?? 'product_name'));
+    $pPk   = $pCols['product_id'] ?? ($pCols['id'] ?? ($pCols['prod_id'] ?? 'product_id'));
+    $pnameVal = 'Product #'.$or['product_id'];
+    if($stmt2=$conn->prepare('SELECT '.$pName.' FROM products WHERE '.$pPk.'=? LIMIT 1')){ $pid=(int)$or['product_id']; $stmt2->bind_param('i',$pid); if($stmt2->execute()){ $stmt2->bind_result($pn); if($stmt2->fetch()){ $pnameVal = $pn; } } $stmt2->close(); }
+    $itemsMap[$oid] = [[ 'order_id'=>$oid, 'product_id'=>$or['product_id'], 'product_name'=>$pnameVal, 'size'=>$or['size'] ?? 'Default', 'quantity'=>$or['quantity'] ?? 1, 'line_price'=>$or['TotalAmount'] ]];
+}}
+
+// Enrich items with type/attribute and derive line price from products_sub when missing or zero
+function enrich_with_subdata($conn, $itemsMap){
+    // Inspect products_sub columns
+    $psCols=[]; $hasPs=false; if($t=$conn->query("SHOW TABLES LIKE 'products_sub'")){ $hasPs = ($t->num_rows>0); $t->free(); }
+    if(!$hasPs) return $itemsMap;
+    if($pc=$conn->query('SHOW COLUMNS FROM products_sub')){ while($r=$pc->fetch_assoc()){ $psCols[strtolower($r['Field'])]=$r['Field']; } $pc->free(); }
+    $psPrice = $psCols['price'] ?? ($psCols['amount'] ?? 'price');
+    $psProd  = $psCols['product_id'] ?? ($psCols['products_id'] ?? ($psCols['prod_id'] ?? 'product_id'));
+    $psSizes = $psCols['sizes'] ?? ($psCols['size'] ?? null);
+    $psAttrs = $psCols['attributes'] ?? ($psCols['attribute'] ?? ($psCols['color'] ?? ($psCols['colour'] ?? null)));
+    $psKind  = $psCols['kind'] ?? ($psCols['type'] ?? ($psCols['name'] ?? null));
+    $psValue = $psCols['value'] ?? ($psCols['values'] ?? ($psCols['val'] ?? ($psCols['option_value'] ?? ($psCols['option'] ?? null))));
+
+    foreach($itemsMap as $oid => &$lines){
+        foreach($lines as &$li){
+            $pid = (int)$li['product_id']; $size = trim((string)($li['size'] ?? ''));
+            $price = (float)($li['line_price'] ?? 0);
+            $typeVal = null; $attrVal = null; $attrPrice = null; $sizePrice = null; $comboPrice = null; $anyPrice = null;
+            // derive type/attribute values via kind/value rows if present
+            if($psKind && $psValue){
+                if($st = $conn->prepare("SELECT $psValue FROM products_sub WHERE $psProd=? AND $psKind='type' LIMIT 1")){
+                    $st->bind_param('i',$pid); if($st->execute()){ $st->bind_result($tv); if($st->fetch()){ $typeVal = $tv; } } $st->close();
+                }
+            }
+            // attribute price or value
+            if($psAttrs){
+                if($st = $conn->prepare("SELECT $psPrice FROM products_sub WHERE $psProd=? AND $psAttrs IS NOT NULL LIMIT 1")){
+                    $st->bind_param('i',$pid); if($st->execute()){ $st->bind_result($ap); if($st->fetch()){ $attrPrice = (float)$ap; } } $st->close();
+                }
+            } elseif($psKind && $psValue){
+                if($st=$conn->prepare("SELECT $psPrice, $psValue FROM products_sub WHERE $psProd=? AND $psKind IN ('attribute','attributes','color','colour') LIMIT 1")){
+                    $st->bind_param('i',$pid); if($st->execute()){ $st->bind_result($ap,$av); if($st->fetch()){ $attrPrice=(float)$ap; $attrVal=$av; } } $st->close();
+                }
+            }
+            // size-related price
+            if($size !== ''){
+                if($psSizes){
+                    if($st=$conn->prepare("SELECT $psPrice FROM products_sub WHERE $psProd=? AND $psSizes=? LIMIT 1")){
+                        $st->bind_param('is',$pid,$size); if($st->execute()){ $st->bind_result($sp); if($st->fetch()){ $sizePrice=(float)$sp; } } $st->close();
+                    }
+                } elseif($psKind && $psValue){
+                    if($st=$conn->prepare("SELECT $psPrice FROM products_sub WHERE $psProd=? AND $psKind='size' AND $psValue=? LIMIT 1")){
+                        $st->bind_param('is',$pid,$size); if($st->execute()){ $st->bind_result($sp); if($st->fetch()){ $sizePrice=(float)$sp; } } $st->close();
+                    }
+                }
+            }
+            // combo price if both wide columns exist
+            if($psSizes && $psAttrs && $size !== ''){
+                if($st=$conn->prepare("SELECT $psPrice, $psAttrs FROM products_sub WHERE $psProd=? AND $psSizes=? AND $psAttrs IS NOT NULL LIMIT 1")){
+                    $st->bind_param('is',$pid,$size); if($st->execute()){ $st->bind_result($cp,$av); if($st->fetch()){ $comboPrice=(float)$cp; if(!$attrVal) $attrVal=$av; } } $st->close();
+                }
+            }
+            // any price
+            if($st=$conn->prepare("SELECT MAX(CASE WHEN $psPrice>0 THEN $psPrice END) FROM products_sub WHERE $psProd=?")){
+                $st->bind_param('i',$pid); if($st->execute()){ $st->bind_result($ap); if($st->fetch()){ $anyPrice=(float)$ap; } } $st->close();
+            }
+            // choose effective line price if missing/zero
+            if($price<=0){
+                $eff = null; foreach([$comboPrice,$sizePrice,$attrPrice,$anyPrice] as $cand){ if($cand && $cand>0){ $eff=$cand; break; } }
+                if($eff!==null){ $li['line_price'] = $eff; }
+            }
+            // Attach type/attribute metadata to line
+            if($typeVal) $li['type'] = $typeVal;
+            if($attrVal) $li['attribute'] = $attrVal;
+        }
+    }
+    return $itemsMap;
+}
+
+$itemsMap = enrich_with_subdata($conn, $itemsMap);
+
+// Recompute order totals when stored TotalAmount is missing/zero
+foreach($orders as &$or){
+    if((float)($or['TotalAmount'] ?? 0) <= 0){
+        $sum = 0; $oid=(int)$or['order_id']; $lines = $itemsMap[$oid] ?? [];
+        foreach($lines as $li){ $sum += ((float)($li['line_price'] ?? 0)) * ((int)($li['quantity'] ?? 1)); }
+        $or['TotalAmount'] = $sum;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang='en'>
@@ -104,8 +196,10 @@ foreach($orders as $or){ $oid=(int)$or['order_id']; if(empty($itemsMap[$oid]) &&
                                         <?php echo htmlspecialchars($li['product_name'] ?? ('#'.$li['product_id'])); ?>
                                     </span>
                                     <span class="order-line-size">Size: <?php echo htmlspecialchars($li['size'] ?? '—'); ?></span>
+                                    <?php if(isset($li['type'])): ?><span class="order-line-type">Type: <?php echo htmlspecialchars($li['type']); ?></span><?php endif; ?>
+                                    <?php if(isset($li['attribute'])): ?><span class="order-line-attr">Attribute: <?php echo htmlspecialchars($li['attribute']); ?></span><?php endif; ?>
                                     <span class="order-line-qty">Qty: <?php echo htmlspecialchars($li['quantity']); ?></span>
-                                    <span class="order-line-line">Line: ₱<?php echo htmlspecialchars(number_format((float)($li['line_price'] ?? 0),2)); ?></span>
+                                    <span class="order-line-line">Price: ₱<?php echo htmlspecialchars(number_format((float)($li['line_price'] ?? 0),2)); ?></span>
                                     <span class="order-line-total">₱<?php echo htmlspecialchars(number_format(((float)($li['line_price'] ?? 0))*(int)($li['quantity'] ?? 1),2)); ?></span>
                                 </li>
                             <?php endforeach; ?>

@@ -729,10 +729,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (err) { console.error('Server save failed', err); }
                 }
 
+                // Generate a small preview to avoid localStorage quota issues
+                function tinyDataURLFromCanvas(srcCanvas){
+                    try {
+                        const maxW = 480, maxH = 480;
+                        const sw = srcCanvas.width, sh = srcCanvas.height;
+                        let scale = 1;
+                        if (sw>maxW || sh>maxH) scale = Math.min(maxW/sw, maxH/sh);
+                        const tw = Math.max(1, Math.round(sw*scale));
+                        const th = Math.max(1, Math.round(sh*scale));
+                        const tmp = document.createElement('canvas'); tmp.width = tw; tmp.height = th;
+                        const ctx = tmp.getContext('2d');
+                        ctx.fillStyle = '#eeeeee'; ctx.fillRect(0,0,tw,th);
+                        ctx.drawImage(srcCanvas, 0,0, tw, th);
+                        let out = null;
+                        try { out = tmp.toDataURL('image/webp', 0.6); } catch(e) { /* ignore */ }
+                        if (!out) {
+                            try { out = tmp.toDataURL('image/jpeg', 0.7); } catch(e) { /* ignore */ }
+                        }
+                        if (!out) {
+                            try { out = tmp.toDataURL('image/png'); } catch(e) { out = null; }
+                        }
+                        return out;
+                    } catch(e){ return null; }
+                }
+
                 let pngData = null;
-                try { pngData = canvas.toDataURL('image/png'); } catch(e) { pngData = null; }
+                try { pngData = tinyDataURLFromCanvas(canvas); } catch(e) { pngData = null; }
                 const item = { id:null, product_id: product_id||0, name:'Custom Shirt', size:size, design:'Custom 3D', color:color, price:150.00, quantity:1, is_design:true, meta: JSON.parse(meta), design_png: pngData, designoption_id: null };
-                const cart = JSON.parse(localStorage.getItem('cart')||'[]'); cart.push(item); localStorage.setItem('cart', JSON.stringify(cart));
+                try {
+                    const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+                    cart.push(item);
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                } catch (qe) {
+                    // QuotaExceeded: store without image preview
+                    try {
+                        item.design_png = null;
+                        const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+                        cart.push(item);
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                    } catch(e2) { /* if it still fails, silently drop local cache */ }
+                }
                 try { if (typeof renderPreviewList === 'function') renderPreviewList(); } catch(e){}
                 showToast('Design saved locally and added to cart');
             } catch (e) { console.error('Save handler failed', e); showToast('Save failed'); }

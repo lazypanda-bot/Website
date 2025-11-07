@@ -39,6 +39,12 @@ $userId = require_valid_user_json();
 $rawItemsJson = $_POST['items'] ?? '';
 $multiItems = [];
 $isMulti = false;
+// Capture payment method & optional GCash fields
+$paymentMethod = strtolower(trim($_POST['payment_method'] ?? ''));
+if(!in_array($paymentMethod,['cash','gcash','card','bank','other'])) $paymentMethod = 'cash';
+// GCash receipt (file) and amount if provided
+$gcashPaidRaw = isset($_POST['gcash_paid']) ? trim((string)$_POST['gcash_paid']) : '';
+$gcashPaid = ($gcashPaidRaw !== '' && is_numeric($gcashPaidRaw)) ? number_format((float)$gcashPaidRaw,2,'.','') : null;
 
 $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
 $size = trim($_POST['size'] ?? '');
@@ -165,6 +171,7 @@ $fkCol = 'user_id'; foreach(['customer_id','user_id','account_id','cust_id'] as 
 if(!defined('ORDERS_ACCOUNT_FK_COL')) define('ORDERS_ACCOUNT_FK_COL',$fkCol);
 $pkCol = 'order_id'; foreach(['order_id','id','orders_id'] as $c){ if(isset($orderCols[$c])) { $pkCol=$orderCols[$c]; break; } }
 if(!defined('ORDERS_PK_COL')) define('ORDERS_PK_COL',$pkCol);
+$createdColDetected = isset($orderCols['created_at']) ? $orderCols['created_at'] : (isset($orderCols['created']) ? $orderCols['created'] : null);
 $createdAt = date('Y-m-d H:i:s');
 // Debounce duplicate: prevent new pending order with same product(s) in last 30s
 $productIdsToCheck = [];
@@ -172,17 +179,53 @@ if ($isMulti) { foreach($multiItems as $it) { $productIdsToCheck[] = (int)$it['p
 else { $productIdsToCheck[] = $product_id; }
 $placeholders = implode(',', array_fill(0, count($productIdsToCheck), '?'));
 if ($placeholders) {
-    $types = str_repeat('i', count($productIdsToCheck)+1);
     // Use detected orders column name for order status (support snake_case or legacy camelCase)
     $orderStatusColName = isset($orderCols['orderstatus']) ? $orderCols['orderstatus'] : (isset($orderCols['order_status']) ? $orderCols['order_status'] : 'order_status');
-    $query = 'SELECT COUNT(*) FROM ' . ORDERS_TABLE . ' WHERE ' . ORDERS_ACCOUNT_FK_COL . '=? AND ' . $orderStatusColName . "='Pending' AND created_at >= (NOW() - INTERVAL 30 SECOND) AND product_id IN (" . $placeholders . ")";
-    if ($stmt = $conn->prepare($query)) {
-        $params = array_merge([$userId], $productIdsToCheck);
-        $stmt->bind_param($types, ...$params);
-        if ($stmt->execute()) { $stmt->bind_result($dupCount); $stmt->fetch(); if (($dupCount??0) > 0) { qlog('Duplicate blocked'); $stmt->close(); respond(['status'=>'duplicate','message'=>'Recent pending order already placed. Please wait a moment.']); } }
-        $stmt->close();
+    // Prefer orders.product_id if it exists; otherwise fall back to order_items join
+    $ordersProductCol = isset($orderCols['product_id']) ? $orderCols['product_id'] : null;
+    if ($ordersProductCol) {
+        $types = str_repeat('i', count($productIdsToCheck)+1);
+        $createdClause = $createdColDetected ? (' AND ' . $createdColDetected . ' >= (NOW() - INTERVAL 30 SECOND)') : '';
+        $query = 'SELECT COUNT(*) FROM ' . ORDERS_TABLE . ' WHERE ' . ORDERS_ACCOUNT_FK_COL . '=? AND ' . $orderStatusColName . "='Pending'" . $createdClause . ' AND ' . $ordersProductCol . ' IN (' . $placeholders . ')';
+        if ($stmt = $conn->prepare($query)) {
+            $params = array_merge([$userId], $productIdsToCheck);
+            $stmt->bind_param($types, ...$params);
+            if ($stmt->execute()) { $stmt->bind_result($dupCount); $stmt->fetch(); if (($dupCount??0) > 0) { qlog('Duplicate blocked'); $stmt->close(); respond(['status'=>'duplicate','message'=>'Recent pending order already placed. Please wait a moment.']); } }
+            $stmt->close();
+        }
+    } else {
+        // Check if order_items table exists; if so, use it for duplicate detection
+        $hasOrderItems=false; if($chkOi=$conn->query("SHOW TABLES LIKE 'order_items'")){ $hasOrderItems = $chkOi->num_rows>0; $chkOi->free(); }
+        if ($hasOrderItems) {
+            $types = 'i' . str_repeat('i', count($productIdsToCheck));
+            $createdClause = $createdColDetected ? (' AND o.' . $createdColDetected . ' >= (NOW() - INTERVAL 30 SECOND)') : '';
+            $query = 'SELECT COUNT(DISTINCT o.' . ORDERS_PK_COL . ') FROM ' . ORDERS_TABLE . ' o JOIN order_items oi ON oi.order_id = o.' . ORDERS_PK_COL . ' WHERE o.' . ORDERS_ACCOUNT_FK_COL . '=? AND o.' . $orderStatusColName . "='Pending'" . $createdClause . ' AND oi.product_id IN (' . $placeholders . ')';
+            if ($stmt = $conn->prepare($query)) {
+                $params = array_merge([$userId], $productIdsToCheck);
+                $stmt->bind_param($types, ...$params);
+                if ($stmt->execute()) { $stmt->bind_result($dupCount); $stmt->fetch(); if (($dupCount??0) > 0) { qlog('Duplicate blocked (order_items)'); $stmt->close(); respond(['status'=>'duplicate','message'=>'Recent pending order already placed. Please wait a moment.']); } }
+                $stmt->close();
+            }
+        } // else: skip duplicate detection to avoid SQL errors on unknown schema
     }
 }
+
+// Secondary duplicate guard: order signature per user for 30 seconds to prevent rapid double submits
+$sigParts = [];
+if ($isMulti) { foreach($multiItems as $it){ $sigParts[] = (int)$it['product_id'] . ':' . (string)$it['size'] . ':' . (int)$it['quantity']; } }
+else { $sigParts[] = (int)$product_id . ':' . (string)$size . ':' . (int)$quantity; }
+sort($sigParts);
+$orderSignature = sha1(implode('|',$sigParts));
+$sigDir = __DIR__ . '/logs'; if(!is_dir($sigDir)) @mkdir($sigDir,0775,true);
+$sigPath = $sigDir . '/order_sig_' . $userId . '.json';
+$prev = @file_get_contents($sigPath); $prevData = $prev ? json_decode($prev,true) : null;
+if (is_array($prevData) && isset($prevData['sig'],$prevData['time'])) {
+    if ($prevData['sig'] === $orderSignature && (time() - (int)$prevData['time']) < 30) {
+        qlog('Duplicate blocked (signature)');
+        respond(['status'=>'duplicate','message'=>'Order already submitted. Please wait a moment.']);
+    }
+}
+@file_put_contents($sigPath, json_encode(['sig'=>$orderSignature,'time'=>time()]));
 
 // Insert order adaptively based on existing columns
 $cols = []; $placeholders = []; $types = ''; $values = [];
@@ -215,8 +258,8 @@ $add($fkColReal,'i',$userId);
 if(isset($orderCols['product_id'])) $add($orderCols['product_id'],'i',$legacyProdId);
 if(isset($orderCols['size'])) $add($orderCols['size'],'s',$legacySize);
 if(isset($orderCols['quantity'])) $add($orderCols['quantity'],'i',$legacyQty);
-if(isset($orderCols['ispartialpayment'])) $add($orderCols['ispartialpayment'],'i',$isPartial);
-if(isset($orderCols['totalamount'])) $add($orderCols['totalamount'],'s',$totalFormatted);
+if(isset($orderCols['ispartialpayment'])) $add($orderCols['ispartialpayment'],'i',$isPartial); else if(isset($orderCols['partial_payment'])) $add($orderCols['partial_payment'],'i',$isPartial);
+if(isset($orderCols['totalamount'])) $add($orderCols['totalamount'],'s',$totalFormatted); else if(isset($orderCols['total_amount'])) $add($orderCols['total_amount'],'s',$totalFormatted);
 // include partial_amount if orders table has a column for it
 if ($partialAmount !== null) {
     // common column names to check
@@ -225,11 +268,11 @@ if ($partialAmount !== null) {
         if (isset($orderCols[$c])) { $add($orderCols[$c],'s',$partialAmount); break; }
     }
 }
-if(isset($orderCols['orderstatus'])) $add($orderCols['orderstatus'],'s',$orderStatus);
-if(isset($orderCols['deliveryaddress'])) $add($orderCols['deliveryaddress'],'s',$userAddress);
-if(isset($orderCols['deliverystatus'])) $add($orderCols['deliverystatus'],'s',$deliveryStatus);
-if(isset($orderCols['phone_number'])) $add($orderCols['phone_number'],'s',$userPhone);
-if($createdColReal) $add($createdColReal,'s',$createdAt);
+if(isset($orderCols['orderstatus'])) $add($orderCols['orderstatus'],'s',$orderStatus); else if(isset($orderCols['order_status'])) $add($orderCols['order_status'],'s',$orderStatus);
+if(isset($orderCols['deliveryaddress'])) $add($orderCols['deliveryaddress'],'s',$userAddress); else if(isset($orderCols['delivery_address'])) $add($orderCols['delivery_address'],'s',$userAddress);
+if(isset($orderCols['deliverystatus'])) $add($orderCols['deliverystatus'],'s',$deliveryStatus); else if(isset($orderCols['delivery_status'])) $add($orderCols['delivery_status'],'s',$deliveryStatus);
+if(isset($orderCols['phone_number'])) $add($orderCols['phone_number'],'s',$userPhone); else if(isset($orderCols['phone'])) $add($orderCols['phone'],'s',$userPhone);
+if($createdColDetected) $add($createdColDetected,'s',$createdAt);
 
 if(empty($cols)) { qlog('No writable columns in orders table'); respond(['status'=>'error','message'=>'No writable columns found in orders table']); }
 $sql = 'INSERT INTO ' . ORDERS_TABLE . ' (' . implode(',', $cols) . ') VALUES (' . implode(',', $placeholders) . ')';
@@ -242,51 +285,58 @@ $orderId = $stmt->insert_id; $stmt->close();
 // Insert order_items for multi or (optional) single for future consistency
     if ($isMulti) {
     // Insert order_items; include designoption_id if the column exists
-    $orderItemsCols = [];
-    if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) { while($r=$resCols->fetch_assoc()){ $orderItemsCols[strtolower($r['Field'])]=$r['Field']; } $resCols->free(); }
-    $hasDesignInOrderItems = isset($orderItemsCols['designoption_id']) || isset($orderItemsCols['design_option_id']) || isset($orderItemsCols['design_id']);
-    if ($hasDesignInOrderItems) {
-        $colName = isset($orderItemsCols['designoption_id']) ? $orderItemsCols['designoption_id'] : (isset($orderItemsCols['design_option_id']) ? $orderItemsCols['design_option_id'] : $orderItemsCols['design_id']);
-        $insSql = "INSERT INTO order_items (order_id, product_id, size, quantity, line_price, {$colName}) VALUES (?,?,?,?,?,?)";
-        if ($ins = $conn->prepare($insSql)) {
-            foreach ($multiItems as $it) {
-                $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
-                $did = isset($it['designoption_id']) && $it['designoption_id'] ? (int)$it['designoption_id'] : null;
-                $ins->bind_param('iisisi', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice, $did);
-                $ins->execute();
+    // First, ensure order_items table exists; if not, skip gracefully
+    $hasOrderItems=false; if($chkOi=$conn->query("SHOW TABLES LIKE 'order_items'")){ $hasOrderItems = $chkOi->num_rows>0; $chkOi->free(); }
+    if ($hasOrderItems) {
+        $orderItemsCols = [];
+        if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) { while($r=$resCols->fetch_assoc()){ $orderItemsCols[strtolower($r['Field'])]=$r['Field']; } $resCols->free(); }
+        $hasDesignInOrderItems = isset($orderItemsCols['designoption_id']) || isset($orderItemsCols['design_option_id']) || isset($orderItemsCols['design_id']);
+        if ($hasDesignInOrderItems) {
+            $colName = isset($orderItemsCols['designoption_id']) ? $orderItemsCols['designoption_id'] : (isset($orderItemsCols['design_option_id']) ? $orderItemsCols['design_option_id'] : $orderItemsCols['design_id']);
+            $insSql = "INSERT INTO order_items (order_id, product_id, size, quantity, line_price, {$colName}) VALUES (?,?,?,?,?,?)";
+            if ($ins = $conn->prepare($insSql)) {
+                foreach ($multiItems as $it) {
+                    $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
+                    $did = isset($it['designoption_id']) && $it['designoption_id'] ? (int)$it['designoption_id'] : null;
+                    $ins->bind_param('iisisi', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice, $did);
+                    $ins->execute();
+                }
+                $ins->close();
             }
-            $ins->close();
-        }
-    } else {
-        if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
-            foreach ($multiItems as $it) {
-                $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
-                $ins->bind_param('iisis', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice);
-                $ins->execute();
+        } else {
+            if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
+                foreach ($multiItems as $it) {
+                    $linePrice = number_format($it['price'] * $it['quantity'], 2, '.', '');
+                    $ins->bind_param('iisis', $orderId, $it['product_id'], $it['size'], $it['quantity'], $linePrice);
+                    $ins->execute();
+                }
+                $ins->close();
             }
-            $ins->close();
         }
     }
 } else {
     // Optional: create matching single line (keeps future compatibility). Include designoption_id if exists in order_items
-    $orderItemsCols = [];
-    if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) { while($r=$resCols->fetch_assoc()){ $orderItemsCols[strtolower($r['Field'])]=$r['Field']; } $resCols->free(); }
-    $hasDesignInOrderItems = isset($orderItemsCols['designoption_id']) || isset($orderItemsCols['design_option_id']) || isset($orderItemsCols['design_id']);
-    if ($hasDesignInOrderItems) {
-        $colName = isset($orderItemsCols['designoption_id']) ? $orderItemsCols['designoption_id'] : (isset($orderItemsCols['design_option_id']) ? $orderItemsCols['design_option_id'] : $orderItemsCols['design_id']);
-        if ($ins = $conn->prepare("INSERT INTO order_items (order_id, product_id, size, quantity, line_price, {$colName}) VALUES (?,?,?,?,?,?)")) {
-            $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
-            $did = isset($multiItems[0]['designoption_id']) ? (int)$multiItems[0]['designoption_id'] : null;
-            $ins->bind_param('iisisi',$orderId,$product_id,$size,$quantity,$linePrice,$did);
-            $ins->execute();
-            $ins->close();
-        }
-    } else {
-        if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
-            $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
-            $ins->bind_param('iisis',$orderId,$product_id,$size,$quantity,$linePrice);
-            $ins->execute();
-            $ins->close();
+    $hasOrderItems=false; if($chkOi=$conn->query("SHOW TABLES LIKE 'order_items'")){ $hasOrderItems = $chkOi->num_rows>0; $chkOi->free(); }
+    if ($hasOrderItems) {
+        $orderItemsCols = [];
+        if ($resCols = $conn->query('SHOW COLUMNS FROM order_items')) { while($r=$resCols->fetch_assoc()){ $orderItemsCols[strtolower($r['Field'])]=$r['Field']; } $resCols->free(); }
+        $hasDesignInOrderItems = isset($orderItemsCols['designoption_id']) || isset($orderItemsCols['design_option_id']) || isset($orderItemsCols['design_id']);
+        if ($hasDesignInOrderItems) {
+            $colName = isset($orderItemsCols['designoption_id']) ? $orderItemsCols['designoption_id'] : (isset($orderItemsCols['design_option_id']) ? $orderItemsCols['design_option_id'] : $orderItemsCols['design_id']);
+            if ($ins = $conn->prepare("INSERT INTO order_items (order_id, product_id, size, quantity, line_price, {$colName}) VALUES (?,?,?,?,?,?)")) {
+                $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
+                $did = isset($multiItems[0]['designoption_id']) ? (int)$multiItems[0]['designoption_id'] : null;
+                $ins->bind_param('iisisi',$orderId,$product_id,$size,$quantity,$linePrice,$did);
+                $ins->execute();
+                $ins->close();
+            }
+        } else {
+            if ($ins = $conn->prepare('INSERT INTO order_items (order_id, product_id, size, quantity, line_price) VALUES (?,?,?,?,?)')) {
+                $linePrice = number_format(($price ?? 0) * $quantity, 2, '.', '');
+                $ins->bind_param('iisis',$orderId,$product_id,$size,$quantity,$linePrice);
+                $ins->execute();
+                $ins->close();
+            }
         }
     }
 }
@@ -317,12 +367,87 @@ if ($isMulti) {
     $redirect = 'profile.php#ordersPanel';
 }
 qlog('SUCCESS order_id='.$orderId.' redirect='.$redirect.' items=' . ($isMulti?count($multiItems):1) . ' partial='.$isPartial);
+// Insert initial payment row if method is cash (full) or gcash partial/paid amount provided
+$createdPaymentId = null; $receiptRelPath = null;
+// Discover payments table columns if it exists
+$hasPaymentsTable=false; if($chk=$conn->query("SHOW TABLES LIKE 'payments'")){ $hasPaymentsTable = $chk->num_rows>0; $chk->free(); }
+if($hasPaymentsTable){
+    $payCols=[]; if($pr=$conn->query('SHOW COLUMNS FROM payments')){ while($r=$pr->fetch_assoc()){ $payCols[strtolower($r['Field'])]=$r['Field']; } $pr->free(); }
+    $payOrderCol = $payCols['order_id'] ?? 'order_id';
+    $payCustCol  = $payCols['customer_id'] ?? ($payCols['user_id'] ?? 'customer_id');
+    $payAmtCol   = $payCols['payment_amount'] ?? ($payCols['amount'] ?? 'payment_amount');
+    $payMethodCol= $payCols['payment_method'] ?? ($payCols['method'] ?? 'payment_method');
+    $payStatusCol= $payCols['payment_status'] ?? ($payCols['status'] ?? 'payment_status');
+    $payDateCol  = $payCols['payment_date'] ?? ($payCols['date'] ?? 'payment_date');
+    // Optional receipt column discovery
+    $receiptCol  = $payCols['receipt_url'] ?? ($payCols['receipt'] ?? ($payCols['proof_image'] ?? null));
+    $insertPayment = false;
+    $initialStatus = 'Pending';
+    $initialAmount = 0.00;
+    if($paymentMethod==='cash'){
+        // For cash, we record a pending payment with amount 0 (will be updated when collected) OR full amount immediately if full payment
+        if($isPartial){
+            $initialStatus = 'Partial';
+            $initialAmount = ($partialAmount !== null) ? (float)$partialAmount : 0.00;
+        } else {
+            // Full cash payment will be recorded when actually paid; start as Pending
+            $initialStatus = 'Pending';
+            $initialAmount = 0.00;
+        }
+        $insertPayment = true;
+    } elseif($paymentMethod==='gcash') {
+        // If user provided a gcash paid amount treat as Partial (if not full) or Paid if equal to total
+        if($gcashPaid !== null){
+            $paidVal = (float)$gcashPaid;
+            $initialAmount = $paidVal;
+            if(abs($paidVal - (float)$totalFormatted) < 0.01){
+                $initialStatus='Paid';
+            } else {
+                $initialStatus='Partial';
+            }
+            $insertPayment = true;
+        }
+    }
+    // Handle receipt upload when gcash and file posted
+    if($paymentMethod==='gcash' && isset($_FILES['gcash_receipt']) && $_FILES['gcash_receipt']['error']===UPLOAD_ERR_OK){
+        $tmp = $_FILES['gcash_receipt']['tmp_name'];
+        $orig = $_FILES['gcash_receipt']['name'];
+        $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
+        if(!in_array($ext,['jpg','jpeg','png','webp','gif'])) $ext='jpg';
+        $payDir = __DIR__ . '/uploads/payments';
+        if(!is_dir($payDir)) @mkdir($payDir,0775,true);
+        $destFile = 'order_'.$orderId.'_'.uniqid().'_receipt.'.$ext;
+        $destPath = $payDir . '/' . $destFile;
+        if(@move_uploaded_file($tmp,$destPath)){
+            $receiptRelPath = 'uploads/payments/'.$destFile;
+        }
+    }
+    if($insertPayment){
+        $cols=[]; $ph=[]; $types=''; $vals=[];
+        $addP = function($col,$type,&$var) use (&$cols,&$ph,&$types,&$vals){ $cols[]=$col; $ph[]='?'; $types.=$type; $vals[]=&$var; };
+        $addP($payCustCol,'i',$userId);
+        $addP($payOrderCol,'i',$orderId);
+        $amtStr = number_format($initialAmount,2,'.',''); $addP($payAmtCol,'s',$amtStr);
+        $addP($payMethodCol,'s',$paymentMethod==='gcash' ? 'GCash' : 'Cash');
+        $addP($payStatusCol,'s',$initialStatus);
+        if($receiptCol && $receiptRelPath){ $addP($receiptCol,'s',$receiptRelPath); }
+        $sqlPay = 'INSERT INTO payments (' . implode(',', $cols) . ') VALUES (' . implode(',', $ph) . ')';
+        if($pst = $conn->prepare($sqlPay)){
+            $pst->bind_param($types, ...$vals);
+            if($pst->execute()){ $createdPaymentId = $pst->insert_id; }
+            $pst->close();
+        }
+    }
+}
 respond([
     'status'=>'ok',
     'order_id'=>$orderId,
     'redirect'=>$redirect,
     'multi'=>$isMulti,
     'items_count'=>$isMulti?count($multiItems):1,
-    'partial'=>$isPartial
+    'partial'=>$isPartial,
+    'payment_method'=>$paymentMethod,
+    'payment_created_id'=>$createdPaymentId,
+    'receipt_url'=>$receiptRelPath
 ]);
 ?>

@@ -263,6 +263,10 @@ function pd_first_image($imagesField) {
   <link rel="stylesheet" href="login.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
+<?php
+    // When a design has just been saved, prefer landing on the Start Your Order tab
+    $forceOrderTab = isset($_GET['designoption_id']) && ctype_digit((string)$_GET['designoption_id']) && ((int)$_GET['designoption_id']) > 0;
+?>
     <script>
         // Dynamic options from admin (products_sub)
         window.__pd_priceByCombo = <?php echo json_encode($priceByCombo, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
@@ -345,8 +349,7 @@ function pd_first_image($imagesField) {
                 initDefaults();
             }catch(e){ console.error('Option wiring failed', e); }
         });
-    </script>
-</script>
+        </script>
     <script>
   window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
@@ -509,10 +512,10 @@ function pd_first_image($imagesField) {
         <div class="product-text">
             <h2><?php echo htmlspecialchars($productName); ?></h2>
             <div class="tab-header">
-                <button class="tab-btn active" data-tab="description">Description</button>
-                <button class="tab-btn" data-tab="order">Start Your Order</button>
+                <button class="tab-btn <?= $forceOrderTab ? '' : 'active' ?>" data-tab="description">Description</button>
+                <button class="tab-btn <?= $forceOrderTab ? 'active' : '' ?>" data-tab="order">Start Your Order</button>
             </div>
-        <div class="tab-content" id="description">
+        <div class="tab-content" id="description"<?= $forceOrderTab ? ' hidden' : '' ?>>
             <div class="product-details">
                 <p class="product-description"><?php echo nl2br(htmlspecialchars($productRow['product_details'] ?? '')); ?></p>
             </div>
@@ -542,7 +545,7 @@ function pd_first_image($imagesField) {
             </div>
             <?php endif; ?>
         </div>
-    <div class="tab-content" id="order" hidden>
+    <div class="tab-content" id="order"<?= $forceOrderTab ? '' : ' hidden' ?>>
             <section class="product-detail-section">
                 <div class="order-step product-detail">
                     <h3>1. Product Detail</h3>
@@ -685,15 +688,20 @@ function pd_first_image($imagesField) {
                         Request Design
                     </button>
                 </div>
-                <p class="design-note">
-                    <strong>Note:</strong> A digital proof of your design will be sent to your registered account. Please review and approve it to proceed with printing.
-                </p>
                 <input type="hidden" name="design-option" id="design-option" value="" />
                 <?php
                     // If page was opened with a saved designoption id, render a small preview area
                     $queriedDesignOption = isset($_GET['designoption_id']) ? (int)$_GET['designoption_id'] : null;
                     if ($queriedDesignOption && isset($conn) && !$conn->connect_error) {
-                        $dsql = 'SELECT do.designoption_id, do.designfilepath, do.request_design, cu.color, cu.note FROM designoption do LEFT JOIN customization cu ON cu.customization_id = do.customization_id WHERE do.designoption_id = ? LIMIT 1';
+                        // Detect optional columns on customization to avoid Unknown column errors (e.g., 'note')
+                        $cCols = [];
+                        if ($cRes = $conn->query('SHOW COLUMNS FROM customization')) {
+                            while ($cr = $cRes->fetch_assoc()) { $cCols[strtolower($cr['Field'])] = $cr['Field']; }
+                            $cRes->free();
+                        }
+                        $selColor = isset($cCols['color']) ? ('cu.' . $cCols['color'] . ' AS color') : ("'' AS color");
+                        $selNote  = isset($cCols['note'])  ? ('cu.' . $cCols['note']  . ' AS note')  : ("'' AS note");
+                        $dsql = 'SELECT do.designoption_id, do.designfilepath, do.request_design, ' . $selColor . ', ' . $selNote . ' FROM designoption do LEFT JOIN customization cu ON cu.customization_id = do.customization_id WHERE do.designoption_id = ? LIMIT 1';
                         if ($dstmt = $conn->prepare($dsql)) {
                             $dstmt->bind_param('i', $queriedDesignOption);
                             if ($dstmt->execute()) {
@@ -901,7 +909,7 @@ function pd_first_image($imagesField) {
     <script src="OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
     <script src="sim.js"></script>
-</script>
+    
     <script>
         // Wire variant selection to update hidden total and visible price display
         document.addEventListener('DOMContentLoaded', function(){

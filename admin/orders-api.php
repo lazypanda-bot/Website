@@ -24,16 +24,25 @@ if ($action === 'list') {
     $priceExpr = $pPriceCol ? ('p.'.$pPriceCol.' AS price') : '0 AS price';
     $joinProducts = ($productsTableExists && $pPk) ? (' LEFT JOIN products p ON p.'.$pPk.' = o.product_id ') : ' ';
 
-    // AmountPaid: sum of payments for order (Paid or Partial) for display. If payments table large, consider separate endpoint / LIMIT.
-    // Select using snake_case DB columns but alias to legacy camelCase keys for client-side compatibility
+    // Discover customization table & columns (color/note may differ or be absent)
+    $hasCustomization = false; $custCols = [];
+    if ($tc = $conn->query("SHOW TABLES LIKE 'customization'")) { if($tc->num_rows>0) { $hasCustomization=true; } $tc->close(); }
+    if ($hasCustomization) {
+        if ($cc = $conn->query('SHOW COLUMNS FROM customization')) { while($cr=$cc->fetch_assoc()){ $custCols[strtolower($cr['Field'])]=$cr['Field']; } $cc->close(); }
+    }
+    $custColorCol = null; foreach(['color','design_color','colour'] as $c){ if(isset($custCols[$c])) { $custColorCol=$custCols[$c]; break; } }
+    $custNoteCol = null; foreach(['note','notes','design_note','description'] as $c){ if(isset($custCols[$c])) { $custNoteCol=$custCols[$c]; break; } }
+    $designColorExpr = $custColorCol ? ('cu.'.$custColorCol.' AS design_color') : "'' AS design_color";
+    $designNoteExpr  = $custNoteCol ? ('cu.'.$custNoteCol.' AS design_note')  : "'' AS design_note";
+    $joinCustomization = $hasCustomization ? ' LEFT JOIN customization cu ON cu.customization_id = do.customization_id ' : ' ';
+    // AmountPaid: sum of payments for order (Paid or Partial) for display.
     $sql = "SELECT o.order_id, o.product_id, o.customer_id, o.size, o.quantity, o.order_status AS OrderStatus, o.delivery_status AS DeliveryStatus, o.total_amount AS TotalAmount, o.partial_payment AS isPartialPayment, o.created_at".$completedFrag.
         ", c.".ACCOUNT_NAME_COL." AS customer_name, c.".ACCOUNT_PHONE_COL." AS phone, c.".ACCOUNT_ADDRESS_COL." AS address, $nameExpr, $priceExpr,
-         do.designoption_id, do.designfilepath, cu.color AS design_color, cu.note AS design_note,
+         do.designoption_id, do.designfilepath, $designColorExpr, $designNoteExpr,
          (SELECT COALESCE(SUM(py.payment_amount),0) FROM payments py WHERE py.order_id = o.order_id AND py.payment_status IN ('Paid','Partial')) AS AmountPaid
          FROM orders o
          LEFT JOIN ".ACCOUNT_TABLE." c ON c.".ACCOUNT_ID_COL." = o.customer_id" . $joinProducts . "
-         LEFT JOIN designoption do ON do.designoption_id = o.designoption_id
-         LEFT JOIN customization cu ON cu.customization_id = do.customization_id
+         LEFT JOIN designoption do ON do.designoption_id = o.designoption_id" . $joinCustomization . "
          ORDER BY o.created_at DESC";
     $rows = [];
     try {

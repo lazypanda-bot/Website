@@ -332,12 +332,18 @@ if (firstActive) {
     if (tabEl) { tabEl.hidden = false; tabEl.style.display = 'block'; }
 }
 // If URL contains #order, open that tab automatically
-if (window.location && window.location.hash && window.location.hash.toLowerCase().includes('order')) {
-    const orderBtn = document.querySelector('.tab-btn[data-tab="order"]');
-    if (orderBtn) {
-        try { orderBtn.click(); } catch (e) { console.warn('Failed to auto-open order tab', e); }
-    }
+function activateOrderTabIfNeeded(){
+    try {
+        const hasHashOrder = window.location && window.location.hash && window.location.hash.toLowerCase().includes('order');
+        const urlParams = new URLSearchParams(window.location.search || '');
+        const hasDesignOptionId = urlParams.has('designoption_id');
+        if (hasHashOrder || hasDesignOptionId) {
+            const orderBtn = document.querySelector('.tab-btn[data-tab="order"]');
+            if (orderBtn) { orderBtn.click(); }
+        }
+    } catch(e){ console.warn('activateOrderTabIfNeeded failed', e); }
 }
+activateOrderTabIfNeeded();
 const modal = document.getElementById('viewerModal');
 if (modal) {
     modal.style.display = 'flex';

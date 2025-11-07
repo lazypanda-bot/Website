@@ -158,7 +158,7 @@ require_once '../database.php';
 					<label>Description</label>
 					<textarea name="product_details" id="product_details" rows="3"></textarea>
 				</div>
-				<!-- <div class="form-row">
+				<div class="form-row">
 					<label>Add image/s</label>
 					<div class="file-chooser">
 						<label class="file-btn">Add image/s
@@ -168,9 +168,9 @@ require_once '../database.php';
 					</div>
 					<div id="imagePreview" class="image-preview"></div>
 				</div>
-				<div class="form-row">
+				<!-- <div class="form-row">
 					<label>Price (₱)</label>
-					<input type="number" name="price" id="price" min="0" step="0.01" required />
+					<input type="number" name="price" id="price" min="0" step="0.01" />
 				</div> -->
 				<div class="form-actions">
 					<button type="submit" class="add-btn" id="saveProductBtn">Save</button>

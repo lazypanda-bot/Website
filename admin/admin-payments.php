@@ -65,10 +65,12 @@ require_once '../database.php';
                             <th>ID</th>
                             <th>Customer</th>
                             <th>Date</th>
+                            <th>Payment Method</th>
+                            <th>Image</th>
+                            <th>Payment Type</th>
                             <th>Total Amount</th>
                             <th>Amount Paid</th>
                             <th>Balance</th>
-                            <th>Payment Method</th>
                             <th>Payment Status</th>
                         </tr>
                     </thead>
