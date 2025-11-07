@@ -1,9 +1,14 @@
 <?php
 // Returns JSON list of cart items for the logged in user (DB-backed cart)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Production-safe: emit only JSON; log errors to file instead of mixing into output
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
+// Error logging
+if (!is_dir(__DIR__ . '/logs')) { @mkdir(__DIR__ . '/logs', 0777, true); }
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/logs/cart_items_error.log');
 require_once 'database.php';
 session_start();
 require_once 'includes/auth.php';
@@ -32,11 +37,13 @@ if (!defined('CART_TABLE')) {
     define('CART_COLOR_COL', $colorCol);
 }
 
-// Attempt to pull product name & price columns adaptively
-$productNameCol = 'name';
-$productPriceCol = 'price';
+// Attempt to pull product name & price columns adaptively; tolerate missing columns
+$productNameCol = null;
+$productPriceCol = null;
 $productCols = [];
+$productsTableExists = false;
 if ($res = $conn->query('SHOW COLUMNS FROM products')) {
+    $productsTableExists = true;
     while ($r = $res->fetch_assoc()) { $productCols[strtolower($r['Field'])] = $r['Field']; }
     $res->free();
 }
@@ -50,9 +57,11 @@ $sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id,
 // The above join simplifies to ON p.<product_id candidate> not implemented (no products PK mapping). We just join on product_id if exists.
 // Rebuild with correct join using product FK detection.
 
-// Detect product PK for join
-$productPk = 'id';
-foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($productCols[$c])) { $productPk = $productCols[$c]; break; } }
+// Detect product PK for join (only if products table exists)
+$productPk = null;
+if ($productsTableExists) {
+    foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($productCols[$c])) { $productPk = $productCols[$c]; break; } }
+}
 
 $designColSelect = '';
 // If cart table has a designoption_id (or similar) column, include it and try to pull design metadata
@@ -74,13 +83,18 @@ if ($designColName) {
     $designSelect .= ', cu.color AS design_color, cu.note AS design_meta, d.request_design AS design_request, d.designfilepath AS designfilepath';
 }
 
-$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", p.".$productNameCol." AS name, p.".$productPriceCol." AS price
-    FROM ".CART_TABLE." c
-    LEFT JOIN products p ON p.".$productPk." = c.".CART_PRODUCT_FK_COL." " . $joinSql . " WHERE c.".CART_USER_FK_COL."=?";
+// Build SELECT expressions with safe fallbacks
+$nameExpr = $productNameCol ? ('p.'.$productNameCol) : "''";
+$priceExpr = $productPriceCol ? ('p.'.$productPriceCol) : '0';
+$joinPart = ($productsTableExists && $productPk) ? (' LEFT JOIN products p ON p.'.$productPk.' = c.'.CART_PRODUCT_FK_COL.' ') : ' ';
+
+$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", $nameExpr AS name, $priceExpr AS price
+    FROM ".CART_TABLE." c" . $joinPart . $joinSql . " WHERE c.".CART_USER_FK_COL."=? ORDER BY c.".CART_PK_COL." DESC LIMIT 200";
 
 $stmt = $conn->prepare($sql);
+if(!$stmt){ echo json_encode(['items'=>[]]); exit; }
 $stmt->bind_param('i', $userId);
-$stmt->execute();
+if(!$stmt->execute()){ $stmt->close(); echo json_encode(['items'=>[]]); exit; }
 $res = $stmt->get_result();
 $items = [];
 while ($row = $res->fetch_assoc()) {

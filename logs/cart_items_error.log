@@ -1,0 +1,15 @@
+[07-Nov-2025 04:00:42 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'p.price' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:86
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(86): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 86
+[07-Nov-2025 04:01:06 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'p.price' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:86
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(86): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 86
+[07-Nov-2025 04:01:10 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'p.price' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:86
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(86): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 86

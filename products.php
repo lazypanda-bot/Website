@@ -9,25 +9,73 @@ require_once __DIR__ . '/includes/auth.php';
 $searchTerm = isset($_GET['q']) ? trim($_GET['q']) : '';
 $isSearching = ($searchTerm !== '');
 
+// Inspect available product columns to adapt to differing schemas
+$pcols = [];
+if ($conn && !$conn->connect_error) {
+    if ($cr = $conn->query("SHOW COLUMNS FROM products")) {
+        while ($c = $cr->fetch_assoc()) { $pcols[strtolower($c['Field'])] = $c['Field']; }
+        $cr->free();
+    }
+}
+$hasProductName = isset($pcols['product_name']) || isset($pcols['name']);
+$hasPriceCol    = isset($pcols['price']);
+$hasSvcType     = isset($pcols['service_type']);
+$hasSvcId       = isset($pcols['service_id']);
+$hasImagesCol   = isset($pcols['images']);
+$hasCreatedAt   = isset($pcols['created_at']);
+
 // Fetch products grouped by service_type (filtered if searching)
 $productsByCategory = [];
 $queryError = null;
 $servicesList = [];
 $totalMatches = 0;
 if ($conn && !$conn->connect_error) {
+    // If service_type text is missing but a services table exists, build id->name map
+    $serviceNameById = [];
+    if (!$hasSvcType && $hasSvcId) {
+        if ($chk = $conn->query("SHOW TABLES LIKE 'services'")) {
+            if ($chk->num_rows > 0) {
+                if ($rs = $conn->query("SELECT service_id, name FROM services")) {
+                    while ($s = $rs->fetch_assoc()) { $serviceNameById[(string)$s['service_id']] = $s['name']; }
+                    $rs->free();
+                }
+            }
+            $chk->free();
+        }
+    }
     if ($isSearching) {
         // Prepared statement for search to avoid injection & allow partial matching
-        $sqlProducts = "SELECT product_id, product_name, price, service_type, images, created_at
-                        FROM products
-                        WHERE product_name LIKE ? OR service_type LIKE ?
-                        ORDER BY created_at DESC";
+        $parts = [];
+        $parts[] = 'product_id';
+        $parts[] = isset($pcols['product_name']) ? 'product_name' : (isset($pcols['name']) ? 'name AS product_name' : "'' AS product_name");
+        $parts[] = $hasPriceCol ? 'price' : '0 AS price';
+        if ($hasSvcType) $parts[] = 'service_type';
+        elseif ($hasSvcId) $parts[] = 'service_id AS service_type';
+        else $parts[] = "'' AS service_type";
+        $parts[] = $hasImagesCol ? 'images' : "'' AS images";
+        if ($hasCreatedAt) $parts[] = 'created_at';
+        $select = implode(', ', $parts);
+        $orderBy = $hasCreatedAt ? 'created_at DESC' : 'product_id DESC';
+        // Build WHERE dynamically
+        if ($hasSvcType) {
+            $sqlProducts = "SELECT $select FROM products WHERE product_name LIKE ? OR service_type LIKE ? ORDER BY $orderBy";
+        } else {
+            $sqlProducts = "SELECT $select FROM products WHERE product_name LIKE ? ORDER BY $orderBy";
+        }
         if ($stmt = $conn->prepare($sqlProducts)) {
             $like = '%' . $searchTerm . '%';
-            $stmt->bind_param('ss', $like, $like);
+            if ($hasSvcType) $stmt->bind_param('ss', $like, $like); else $stmt->bind_param('s', $like);
             if ($stmt->execute()) {
                 if ($res = $stmt->get_result()) {
                     while ($row = $res->fetch_assoc()) {
-                        $cat = trim($row['service_type'] ?? '');
+                        // Normalize category name
+                        $catRaw = (string)($row['service_type'] ?? '');
+                        if (!$hasSvcType && $hasSvcId) {
+                            $cat = isset($serviceNameById[$catRaw]) ? $serviceNameById[$catRaw] : 'Uncategorized';
+                        } else {
+                            $cat = trim($catRaw);
+                            if ($cat === '') $cat = 'Uncategorized';
+                        }
                         if ($cat === '') $cat = 'Uncategorized';
                         if (!isset($productsByCategory[$cat])) { $productsByCategory[$cat] = []; }
                         $productsByCategory[$cat][] = $row;
@@ -69,11 +117,27 @@ if ($conn && !$conn->connect_error) {
         }
     } else {
         // Non-search: load all products & ensure service categories appear
-        $sqlProducts = "SELECT product_id, product_name, price, service_type, images, created_at FROM products ORDER BY created_at DESC";
+        $parts = [];
+        $parts[] = 'product_id';
+        $parts[] = isset($pcols['product_name']) ? 'product_name' : (isset($pcols['name']) ? 'name AS product_name' : "'' AS product_name");
+        $parts[] = $hasPriceCol ? 'price' : '0 AS price';
+        if ($hasSvcType) $parts[] = 'service_type';
+        elseif ($hasSvcId) $parts[] = 'service_id AS service_type';
+        else $parts[] = "'' AS service_type";
+        $parts[] = $hasImagesCol ? 'images' : "'' AS images";
+        if ($hasCreatedAt) $parts[] = 'created_at';
+        $orderBy = $hasCreatedAt ? 'created_at DESC' : 'product_id DESC';
+        $sqlProducts = "SELECT " . implode(', ', $parts) . " FROM products ORDER BY $orderBy";
         $q = $conn->query($sqlProducts);
         if ($q instanceof mysqli_result) {
             while ($row = $q->fetch_assoc()) {
-                $cat = trim($row['service_type'] ?? '');
+                $catRaw = (string)($row['service_type'] ?? '');
+                if (!$hasSvcType && $hasSvcId) {
+                    $cat = isset($serviceNameById[$catRaw]) ? $serviceNameById[$catRaw] : 'Uncategorized';
+                } else {
+                    $cat = trim($catRaw);
+                    if ($cat === '') $cat = 'Uncategorized';
+                }
                 if ($cat === '') $cat = 'Uncategorized';
                 if (!isset($productsByCategory[$cat])) { $productsByCategory[$cat] = []; }
                 $productsByCategory[$cat][] = $row;
@@ -254,7 +318,7 @@ function firstImage($imagesField) {
                             $img = htmlspecialchars(firstImage($p['images'] ?? ''));
                             $nameEsc = htmlspecialchars($p['product_name']);
                             // No highlighting while searching per request
-                            $priceEsc = htmlspecialchars($p['price']);
+                            // Price hidden per request; keep code path but do not render price
                             $id = (int)$p['product_id'];
                             echo '<div class="service-card">';
                             echo '<a href="product-details.php?id=' . $id . '">';
@@ -262,7 +326,7 @@ function firstImage($imagesField) {
                             echo '<img src="' . $img . '" alt="' . strip_tags($nameEsc) . '" class="service-img" onerror="this.onerror=null;this.src=\'img/logo.png\';">';
                             echo '</a>';
                             echo '<h4>' . $nameEsc . '</h4>';
-                            echo '<div class="service-price">₱' . $priceEsc . '</div>';
+                            // Price tag removed from listing card
                             echo '</div>';
                         }
                         echo '</div>';

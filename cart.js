@@ -121,49 +121,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let subtotal=0;
+    const rows = [];
     grouped.forEach((p,idx)=>{
         const price = parseFloat(p.price||0);
         const line  = price * p.quantity;
         subtotal += line;
-            if(cartItemsContainer){
-            const idAttr = p.id ? `data-id="${p.id}"` : '';
-            // Build a small preview thumbnail if available. Normalize paths that
-            // may be saved as filesystem paths (Windows backslashes or full local
-            // paths) into web-relative `uploads/...` URLs so the browser can load them.
-            let designHtml = '';
-            try {
-                function resolveDesignSrc(item) {
-                    // prefer explicit data URL
-                    if (item.design_png && String(item.design_png).startsWith('data:')) return item.design_png;
-                    const candidates = [item.designfilepath, item.design_file, item.designpath, item.design];
-                    for (let c of candidates) {
-                        if (!c) continue;
-                        let s = String(c).trim();
-                        if (!s) continue;
-                        // already a usable url/data or absolute path
-                        if (s.startsWith('data:') || /^https?:\/\//i.test(s) || s.startsWith('/')) return s;
-                        // normalize backslashes -> forward slashes
-                        s = s.replace(/\\/g, '/').replace(/\\/g, '/').replace(/\\/g, '/');
-                        // find uploads/ segment and return the relative path from there
-                        const m = s.match(/(uploads\/.*)/i);
-                        if (m && m[1]) return m[1].replace(/\\/g, '/');
-                        // fallback: if it already contains 'uploads' anywhere, return that substring
-                        const idx = s.toLowerCase().indexOf('uploads/');
-                        if (idx !== -1) return s.slice(idx).replace(/\\/g, '/');
-                        // otherwise return the raw string (may still work if it's already web-relative)
-                        return s;
-                    }
-                    return null;
+        if(!cartItemsContainer) return;
+        const idAttr = p.id ? `data-id="${p.id}"` : '';
+        // Build a small preview thumbnail if available. Normalize paths to web-relative.
+        let designHtml = '';
+        try {
+            function resolveDesignSrc(item) {
+                if (item.design_png && String(item.design_png).startsWith('data:')) return item.design_png;
+                const candidates = [item.designfilepath, item.design_file, item.designpath, item.design];
+                for (let c of candidates) {
+                    if (!c) continue;
+                    let s = String(c).trim();
+                    if (!s) continue;
+                    if (s.startsWith('data:') || /^https?:\/\//i.test(s) || s.startsWith('/')) return s;
+                    s = s.replace(/\\/g, '/');
+                    const m = s.match(/(uploads\/.*)/i);
+                    if (m && m[1]) return m[1].replace(/\\/g, '/');
+                    const i = s.toLowerCase().indexOf('uploads/');
+                    if (i !== -1) return s.slice(i).replace(/\\/g, '/');
+                    return s;
                 }
+                return null;
+            }
+            const src = resolveDesignSrc(p);
+            if (src) {
+                const safe = escapeHtml(src);
+                designHtml = `<div class="cart-thumb"><img src="${safe}" alt="design" loading="lazy" decoding="async" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-right:8px;"/></div>`;
+            }
+        } catch(e){ console.warn('Failed to build design preview', e); designHtml = ''; }
 
-                const src = resolveDesignSrc(p);
-                if (src) {
-                    const safe = escapeHtml(src);
-                    designHtml = `<div class="cart-thumb"><img src="${safe}" alt="design" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-right:8px;"/></div>`;
-                }
-            } catch(e){ console.warn('Failed to build design preview', e); designHtml = ''; }
-
-            cartItemsContainer.innerHTML += `
+        rows.push(`
             <div class="cart-item cart-item-card" data-line-index="${idx}">
                 <label class="cart-item-label">
                     <input type="checkbox" class="select-cart-item" checked data-key="${getKey(p)}" ${idAttr} />
@@ -175,14 +167,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label for="qty_${idx}" class="qty-label">QTY</label>
                     <input id="qty_${idx}" type="number" class="qty-input" min="1" value="${p.quantity}" data-key="${getKey(p)}" ${idAttr} />
                 </div>
-                <p>Price: ${price.toFixed(2)} each</p>
-                <p><strong>Subtotal: ${line.toFixed(2)}</strong></p>
+                <p>Price: ₱${price.toFixed(2)} each</p>
+                <p><strong>Subtotal: ₱${line.toFixed(2)}</strong></p>
                 <div class="cart-item-actions">
                     <button class="delete-cart-item" data-key="${getKey(p)}" ${idAttr}><i class="fa fa-trash"></i> Delete</button>
               </div>
-          </div>`;
-        }
+          </div>`);
     });
+
+    if(cartItemsContainer) cartItemsContainer.innerHTML = rows.join('');
 
     if(cartSummary && cartSummary.querySelector('h3')) cartSummary.querySelector('h3').textContent = `Total: ₱${subtotal.toFixed(2)}`;
     if(orderSummaryDiv) orderSummaryDiv.innerHTML = grouped.map(g=>`<div class="order-summary-line"><strong>${g.name}</strong> (${g.size}) x${g.quantity} - ₱${(parseFloat(g.price||0)*g.quantity).toFixed(2)}</div>`).join('') + `<div class="order-summary-subtotal">Subtotal: ₱${subtotal.toFixed(2)}</div>`;

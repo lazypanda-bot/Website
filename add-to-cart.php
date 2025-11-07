@@ -55,7 +55,12 @@ if ($size === '')  { $size = 'Default'; }
 if ($color === '') { $color = 'Standard'; }
 
 // Verify product exists (prevents foreign key failure)
-$prodCheck = $conn->prepare('SELECT 1 FROM products WHERE product_id = ? LIMIT 1');
+// Detect products PK column adaptively and verify existence
+$productCols = [];
+if ($resPC = $conn->query('SHOW COLUMNS FROM products')) { while($r=$resPC->fetch_assoc()){ $productCols[strtolower($r['Field'])] = $r['Field']; } $resPC->free(); }
+$productPk = 'product_id'; foreach(['product_id','id','prod_id','products_id'] as $c){ if(isset($productCols[$c])) { $productPk = $productCols[$c]; break; } }
+$sqlCheck = 'SELECT 1 FROM products WHERE ' . $productPk . ' = ? LIMIT 1';
+$prodCheck = $conn->prepare($sqlCheck);
 if ($prodCheck) {
     $prodCheck->bind_param('i', $product_id);
     $prodCheck->execute();

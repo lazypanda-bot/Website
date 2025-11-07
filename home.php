@@ -37,7 +37,7 @@
                     FROM products p
                     JOIN product_images pi ON pi.product_id = p.product_id
                     WHERE TRIM(p.service_type) = s.name
-                    ORDER BY p.product_id DESC, pi.image_id DESC
+                    ORDER BY p.product_id DESC
                     LIMIT 1
                 ) AS sample_images
                 FROM services s

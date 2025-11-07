@@ -113,18 +113,114 @@ if (isset($_GET['debug_products'])) {
     exit;
 }
 
+// Load product sub-options (Type/Size/Attribute) from products_sub to mirror admin
+$typesOptions = [];
+$sizesOptions = [];
+$attrOptions = [];
+$priceByType = [];
+$priceBySize = [];
+$priceByAttr = [];
+$priceByCombo = [];
+if (!$productNotFound && isset($conn) && !$conn->connect_error) {
+    // Detect products_sub table and columns
+    $subsExists = false; $subCols = [];
+    if ($cols = $conn->query("SHOW COLUMNS FROM products_sub")) {
+        $subsExists = true;
+        while ($c = $cols->fetch_assoc()) { $subCols[strtolower($c['Field'])] = $c['Field']; }
+        $cols->free();
+    }
+    if ($subsExists) {
+        $cProductId = $subCols['product_id'] ?? 'product_id';
+        $cKind      = $subCols['kind'] ?? 'kind';
+        $cValue     = $subCols['value'] ?? 'value';
+        $cPrice     = $subCols['price'] ?? 'price';
+        $cTypes     = $subCols['types'] ?? null;
+        $cSizes     = $subCols['sizes'] ?? null;
+        $cAttrs     = $subCols['attributes'] ?? ($subCols['attribute'] ?? null);
+
+        $sql = "SELECT $cKind AS kind, $cValue AS value, IFNULL($cPrice,0) AS price";
+        if ($cTypes) $sql .= ", $cTypes AS types"; else $sql .= ", '' AS types";
+        if ($cSizes) $sql .= ", $cSizes AS sizes"; else $sql .= ", '' AS sizes";
+        if ($cAttrs) $sql .= ", $cAttrs AS attributes"; else $sql .= ", '' AS attributes";
+        $sql .= " FROM products_sub WHERE $cProductId = ?";
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param('i', $productId);
+            if ($stmt->execute()) {
+                $res = $stmt->get_result();
+                while ($row = $res->fetch_assoc()) {
+                    $k = strtolower(trim((string)$row['kind']));
+                    $v = trim((string)$row['value']);
+                    $p = is_null($row['price']) ? 0 : (float)$row['price'];
+                    $t = trim((string)$row['types']);
+                    $s = trim((string)$row['sizes']);
+                    $a = trim((string)$row['attributes']);
+
+                    // Collect option lists by kind
+                    if ($k === 'type' && $v !== '') { $typesOptions[] = $v; if ($p > 0) $priceByType[$v] = $p; }
+                    if ($k === 'size' && $v !== '') { $sizesOptions[] = $v; if ($p > 0) $priceBySize[$v] = $p; }
+                    if (($k === 'attribute' || $k === 'attributes') && $v !== '') { $attrOptions[] = $v; if ($p > 0) $priceByAttr[$v] = $p; }
+
+                    // If wide columns are present, record combo pricing (partial or full)
+                    if ($t !== '' || $s !== '' || $a !== '') {
+                        $ckey = strtolower($t) . '|' . strtolower($s) . '|' . strtolower($a);
+                        if ($p > 0) $priceByCombo[$ckey] = $p;
+                        // also merge into option pools
+                        if ($t !== '') $typesOptions[] = $t;
+                        if ($s !== '') $sizesOptions[] = $s;
+                        if ($a !== '') $attrOptions[] = $a;
+                    }
+                }
+                $res->free();
+            }
+            $stmt->close();
+        }
+
+        // Dedupe while preserving order
+        $typesOptions = array_values(array_unique($typesOptions));
+        $sizesOptions = array_values(array_unique($sizesOptions));
+        $attrOptions  = array_values(array_unique($attrOptions));
+    }
+}
+
 // Fetch related products (same service_type) if available
 $relatedProducts = [];
-if (!$productNotFound && isset($productRow['service_type']) && $productRow['service_type'] !== '') {
-    if ($stmtRel = $conn->prepare("SELECT product_id, product_name, price, images FROM products WHERE service_type = ? AND product_id <> ? ORDER BY created_at DESC LIMIT 8")) {
-        $svc = $productRow['service_type'];
-        $pid = $productId;
-        $stmtRel->bind_param('si', $svc, $pid);
-        if ($stmtRel->execute()) {
-            $resRel = $stmtRel->get_result();
-            while ($r = $resRel->fetch_assoc()) { $relatedProducts[] = $r; }
+// Detect service_type/service_id and build a resilient related-products query
+if (!$productNotFound && $productsTableExists) {
+    // Extend detected product columns with service columns and created_at
+    $serviceTypeCol = null; $serviceIdCol = null; $createdAtCol = null;
+    if ($colsRes2 = $conn->query("SHOW COLUMNS FROM products")) {
+        $available2 = [];
+        while ($cRow2 = $colsRes2->fetch_assoc()) { $available2[strtolower($cRow2['Field'])] = $cRow2['Field']; }
+        $colsRes2->free();
+        foreach(['service_type','service','category','type'] as $c){ if(isset($available2[$c])) { $serviceTypeCol = $available2[$c]; break; } }
+        foreach(['service_id','serviceid','sid'] as $c){ if(isset($available2[$c])) { $serviceIdCol = $available2[$c]; break; } }
+        foreach(['created_at','createdat','date_created','createdon'] as $c){ if(isset($available2[$c])) { $createdAtCol = $available2[$c]; break; } }
+    }
+
+    $whereCol = null; $whereType = null; $whereVal = null;
+    if ($serviceTypeCol && isset($productRow[$serviceTypeCol]) && $productRow[$serviceTypeCol] !== '') {
+        $whereCol = $serviceTypeCol; $whereType = 's'; $whereVal = (string)$productRow[$serviceTypeCol];
+    } elseif ($serviceIdCol && isset($productRow[$serviceIdCol])) {
+        $whereCol = $serviceIdCol; $whereType = 'i'; $whereVal = (int)$productRow[$serviceIdCol];
+    }
+
+    if ($whereCol) {
+        // Build SELECT with aliases so downstream rendering can use consistent keys
+        $selId = $productIdCol . ' AS product_id';
+        $selName = ($productNameCol ? ($productNameCol . ' AS product_name') : ("'' AS product_name"));
+        $selPrice = ($productPriceCol ? ($productPriceCol . ' AS price') : ('0 AS price'));
+        $selImages = ($productImagesCol ? ($productImagesCol . ' AS images') : ("'' AS images"));
+        $order = $createdAtCol ? ($createdAtCol . ' DESC') : ($productIdCol . ' DESC');
+        $sqlRel = "SELECT $selId, $selName, $selPrice, $selImages FROM products WHERE $whereCol = ? AND $productIdCol <> ? ORDER BY $order LIMIT 8";
+        if ($stmtRel = $conn->prepare($sqlRel)) {
+            if ($whereType === 's') { $stmtRel->bind_param('si', $whereVal, $productId); }
+            else { $stmtRel->bind_param('ii', $whereVal, $productId); }
+            if ($stmtRel->execute()) {
+                $resRel = $stmtRel->get_result();
+                while ($r = $resRel->fetch_assoc()) { $relatedProducts[] = $r; }
+            }
+            $stmtRel->close();
         }
-        $stmtRel->close();
     }
 }
 
@@ -167,7 +263,91 @@ function pd_first_image($imagesField) {
   <link rel="stylesheet" href="login.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 </head>
-<script>
+    <script>
+        // Dynamic options from admin (products_sub)
+        window.__pd_priceByCombo = <?php echo json_encode($priceByCombo, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+        window.__pd_priceByType  = <?php echo json_encode($priceByType, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+        window.__pd_priceBySize  = <?php echo json_encode($priceBySize, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+        window.__pd_priceByAttr  = <?php echo json_encode($priceByAttr, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+        window.__pd_defaults = {
+            type: <?php echo json_encode($typesOptions[0] ?? ''); ?>,
+            size: <?php echo json_encode($sizesOptions[0] ?? ''); ?>,
+            attribute: <?php echo json_encode($attrOptions[0] ?? ''); ?>,
+            basePrice: <?php echo json_encode((float)($productPrice ?? 0)); ?>
+        };
+    </script>
+    <script>
+        // Price calculation and form sync for Type/Size/Attribute
+        document.addEventListener('DOMContentLoaded', function(){
+            try{
+                var typeSel = document.getElementById('typeSelect');
+                var sizeSel = document.getElementById('sizeSelect');
+                var attrSel = document.getElementById('attrSelect');
+                var hTypeF = document.getElementById('form_type');
+                var hSizeF = document.getElementById('form_size');
+                var hAttrF = document.getElementById('form_attribute');
+                var hTypeC = document.getElementById('cart_type');
+                var hSizeC = document.getElementById('cart_size');
+                var hAttrC = document.getElementById('cart_attribute');
+                var hColorF = document.getElementById('form_color');
+                var hColorC = document.getElementById('cart_color');
+                var priceBox = document.querySelector('.price-box');
+                var priceAmountEl = priceBox ? priceBox.querySelector('.amount') : null;
+                var buyBtn = document.querySelector('.buy-btn');
+
+                function val(el){ return (el && el.value) ? el.value.trim() : ''; }
+
+                function computePrice(t, s, a){
+                    var pBase = (window.__pd_defaults && window.__pd_defaults.basePrice) ? parseFloat(window.__pd_defaults.basePrice)||0 : 0;
+                    t = (t||'').toLowerCase(); s = (s||'').toLowerCase(); a = (a||'').toLowerCase();
+                    var combo = window.__pd_priceByCombo || {};
+                    var key = t+'|'+s+'|'+a;
+                    if (combo[key] != null) return parseFloat(combo[key])||0;
+                    // Try partial keys in priority order
+                    var partials = [ t+'|'+s+'|', t+'||'+a, '|'+s+'|'+a, t+'||', '|'+s+'|', '||'+a ];
+                    for (var i=0;i<partials.length;i++){ var k=partials[i]; if (combo[k]!=null) return parseFloat(combo[k])||0; }
+                    // Fallback to per-kind pricing
+                    if (t && window.__pd_priceByType && window.__pd_priceByType[t]!=null) return parseFloat(window.__pd_priceByType[t])||0;
+                    if (s && window.__pd_priceBySize && window.__pd_priceBySize[s]!=null) return parseFloat(window.__pd_priceBySize[s])||0;
+                    if (a && window.__pd_priceByAttr && window.__pd_priceByAttr[a]!=null) return parseFloat(window.__pd_priceByAttr[a])||0;
+                    return pBase;
+                }
+
+                function syncHidden(){
+                    var t = val(typeSel), s = val(sizeSel), a = val(attrSel);
+                    if (hTypeF) hTypeF.value = t; if (hTypeC) hTypeC.value = t;
+                    if (hSizeF) hSizeF.value = s; if (hSizeC) hSizeC.value = s;
+                    if (hAttrF) hAttrF.value = a; if (hAttrC) hAttrC.value = a;
+                    // Map attribute -> color when relevant (keeps downstream compatibility)
+                    if (hColorF) hColorF.value = a; if (hColorC) hColorC.value = a;
+                }
+
+                function renderPrice(){
+                    var t = val(typeSel), s = val(sizeSel), a = val(attrSel);
+                    var p = computePrice(t,s,a);
+                    if (priceBox) { priceBox.setAttribute('data-price', p.toFixed(2)); }
+                    if (priceAmountEl) { priceAmountEl.textContent = p.toFixed(2); }
+                    if (buyBtn) { buyBtn.setAttribute('data-price', p.toFixed(2)); }
+                    var totalHidden = document.getElementById('form_totalAmount');
+                    if (totalHidden) totalHidden.value = p.toFixed(2);
+                }
+
+                function initDefaults(){
+                    // If selects exist but no option selected, select first
+                    [typeSel,sizeSel,attrSel].forEach(function(sel){ if (sel && sel.selectedIndex<0 && sel.options.length>0) sel.selectedIndex = 0; });
+                    syncHidden();
+                    renderPrice();
+                }
+
+                if (typeSel) typeSel.addEventListener('change', function(){ syncHidden(); renderPrice(); });
+                if (sizeSel) sizeSel.addEventListener('change', function(){ syncHidden(); renderPrice(); });
+                if (attrSel) attrSel.addEventListener('change', function(){ syncHidden(); renderPrice(); });
+                initDefaults();
+            }catch(e){ console.error('Option wiring failed', e); }
+        });
+    </script>
+</script>
+    <script>
   window.isAuthenticated = <?= $isAuthenticated ? 'true' : 'false' ?>;
 </script>
 <body>
@@ -376,17 +556,46 @@ function pd_first_image($imagesField) {
                                     <?php echo htmlspecialchars($productName); ?>
                                 </div>
                             </div>
+                            <?php
+                                $hasTypes = count($typesOptions) > 0;
+                                $hasSizes = count($sizesOptions) > 0;
+                                $hasAttrs = count($attrOptions) > 0;
+                                $defType = $hasTypes ? $typesOptions[0] : '';
+                                $defSize = $hasSizes ? $sizesOptions[0] : '';
+                                $defAttr = $hasAttrs ? $attrOptions[0] : '';
+                            ?>
+                            <?php if ($hasTypes): ?>
                             <div class="form-group grid-col-2">
-                                <label for="size">Size</label>
-                                <div class="custom-dropdown" id="sizeDropdown">
-                                    <button type="button" class="dropdown-toggle" id="sizeDropdownToggle">12oz</button>
-                                    <ul class="dropdown-menu">
-                                        <li class="size-option">12oz</li>
-                                        <li class="size-option">15oz</li>
-                                    </ul>
-                                    <input type="hidden" name="size" id="size" value="12oz" />
-                                </div>
+                                <label for="typeSelect">Type</label>
+                                <select id="typeSelect" name="type" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+                                    <?php foreach($typesOptions as $opt): $safe=htmlspecialchars($opt); ?>
+                                        <option value="<?=$safe?>" <?= ($opt===$defType?'selected':'')?>><?=$safe?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
+                            <?php endif; ?>
+
+                            <?php if ($hasSizes): ?>
+                            <div class="form-group grid-col-2">
+                                <label for="sizeSelect">Size</label>
+                                <select id="sizeSelect" name="size" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+                                    <?php foreach($sizesOptions as $opt): $safe=htmlspecialchars($opt); ?>
+                                        <option value="<?=$safe?>" <?= ($opt===$defSize?'selected':'')?>><?=$safe?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if ($hasAttrs): ?>
+                            <div class="form-group grid-col-2">
+                                <label for="attrSelect">Attribute</label>
+                                <select id="attrSelect" name="attribute" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+                                    <?php foreach($attrOptions as $opt): $safe=htmlspecialchars($opt); ?>
+                                        <option value="<?=$safe?>" <?= ($opt===$defAttr?'selected':'')?>><?=$safe?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <?php endif; ?>
                             <div class="form-group grid-col-1">
                                 <label for="quantity">Quantity</label>
                                 <div class="quantity-control">
@@ -447,9 +656,9 @@ function pd_first_image($imagesField) {
                                         </select>
                                     </div>
                                 <?php else: ?>
-                                    <div class="product-static-box price-box">
+                                    <div class="product-static-box price-box" data-price="<?php echo htmlspecialchars(is_numeric($productPrice)?number_format((float)$productPrice,2,'.',''):$productPrice); ?>">
                                         <span class="peso-sign">₱</span>
-                                        <?php echo htmlspecialchars($productPrice); ?>
+                                        <span class="amount"><?php echo htmlspecialchars(is_numeric($productPrice)?number_format((float)$productPrice,2):$productPrice); ?></span>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -546,7 +755,9 @@ function pd_first_image($imagesField) {
                 <?php endif; ?>
                 <form action="place-order.php" method="POST" id="orderForm" class="order-form">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
-                    <input type="hidden" name="size" id="form_size" value="12oz" />
+                    <input type="hidden" name="type" id="form_type" value="" />
+                    <input type="hidden" name="size" id="form_size" value="" />
+                    <input type="hidden" name="attribute" id="form_attribute" value="" />
                     <input type="hidden" name="color" id="form_color" value="" />
                     <input type="hidden" name="variant_index" id="form_variant_index" value="" />
                     <input type="hidden" name="quantity" id="form_quantity" value="1" />
@@ -560,7 +771,9 @@ function pd_first_image($imagesField) {
                 <form action="add-to-cart.php" method="POST" id="cartForm" class="cart-form" onsubmit="return false;">
                     <form action="add-to-cart.php" method="POST" id="cartForm" class="cart-form">
                     <input type="hidden" name="product_id" value="<?php echo htmlspecialchars($productId ?? ''); ?>" />
-                    <input type="hidden" name="size" id="cart_size" value="12oz" />
+                    <input type="hidden" name="type" id="cart_type" value="" />
+                    <input type="hidden" name="size" id="cart_size" value="" />
+                    <input type="hidden" name="attribute" id="cart_attribute" value="" />
                     <input type="hidden" name="color" id="cart_color" value="" />
                     <input type="hidden" name="variant_index" id="cart_variant_index" value="" />
                     <input type="hidden" name="quantity" id="cart_quantity" value="1" />
@@ -580,7 +793,7 @@ function pd_first_image($imagesField) {
                                                 try{
                                                     var nameEl = document.getElementById('product-name');
                                                     var name = (nameEl && nameEl.value) || (document.querySelector('.product-text h2') && document.querySelector('.product-text h2').textContent) || (document.querySelector('h2') && document.querySelector('h2').textContent) || 'Item';
-                                                    var size = document.getElementById('size')?.value || 'Default';
+                                                    var size = (document.getElementById('sizeSelect') && document.getElementById('sizeSelect').value) || (document.getElementById('size') && document.getElementById('size').value) || 'Default';
                                                     var qty = parseInt(document.getElementById('quantity')?.value||'1',10) || 1;
                                                     var priceText = document.querySelector('.price-box')?.textContent || '0';
                                                     var match = priceText.match(/([\d,.]+)/);

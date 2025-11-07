@@ -23,24 +23,39 @@ document.addEventListener('DOMContentLoaded', () => {
                    (document.querySelector('.product-text h2') && document.querySelector('.product-text h2').textContent) ||
                    (document.querySelector('h2') && document.querySelector('h2').textContent) || '';
         // Get size
-        let size = document.getElementById('size')?.value || '';
+        let size = (document.getElementById('sizeSelect') && document.getElementById('sizeSelect').value) ||
+                   (document.getElementById('size') && document.getElementById('size').value) ||
+                   (document.getElementById('form_size') && document.getElementById('form_size').value) || '';
+        // Get type/attribute (optional; used for price and server color)
+        let type = (document.getElementById('typeSelect') && document.getElementById('typeSelect').value) ||
+                   (document.getElementById('form_type') && document.getElementById('form_type').value) || '';
+        let attribute = (document.getElementById('attrSelect') && document.getElementById('attrSelect').value) ||
+                        (document.getElementById('form_attribute') && document.getElementById('form_attribute').value) || '';
         // Get quantity
         let quantity = parseInt(document.getElementById('quantity')?.value || '1');
         // Get design
         let design = document.getElementById('design-option')?.value || '';
-        // Get price from the price box (not from a hidden input)
-        let priceText = document.querySelector('.price-box')?.textContent || '';
+        // Get price from the price box (prefer data-price attribute)
+        let pb = document.querySelector('.price-box');
+        let priceText = (pb && pb.getAttribute('data-price')) || (pb && pb.textContent) || '';
         let price = 0;
         // Extract numeric value from text like '₱150'
         let match = priceText.match(/([\d,.]+)/);
         if (match) {
             price = parseFloat(match[1].replace(/,/g, ''));
         }
+        // Color derives from attribute if provided, else from hidden color inputs, else Standard
+        let color = (document.getElementById('form_color') && document.getElementById('form_color').value) ||
+                    (document.getElementById('cart_color') && document.getElementById('cart_color').value) ||
+                    attribute || 'Standard';
         return {
             name,
             size,
+            type,
+            attribute,
             quantity,
             design,
+            color,
             price,
             total: price * quantity
         };
@@ -102,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            if (addToCartBtn.dataset.busy === '1') return; // debounce
+            addToCartBtn.dataset.busy = '1';
             const qtyInput = document.getElementById('quantity');
             const cartQtyInput = document.getElementById('cart_quantity');
             if (qtyInput && cartQtyInput) {
@@ -110,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const product = getSelectedProduct();
             if (!product.quantity || product.quantity < 1) {
                 alert('Quantity must be at least 1 to add to cart.');
+                addToCartBtn.dataset.busy = '0';
                 return;
             }
             // Attach product id from hidden form field
@@ -121,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.isAuthenticated) {
                 showLoginModal();
             }
+            addToCartBtn.dataset.busy = '0';
         });
     }
 
@@ -141,13 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // attach handlers to all buy buttons
     buyNowBtns.forEach(buyNowBtn => buyNowBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            if (buyNowBtn.dataset.busy === '1') return; // debounce
+            buyNowBtn.dataset.busy = '1';
             const product = getSelectedProduct();
             pendingProduct = product;
             const errors = [];
             if (!product.quantity || product.quantity < 1) errors.push('Quantity must be at least 1.');
             if (!product.size || /select/i.test(product.size)) errors.push('Please choose a size.');
-            const colorInputEl = document.getElementById('color');
-            if (colorInputEl && !colorInputEl.value.trim()) errors.push('Please choose a color.');
+            // If attribute control exists, require a choice only when options are rendered
+            const attrSelect = document.getElementById('attrSelect');
+            if (attrSelect && !product.attribute) errors.push('Please choose an attribute.');
             if (errors.length) { alert(errors.join('\n')); return; }
             const prodIdInput = document.querySelector('input[name="product_id"]');
             if (prodIdInput && prodIdInput.value) product.id = parseInt(prodIdInput.value,10);
@@ -191,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showLoginModal();
                 }
+                buyNowBtn.dataset.busy = '0';
                 return;
             }
             // Otherwise redirect to cart checkout section
