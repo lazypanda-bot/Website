@@ -35,14 +35,38 @@ if ($action === 'list') {
     $designColorExpr = $custColorCol ? ('cu.'.$custColorCol.' AS design_color') : "'' AS design_color";
     $designNoteExpr  = $custNoteCol ? ('cu.'.$custNoteCol.' AS design_note')  : "'' AS design_note";
     $joinCustomization = $hasCustomization ? ' LEFT JOIN customization cu ON cu.customization_id = do.customization_id ' : ' ';
+
+    // Fallback to item-level design if orders.designoption_id is null
+    $hasOrderItems = false; $oiCols = []; $oiDesignCol = null;
+    if ($t = $conn->query("SHOW TABLES LIKE 'order_items'")) { if($t->num_rows>0){ $hasOrderItems=true; } $t->close(); }
+    if ($hasOrderItems) {
+        if ($cc = $conn->query('SHOW COLUMNS FROM order_items')) { while($cr=$cc->fetch_assoc()){ $oiCols[strtolower($cr['Field'])] = $cr['Field']; } $cc->close(); }
+        foreach(['designoption_id','design_option_id','design_id'] as $c){ if(isset($oiCols[$c])) { $oiDesignCol = $oiCols[$c]; break; } }
+    }
+    $joinItems = '';
+    $joinDo2 = '';
+    $joinCu2 = '';
+    $designIdExpr = 'do.designoption_id AS designoption_id';
+    $designPathExpr = 'do.designfilepath AS designfilepath';
+    if ($oiDesignCol) {
+        $joinItems = ' LEFT JOIN (SELECT oi.order_id, oi.' . $oiDesignCol . ' AS item_designoption_id FROM order_items oi WHERE oi.' . $oiDesignCol . ' IS NOT NULL AND oi.' . $oiDesignCol . ' <> 0 GROUP BY oi.order_id) ois ON ois.order_id = o.order_id ';
+        $joinDo2 = ' LEFT JOIN designoption do2 ON do2.designoption_id = ois.item_designoption_id ';
+        if ($hasCustomization) { $joinCu2 = ' LEFT JOIN customization cu2 ON cu2.customization_id = do2.customization_id '; }
+        $designIdExpr = 'COALESCE(do.designoption_id, ois.item_designoption_id) AS designoption_id';
+        $designPathExpr = 'COALESCE(do.designfilepath, do2.designfilepath) AS designfilepath';
+        if ($hasCustomization) {
+            $designColorExpr = 'COALESCE(cu.' . $custColorCol . ', cu2.' . $custColorCol . ') AS design_color';
+            $designNoteExpr  = 'COALESCE(cu.' . $custNoteCol  . ', cu2.' . $custNoteCol  . ') AS design_note';
+        }
+    }
     // AmountPaid: sum of payments for order (Paid or Partial) for display.
     $sql = "SELECT o.order_id, o.product_id, o.customer_id, o.size, o.quantity, o.order_status AS OrderStatus, o.delivery_status AS DeliveryStatus, o.total_amount AS TotalAmount, o.partial_payment AS isPartialPayment, o.created_at".$completedFrag.
         ", c.".ACCOUNT_NAME_COL." AS customer_name, c.".ACCOUNT_PHONE_COL." AS phone, c.".ACCOUNT_ADDRESS_COL." AS address, $nameExpr, $priceExpr,
-         do.designoption_id, do.designfilepath, $designColorExpr, $designNoteExpr,
+         $designIdExpr, $designPathExpr, $designColorExpr, $designNoteExpr,
          (SELECT COALESCE(SUM(py.payment_amount),0) FROM payments py WHERE py.order_id = o.order_id AND py.payment_status IN ('Paid','Partial')) AS AmountPaid
          FROM orders o
          LEFT JOIN ".ACCOUNT_TABLE." c ON c.".ACCOUNT_ID_COL." = o.customer_id" . $joinProducts . "
-         LEFT JOIN designoption do ON do.designoption_id = o.designoption_id" . $joinCustomization . "
+         LEFT JOIN designoption do ON do.designoption_id = o.designoption_id" . $joinCustomization . $joinItems . $joinDo2 . $joinCu2 . "
          ORDER BY o.created_at DESC";
     $rows = [];
     try {
