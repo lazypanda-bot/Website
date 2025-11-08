@@ -1,3 +1,8 @@
+/* Thumbnail and swatch styles for design preview in orders */
+.admin-design-thumb{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #eee;margin-right:8px;vertical-align:middle}
+.admin-design-swatch{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #ddd;margin-right:6px;vertical-align:middle}
+.admin-design-meta{display:inline-block;vertical-align:middle;max-width:320px}
+.admin-design-note{font-size:12px;color:#666}
 .badge, .badge-status, .status-badge-wrapper span {
     background: #efefef;
     color: #222;
@@ -78,6 +83,65 @@ body {
     color: #752525;
     margin: 0;
 }
+.filter-panel { 
+    background:#fafafa; 
+    border:1px solid #ddd; 
+    padding:12px 14px; 
+    border-radius:10px; 
+    margin-top:10px; 
+    box-shadow:0 2px 6px rgba(0,0,0,0.06); 
+}
+.filter-panel .fp-row { 
+    display:flex; 
+    flex-wrap:wrap; 
+    gap:14px; 
+    align-items:flex-end; 
+}
+.filter-panel label { 
+    font-size:.65rem; 
+    font-weight:600; 
+    letter-spacing:.5px; 
+    color:#553; 
+    display:flex; 
+    flex-direction:column; 
+    gap:4px; 
+    min-width:120px; 
+}
+.filter-panel .fp-input { 
+    padding:6px 10px; 
+    border:1px solid #bbb; 
+    border-radius:6px; 
+    font-size:.7rem; 
+    background:#fff; 
+}
+.filter-panel .fp-input:focus { 
+    outline:none; 
+    border-color:#752525; 
+    box-shadow:0 0 0 2px rgba(117,37,37,.15); 
+}
+.filter-panel .fp-actions { 
+    margin-top:12px; 
+    display:flex; 
+    gap:10px; 
+}
+.filter-panel .fp-apply, .filter-panel .fp-reset { 
+    padding:8px 14px; 
+    border:none; 
+    border-radius:6px; 
+    font-size:.65rem; 
+    font-weight:600; 
+    cursor:pointer; 
+    background:#752525; 
+    color:#fff; 
+    display:flex; 
+    align-items:center; 
+    gap:6px; 
+}
+.filter-panel .fp-reset { 
+    background:#555; 
+}
+.filter-panel .fp-apply:hover { background:#a03b3b; }
+.filter-panel .fp-reset:hover { background:#777; }
 .controls {
     display: flex;
     gap: 10px;

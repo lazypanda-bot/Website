@@ -59,11 +59,51 @@ require_once '../database.php';
                     <div class="controls">
                         <div class="controls-row">
                             <input type="text" placeholder="Search Order" class="search-input" />
-                            <!-- <button class="filter-btn"><i class="fas fa-filter"></i> Filter</button> -->
+                            <button class="filter-btn" id="ordersFilterBtn"><i class="fas fa-filter"></i> Filter</button>
                             <button class="add-btn"><i class="fas fa-plus"></i> Add Order</button>
                         </div>
                         <span class="last-updated" id="lastUpdated" aria-live="polite"></span>
                     </div>
+                </div>
+                <div id="ordersFilterPanel" class="filter-panel" hidden>
+                    <form id="ordersFilterForm" autocomplete="off">
+                        <div class="fp-row">
+                            <label>Status
+                                <select name="order_status" class="fp-input">
+                                    <option value="">Any</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Processing">Processing</option>
+                                    <option value="Ready for Pickup">Ready for Pickup</option>
+                                    <option value="Ready to Ship">Ready to Ship</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </label>
+                            <label>Delivery
+                                <select name="delivery_status" class="fp-input">
+                                    <option value="">Any</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Picked up">Picked up</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </label>
+                            <label>Min Paid
+                                <input type="number" step="0.01" name="min_paid" class="fp-input" placeholder="0" />
+                            </label>
+                            <label>Max Paid
+                                <input type="number" step="0.01" name="max_paid" class="fp-input" placeholder="" />
+                            </label>
+                            <label>Customer
+                                <input type="text" name="customer" class="fp-input" placeholder="Name" />
+                            </label>
+                        </div>
+                        <div class="fp-actions">
+                            <button type="submit" class="fp-apply"><i class="fas fa-check"></i> Apply</button>
+                            <button type="reset" class="fp-reset"><i class="fas fa-undo"></i> Reset</button>
+                        </div>
+                    </form>
                 </div>
                 <table class="product-table" id="ordersTable">
                     <colgroup>

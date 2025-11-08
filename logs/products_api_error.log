@@ -102,3 +102,38 @@ Stack trace:
 #0 C:\xampp\htdocs\Website\admin\products-api.php(93): mysqli->query('SELECT product_...')
 #1 {main}
   thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 93
+[08-Nov-2025 02:36:21 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339
+[08-Nov-2025 02:36:53 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339
+[08-Nov-2025 02:39:45 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339
+[08-Nov-2025 02:41:11 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339
+[08-Nov-2025 02:46:36 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339
+[08-Nov-2025 02:46:43 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339
+[08-Nov-2025 02:46:46 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'price' in 'field list' in C:\xampp\htdocs\Website\admin\products-api.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\products-api.php(339): mysqli->prepare('INSERT INTO pro...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\products-api.php on line 339

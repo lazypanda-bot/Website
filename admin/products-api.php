@@ -78,13 +78,23 @@ try{
     if($colRes instanceof mysqli_result){ while($cr=$colRes->fetch_assoc()){ $productCols[strtolower($cr['Field'])] = $cr['Field']; } $colRes->free(); }
 }catch(Exception $e){ /* ignore */ }
 
-// Helper flags for common columns
+// Helper flags for common columns (derive adaptable column names)
 $hasProductId = isset($productCols['product_id']);
+$hasIdCol = isset($productCols['id']);
+$pkCol = $hasProductId ? $productCols['product_id'] : ($hasIdCol ? $productCols['id'] : null);
 $hasProductName = isset($productCols['product_name']);
+$hasNameAlt = isset($productCols['name']);
+$nameCol = $hasProductName ? $productCols['product_name'] : ($hasNameAlt ? $productCols['name'] : null);
 $hasPriceCol = isset($productCols['price']);
+$priceCol = $hasPriceCol ? $productCols['price'] : null;
 $hasServiceType = isset($productCols['service_type']);
 $hasServiceId = isset($productCols['service_id']);
+$serviceCol = $hasServiceType ? $productCols['service_type'] : ($hasServiceId ? $productCols['service_id'] : null);
+$hasProductDetails = isset($productCols['product_details']);
+$hasDescription = isset($productCols['description']);
+$detailsCol = $hasProductDetails ? $productCols['product_details'] : ($hasDescription ? $productCols['description'] : null);
 $hasImages = isset($productCols['images']);
+$imagesCol = $hasImages ? $productCols['images'] : null;
 $hasCreatedAt = isset($productCols['created_at']);
 
 function flush_json($arr, $code = 200){
@@ -113,21 +123,21 @@ $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 if ($method === 'GET' && $action === 'list') {
     $data = [];
     // Build a compatible SELECT list based on available columns
-    if (!$hasProductId) { flush_json(['status'=>'error','message'=>'products table missing product_id'],500); }
+    if (!$pkCol) { flush_json(['status'=>'error','message'=>'products table missing primary key (product_id or id)'],500); }
     $parts = [];
-    $parts[] = 'product_id';
-    $parts[] = $hasProductName ? 'product_name' : (isset($productCols['name']) ? 'name as product_name' : "'' as product_name");
+    $parts[] = $pkCol === 'product_id' ? 'product_id' : ($pkCol . ' as product_id');
+    $parts[] = $nameCol ? ($nameCol === 'product_name' ? 'product_name' : ($nameCol . ' as product_name')) : "'' as product_name";
     $parts[] = $hasPriceCol ? 'price' : "0 as price";
     // prefer service_type text; if absent fall back to service_id (numeric)
     if ($hasServiceType) $parts[] = 'service_type';
     elseif ($hasServiceId) $parts[] = 'service_id as service_type';
     else $parts[] = "'' as service_type";
-    $parts[] = isset($productCols['product_details']) ? 'product_details' : "'' as product_details";
-    $parts[] = $hasImages ? 'images' : "'' as images";
+    $parts[] = $detailsCol ? ($detailsCol === 'product_details' ? 'product_details' : ($detailsCol . ' as product_details')) : "'' as product_details";
+    $parts[] = $imagesCol ? ($imagesCol === 'images' ? 'images' : ($imagesCol . ' as images')) : "'' as images";
     if ($hasVariants) $parts[] = 'variants';
     if ($hasWherePrice) $parts[] = 'wherepricedepends';
     // Order by created_at if available, otherwise by product_id desc
-    $orderBy = $hasCreatedAt ? 'created_at DESC' : 'product_id DESC';
+    $orderBy = $hasCreatedAt ? 'created_at DESC' : ($pkCol . ' DESC');
     $selectFields = implode(', ', $parts);
     $q = $conn->query("SELECT " . $selectFields . " FROM products ORDER BY $orderBy");
     if ($q instanceof mysqli_result) {
@@ -157,10 +167,11 @@ if ($method === 'GET' && $action === 'sub_list_all') {
 // Create / Update product (supports current images + uploaded files for admin UI)
 if ($method === 'POST' && $action === 'save') {
     $id = isset($_POST['product_id']) && ctype_digit($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
-    $name = trim($_POST['product_name'] ?? '');
-    $service = trim($_POST['service_type'] ?? '');
+    if(!$id && isset($_POST['id']) && ctype_digit($_POST['id'])) $id = (int)$_POST['id'];
+    $name = trim($_POST['product_name'] ?? ($_POST['name'] ?? ''));
+    $service = trim($_POST['service_type'] ?? ($_POST['service_id'] ?? ''));
     $price = isset($_POST['price']) ? (float)$_POST['price'] : 0.0;
-    $details = trim($_POST['product_details'] ?? '');
+    $details = trim($_POST['product_details'] ?? ($_POST['description'] ?? ''));
     // images_current is JSON list of kept images (paths)
     $images_current = [];
     if (!empty($_POST['images_current'])) {
@@ -230,7 +241,7 @@ if ($method === 'POST' && $action === 'save') {
         $images_removed = $_POST['images_removed'];
     }
 
-    if ($name === '') fail('Product name required');
+    if ($name === '' && $nameCol) fail('Product name required');
     if ($price < 0) fail('Price invalid');
 
     // Handle uploaded files (images_files[]). We'll collect errors and moved paths.
@@ -294,23 +305,24 @@ if ($method === 'POST' && $action === 'save') {
             fail('Images payload too large. Remove inline/data images and try again.', 413);
         }
         // Choose prepared statement based on which optional columns exist
-        if ($hasVariants && $hasWherePrice) {
-            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=?, variants=?, wherepricedepends=? WHERE product_id=?");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdssssi', $name,$service,$price,$details,$images_json,$variants_raw,$wherepriced_raw,$id);
-        } elseif ($hasVariants) {
-            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=?, variants=? WHERE product_id=?");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdsssi', $name,$service,$price,$details,$images_json,$variants_raw,$id);
-        } elseif ($hasWherePrice) {
-            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=?, wherepricedepends=? WHERE product_id=?");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdsssi', $name,$service,$price,$details,$images_json,$wherepriced_raw,$id);
-        } else {
-            $stmt = $conn->prepare("UPDATE products SET product_name=?, service_type=?, price=?, product_details=?, images=? WHERE product_id=?");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdssi', $name,$service,$price,$details,$images_json,$id);
-        }
+        // Build dynamic UPDATE based on available columns
+        if(!$pkCol) fail('products table missing primary key (product_id or id)',500);
+        $setParts = [];
+        $types = '';
+        $vals = [];
+        if($nameCol){ $setParts[] = "$nameCol=?"; $types.='s'; $vals[] = $name; }
+        if($serviceCol){ $setParts[] = "$serviceCol=?"; $types .= ($serviceCol==='service_id' ? 'i' : 's'); $vals[] = ($serviceCol==='service_id' ? (int)$service : $service); }
+        if($priceCol){ $setParts[] = "$priceCol=?"; $types.='d'; $vals[] = $price; }
+        if($detailsCol){ $setParts[] = "$detailsCol=?"; $types.='s'; $vals[] = $details; }
+        if($imagesCol){ $setParts[] = "$imagesCol=?"; $types.='s'; $vals[] = $images_json; }
+        if($hasVariants){ $setParts[] = "variants=?"; $types.='s'; $vals[] = $variants_raw; }
+        if($hasWherePrice){ $setParts[] = "wherepricedepends=?"; $types.='s'; $vals[] = $wherepriced_raw; }
+        if(empty($setParts)) fail('No updatable columns available in products table',500);
+        $sql = "UPDATE products SET ".implode(', ',$setParts)." WHERE $pkCol=?";
+        $types.='i'; $vals[] = $id;
+        $stmt = $conn->prepare($sql);
+        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+        $stmt->bind_param($types, ...$vals);
         if(!$stmt->execute()) fail('Update failed: ' . $stmt->error,500);
         $stmt->close();
         // Optionally persist sub-items if provided
@@ -323,23 +335,23 @@ if ($method === 'POST' && $action === 'save') {
         $processFilesToFolder('tmp');
         // Insert product with empty images placeholder for now
         $initial_images_json = json_encode($images_current);
-        if ($hasVariants && $hasWherePrice) {
-            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images, variants, wherepricedepends) VALUES (?,?,?,?,?,?,?)");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdssss', $name,$service,$price,$details,$initial_images_json,$variants_raw,$wherepriced_raw);
-        } elseif ($hasVariants) {
-            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images, variants) VALUES (?,?,?,?,?,?)");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdsss', $name,$service,$price,$details,$initial_images_json,$variants_raw);
-        } elseif ($hasWherePrice) {
-            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images, wherepricedepends) VALUES (?,?,?,?,?,?)");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdsss', $name,$service,$price,$details,$initial_images_json,$wherepriced_raw);
-        } else {
-            $stmt = $conn->prepare("INSERT INTO products (product_name, service_type, price, product_details, images) VALUES (?,?,?,?,?)");
-            if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
-            $stmt->bind_param('ssdss', $name,$service,$price,$details,$initial_images_json);
-        }
+        // Build dynamic INSERT based on available columns
+        $cols = [];
+        $place = [];
+        $types = '';
+        $vals = [];
+        if($nameCol){ $cols[] = $nameCol; $place[]='?'; $types.='s'; $vals[]=$name; }
+        if($serviceCol){ $cols[] = $serviceCol; $place[]='?'; $types.= ($serviceCol==='service_id' ? 'i' : 's'); $vals[] = ($serviceCol==='service_id' ? (int)$service : $service); }
+        if($priceCol){ $cols[] = $priceCol; $place[]='?'; $types.='d'; $vals[]=$price; }
+        if($detailsCol){ $cols[] = $detailsCol; $place[]='?'; $types.='s'; $vals[]=$details; }
+        if($imagesCol){ $cols[] = $imagesCol; $place[]='?'; $types.='s'; $vals[]=$initial_images_json; }
+        if($hasVariants){ $cols[]='variants'; $place[]='?'; $types.='s'; $vals[]=$variants_raw; }
+        if($hasWherePrice){ $cols[]='wherepricedepends'; $place[]='?'; $types.='s'; $vals[]=$wherepriced_raw; }
+        if(empty($cols)) fail('No insertable columns available in products table',500);
+        $sql = 'INSERT INTO products (' . implode(',', $cols) . ') VALUES (' . implode(',', $place) . ')';
+        $stmt = $conn->prepare($sql);
+        if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
+        $stmt->bind_param($types, ...$vals);
         if(!$stmt->execute()) fail('Insert failed: ' . $stmt->error,500);
         $newId = $stmt->insert_id;
         $stmt->close();
@@ -375,8 +387,8 @@ if ($method === 'POST' && $action === 'save') {
             fail('Images payload too large. Remove inline/data images and try again.', 413);
         }
         // Update product with final image list
-        $stmt2 = $conn->prepare("UPDATE products SET images=? WHERE product_id=?");
-        if($stmt2) {
+        $stmt2 = $conn->prepare("UPDATE products SET ".$imagesCol."=? WHERE $pkCol=?");
+        if($stmt2 && $imagesCol) {
             $stmt2->bind_param('si', $images_json, $newId);
             $stmt2->execute();
             $stmt2->close();
@@ -416,9 +428,10 @@ if ($method === 'POST' && $action === 'delete_sub') {
 
 // Delete product
 if ($method === 'POST' && $action === 'delete') {
-    $id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    $id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
     if ($id <= 0) fail('Invalid id');
-    $stmt = $conn->prepare("DELETE FROM products WHERE product_id=?");
+    if(!$pkCol) fail('products table missing primary key',500);
+    $stmt = $conn->prepare("DELETE FROM products WHERE $pkCol=?");
     if(!$stmt) fail('Prepare failed: ' . $conn->error,500);
     $stmt->bind_param('i',$id);
     if(!$stmt->execute()) fail('Delete failed: ' . $stmt->error,500);

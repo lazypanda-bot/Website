@@ -109,13 +109,34 @@ if ($user_id > 0 && $product_id > 0) {
     // Detect if cart table has a column to store designoption_id (nullable int)
     $designCol = $cartCols['designoption_id'] ?? $cartCols['design_option_id'] ?? $cartCols['design_id'] ?? null;
     $qty = 1; $s = $size ?: 'Default'; $c = $color ?: 'Standard';
-    if ($designCol) {
+    // Detect any direct design filepath column too
+    $designPathCol = $cartCols['designfilepath'] ?? ($cartCols['design_file'] ?? ($cartCols['designpath'] ?? ($cartCols['design'] ?? null)));
+    $hasPath = $designPathCol && isset($thumbWeb) && $thumbWeb;
+    if ($designCol && $hasPath) {
+        $insSql = "INSERT INTO cart ({$userFk}, {$prodFk}, {$sizeCol}, {$colorCol}, {$qtyCol}, {$designCol}, {$designPathCol}) VALUES (?,?,?,?,?,?,?)";
+        $ins = $conn->prepare($insSql);
+        if ($ins) {
+            $did = $designoption_id ? (int)$designoption_id : 0; $path = $thumbWeb;
+            $ins->bind_param('iississ', $user_id, $product_id, $s, $c, $qty, $did, $path);
+            if ($ins->execute()) { $cart_inserted = true; $cart_insert_id = $ins->insert_id; }
+            $ins->close();
+        }
+    } elseif ($designCol) {
         // include designoption column in insert
         $insSql = "INSERT INTO cart ({$userFk}, {$prodFk}, {$sizeCol}, {$colorCol}, {$qtyCol}, {$designCol}) VALUES (?,?,?,?,?,?)";
         $ins = $conn->prepare($insSql);
         if ($ins) {
             $did = $designoption_id ? (int)$designoption_id : 0;
             $ins->bind_param('iissii', $user_id, $product_id, $s, $c, $qty, $did);
+            if ($ins->execute()) { $cart_inserted = true; $cart_insert_id = $ins->insert_id; }
+            $ins->close();
+        }
+    } elseif ($hasPath) {
+        $insSql = "INSERT INTO cart ({$userFk}, {$prodFk}, {$sizeCol}, {$colorCol}, {$qtyCol}, {$designPathCol}) VALUES (?,?,?,?,?,?)";
+        $ins = $conn->prepare($insSql);
+        if ($ins) {
+            $path = $thumbWeb;
+            $ins->bind_param('iissis', $user_id, $product_id, $s, $c, $qty, $path);
             if ($ins->execute()) { $cart_inserted = true; $cart_insert_id = $ins->insert_id; }
             $ins->close();
         }
@@ -149,6 +170,12 @@ if ($user_id > 0 && $designoption_id && $product_id > 0) {
         $updSql = "UPDATE cart SET {$foundDesignCol} = ? WHERE {$userFk2} = ? AND {$prodFk2} = ? AND ({$foundDesignCol} IS NULL OR {$foundDesignCol} = '' OR {$foundDesignCol} = 0) LIMIT 1";
         $upd = $conn->prepare($updSql);
         if ($upd) { $upd->bind_param('iii', $designoption_id, $user_id, $product_id); $upd->execute(); $upd->close(); }
+    }
+    // Also attempt to set a path column if exists and empty
+    $pathCol = $cartCols2['designfilepath'] ?? ($cartCols2['design_file'] ?? ($cartCols2['designpath'] ?? ($cartCols2['design'] ?? null)));
+    if ($pathCol && isset($thumbWeb) && $thumbWeb && $userFk2 && $prodFk2) {
+        $upd2 = $conn->prepare("UPDATE cart SET {$pathCol} = ? WHERE {$userFk2} = ? AND {$prodFk2} = ? AND ({$pathCol} IS NULL OR {$pathCol} = '') LIMIT 1");
+        if ($upd2) { $u = $thumbWeb; $upd2->bind_param('sii', $u, $user_id, $product_id); $upd2->execute(); $upd2->close(); }
     }
 }
 

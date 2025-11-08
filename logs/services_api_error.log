@@ -13,3 +13,63 @@ Stack trace:
 #0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
 #1 {main}
   thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 00:08:16 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 00:46:26 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 00:53:39 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 00:53:57 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 00:56:59 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:23:44 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:24:08 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:26:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:26:27 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:27:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:27:29 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44
+[08-Nov-2025 02:28:09 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'description' in 'field list' in C:\xampp\htdocs\Website\admin\services-api.php:44
+Stack trace:
+#0 C:\xampp\htdocs\Website\admin\services-api.php(44): mysqli->query('SELECT service_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\admin\services-api.php on line 44

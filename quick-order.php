@@ -14,6 +14,22 @@ require_once __DIR__ . '/database.php';
 // Centralized auth helper (clears stale sessions and responds with JSON on failure)
 require_once __DIR__ . '/includes/auth.php';
 
+// Convert PHP errors/exceptions into JSON so the client doesn't see empty bodies
+set_exception_handler(function($ex){
+    try { qlog('EXCEPTION: '.$ex->getMessage().' @ '.$ex->getFile().':'.$ex->getLine()); } catch(Throwable $e){}
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['status'=>'error','message'=>'Server error','detail'=>$ex->getMessage()]);
+    exit;
+});
+set_error_handler(function($errno,$errstr,$errfile,$errline){
+    try { qlog('ERROR '.$errno.': '.$errstr.' @ '.$errfile.':'.$errline); } catch(Throwable $e){}
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['status'=>'error','message'=>'Server error']);
+    exit;
+});
+
 function qlog($msg){
     $dir = __DIR__ . '/logs';
     if(!is_dir($dir)) @mkdir($dir,0775,true);
@@ -211,9 +227,21 @@ if ($placeholders) {
 }
 
 // Secondary duplicate guard: order signature per user for 30 seconds to prevent rapid double submits
+// Normalize size (trim, lowercase) and collapse identical items to aggregate qty to reduce false negatives.
+$sigMap = [];
+if ($isMulti) {
+    foreach($multiItems as $it){
+        $pid = (int)$it['product_id'];
+        $sz  = strtolower(trim($it['size'] ?? 'Default'));
+        $key = $pid . ':' . $sz;
+        $sigMap[$key] = ($sigMap[$key] ?? 0) + (int)$it['quantity'];
+    }
+} else {
+    $pid = (int)$product_id; $sz = strtolower(trim($size ?: 'Default'));
+    $sigMap[$pid . ':' . $sz] = (int)$quantity ?: 1;
+}
 $sigParts = [];
-if ($isMulti) { foreach($multiItems as $it){ $sigParts[] = (int)$it['product_id'] . ':' . (string)$it['size'] . ':' . (int)$it['quantity']; } }
-else { $sigParts[] = (int)$product_id . ':' . (string)$size . ':' . (int)$quantity; }
+foreach($sigMap as $k=>$qty){ $sigParts[] = $k . ':' . $qty; }
 sort($sigParts);
 $orderSignature = sha1(implode('|',$sigParts));
 $sigDir = __DIR__ . '/logs'; if(!is_dir($sigDir)) @mkdir($sigDir,0775,true);
@@ -245,19 +273,29 @@ $orderStatus='Pending'; $deliveryStatus='Pending';
 $legacyProdId = $isMulti ? $multiItems[0]['product_id'] : $product_id;
 $legacySize   = $isMulti ? $multiItems[0]['size']       : $size;
 $legacyQty    = $isMulti ? $multiItems[0]['quantity']   : $quantity;
+// If orders table has a single designoption_id column, store the first item's design (best effort)
+$legacyDesign = null;
+if ($isMulti) {
+    foreach ($multiItems as $it) { if (!empty($it['designoption_id'])) { $legacyDesign = (int)$it['designoption_id']; break; } }
+}
 
 // Mandatory: FK, TotalAmount, OrderStatus, created_at if exist else fallback to current timestamp later
 $fkColReal = ORDERS_ACCOUNT_FK_COL;
 $createdColReal = isset($orderCols['created_at']) ? $orderCols['created_at'] : null;
 // Helper to add param
-$add = function($col, $type, &$var) use (&$cols,&$placeholders,&$types,&$values) {
-    $cols[] = $col; $placeholders[]='?'; $types.=$type; $values[]=&$var; };
+// Safe add helper that allows passing expressions or scalars without reference errors.
+$add = function($col, $type, $var, $byRef=false) use (&$cols,&$placeholders,&$types,&$values) {
+    $cols[] = $col; $placeholders[]='?'; $types.=$type; 
+    if($byRef) { $values[] = &$var; } else { $values[] = $var; }
+};
 
 // Always include FK
+// Add base columns
 $add($fkColReal,'i',$userId);
 if(isset($orderCols['product_id'])) $add($orderCols['product_id'],'i',$legacyProdId);
 if(isset($orderCols['size'])) $add($orderCols['size'],'s',$legacySize);
 if(isset($orderCols['quantity'])) $add($orderCols['quantity'],'i',$legacyQty);
+if(isset($orderCols['designoption_id']) && $legacyDesign) $add($orderCols['designoption_id'],'i',$legacyDesign);
 if(isset($orderCols['ispartialpayment'])) $add($orderCols['ispartialpayment'],'i',$isPartial); else if(isset($orderCols['partial_payment'])) $add($orderCols['partial_payment'],'i',$isPartial);
 if(isset($orderCols['totalamount'])) $add($orderCols['totalamount'],'s',$totalFormatted); else if(isset($orderCols['total_amount'])) $add($orderCols['total_amount'],'s',$totalFormatted);
 // include partial_amount if orders table has a column for it
@@ -265,7 +303,7 @@ if ($partialAmount !== null) {
     // common column names to check
     // prefer canonical 'partial', but accept other modern synonyms if present in DB
     foreach(['partial','amount_paid','downpayment','deposit'] as $c) {
-        if (isset($orderCols[$c])) { $add($orderCols[$c],'s',$partialAmount); break; }
+    if (isset($orderCols[$c])) { $add($orderCols[$c],'s',$partialAmount); break; }
     }
 }
 if(isset($orderCols['orderstatus'])) $add($orderCols['orderstatus'],'s',$orderStatus); else if(isset($orderCols['order_status'])) $add($orderCols['order_status'],'s',$orderStatus);
@@ -372,71 +410,77 @@ $createdPaymentId = null; $receiptRelPath = null;
 // Discover payments table columns if it exists
 $hasPaymentsTable=false; if($chk=$conn->query("SHOW TABLES LIKE 'payments'")){ $hasPaymentsTable = $chk->num_rows>0; $chk->free(); }
 if($hasPaymentsTable){
-    $payCols=[]; if($pr=$conn->query('SHOW COLUMNS FROM payments')){ while($r=$pr->fetch_assoc()){ $payCols[strtolower($r['Field'])]=$r['Field']; } $pr->free(); }
-    $payOrderCol = $payCols['order_id'] ?? 'order_id';
-    $payCustCol  = $payCols['customer_id'] ?? ($payCols['user_id'] ?? 'customer_id');
-    $payAmtCol   = $payCols['payment_amount'] ?? ($payCols['amount'] ?? 'payment_amount');
-    $payMethodCol= $payCols['payment_method'] ?? ($payCols['method'] ?? 'payment_method');
-    $payStatusCol= $payCols['payment_status'] ?? ($payCols['status'] ?? 'payment_status');
-    $payDateCol  = $payCols['payment_date'] ?? ($payCols['date'] ?? 'payment_date');
-    // Optional receipt column discovery
-    $receiptCol  = $payCols['receipt_url'] ?? ($payCols['receipt'] ?? ($payCols['proof_image'] ?? null));
-    $insertPayment = false;
-    $initialStatus = 'Pending';
-    $initialAmount = 0.00;
-    if($paymentMethod==='cash'){
-        // For cash, we record a pending payment with amount 0 (will be updated when collected) OR full amount immediately if full payment
-        if($isPartial){
-            $initialStatus = 'Partial';
-            $initialAmount = ($partialAmount !== null) ? (float)$partialAmount : 0.00;
-        } else {
-            // Full cash payment will be recorded when actually paid; start as Pending
-            $initialStatus = 'Pending';
-            $initialAmount = 0.00;
-        }
-        $insertPayment = true;
-    } elseif($paymentMethod==='gcash') {
-        // If user provided a gcash paid amount treat as Partial (if not full) or Paid if equal to total
-        if($gcashPaid !== null){
-            $paidVal = (float)$gcashPaid;
-            $initialAmount = $paidVal;
-            if(abs($paidVal - (float)$totalFormatted) < 0.01){
-                $initialStatus='Paid';
+    try {
+        $payCols=[]; if($pr=$conn->query('SHOW COLUMNS FROM payments')){ while($r=$pr->fetch_assoc()){ $payCols[strtolower($r['Field'])]=$r['Field']; } $pr->free(); }
+        $payOrderCol = $payCols['order_id'] ?? 'order_id';
+        $payCustCol  = $payCols['customer_id'] ?? ($payCols['user_id'] ?? 'customer_id');
+        $payAmtCol   = $payCols['payment_amount'] ?? ($payCols['amount'] ?? 'payment_amount');
+        $payMethodCol= $payCols['payment_method'] ?? ($payCols['method'] ?? 'payment_method');
+        $payStatusCol= $payCols['payment_status'] ?? ($payCols['status'] ?? 'payment_status');
+        $payDateCol  = $payCols['payment_date'] ?? ($payCols['date'] ?? 'payment_date');
+        // Optional receipt column discovery
+        $receiptCol  = $payCols['receipt_url'] ?? ($payCols['receipt'] ?? ($payCols['proof_image'] ?? null));
+        $insertPayment = false;
+        $initialStatus = 'Pending';
+        $initialAmount = 0.00;
+        if($paymentMethod==='cash'){
+            // For cash, we record a pending payment with amount 0 (will be updated when collected) OR full amount immediately if full payment
+            if($isPartial){
+                $initialStatus = 'Partial';
+                $initialAmount = ($partialAmount !== null) ? (float)$partialAmount : 0.00;
             } else {
-                $initialStatus='Partial';
+                // Full cash payment will be recorded when actually paid; start as Pending
+                $initialStatus = 'Pending';
+                $initialAmount = 0.00;
             }
             $insertPayment = true;
+        } elseif($paymentMethod==='gcash') {
+            // If user provided a gcash paid amount treat as Partial (if not full) or Paid if equal to total
+            if($gcashPaid !== null){
+                $paidVal = (float)$gcashPaid;
+                $initialAmount = $paidVal;
+                if(abs($paidVal - (float)$totalFormatted) < 0.01){
+                    $initialStatus='Paid';
+                } else {
+                    $initialStatus='Partial';
+                }
+                $insertPayment = true;
+            }
         }
-    }
-    // Handle receipt upload when gcash and file posted
-    if($paymentMethod==='gcash' && isset($_FILES['gcash_receipt']) && $_FILES['gcash_receipt']['error']===UPLOAD_ERR_OK){
-        $tmp = $_FILES['gcash_receipt']['tmp_name'];
-        $orig = $_FILES['gcash_receipt']['name'];
-        $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
-        if(!in_array($ext,['jpg','jpeg','png','webp','gif'])) $ext='jpg';
-        $payDir = __DIR__ . '/uploads/payments';
-        if(!is_dir($payDir)) @mkdir($payDir,0775,true);
-        $destFile = 'order_'.$orderId.'_'.uniqid().'_receipt.'.$ext;
-        $destPath = $payDir . '/' . $destFile;
-        if(@move_uploaded_file($tmp,$destPath)){
-            $receiptRelPath = 'uploads/payments/'.$destFile;
+        // Handle receipt upload when gcash and file posted
+        if($paymentMethod==='gcash' && isset($_FILES['gcash_receipt']) && $_FILES['gcash_receipt']['error']===UPLOAD_ERR_OK){
+            $tmp = $_FILES['gcash_receipt']['tmp_name'];
+            $orig = $_FILES['gcash_receipt']['name'];
+            $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
+            if(!in_array($ext,['jpg','jpeg','png','webp','gif'])) $ext='jpg';
+            $payDir = __DIR__ . '/uploads/payments';
+            if(!is_dir($payDir)) @mkdir($payDir,0775,true);
+            $destFile = 'order_'.$orderId.'_'.uniqid().'_receipt.'.$ext;
+            $destPath = $payDir . '/' . $destFile;
+            if(@move_uploaded_file($tmp,$destPath)){
+                $receiptRelPath = 'uploads/payments/'.$destFile;
+            }
         }
-    }
-    if($insertPayment){
-        $cols=[]; $ph=[]; $types=''; $vals=[];
-        $addP = function($col,$type,&$var) use (&$cols,&$ph,&$types,&$vals){ $cols[]=$col; $ph[]='?'; $types.=$type; $vals[]=&$var; };
-        $addP($payCustCol,'i',$userId);
-        $addP($payOrderCol,'i',$orderId);
-        $amtStr = number_format($initialAmount,2,'.',''); $addP($payAmtCol,'s',$amtStr);
-        $addP($payMethodCol,'s',$paymentMethod==='gcash' ? 'GCash' : 'Cash');
-        $addP($payStatusCol,'s',$initialStatus);
-        if($receiptCol && $receiptRelPath){ $addP($receiptCol,'s',$receiptRelPath); }
-        $sqlPay = 'INSERT INTO payments (' . implode(',', $cols) . ') VALUES (' . implode(',', $ph) . ')';
-        if($pst = $conn->prepare($sqlPay)){
-            $pst->bind_param($types, ...$vals);
-            if($pst->execute()){ $createdPaymentId = $pst->insert_id; }
-            $pst->close();
+        if($insertPayment){
+            $cols=[]; $ph=[]; $types=''; $vals=[];
+            $addP = function($col,$type,&$var) use (&$cols,&$ph,&$types,&$vals){ $cols[]=$col; $ph[]='?'; $types.=$type; $vals[]=&$var; };
+            $addP($payCustCol,'i',$userId);
+            $addP($payOrderCol,'i',$orderId);
+            $amtStr = number_format($initialAmount,2,'.',''); $addP($payAmtCol,'s',$amtStr);
+            $methodStr = ($paymentMethod==='gcash' ? 'GCash' : 'Cash');
+            $addP($payMethodCol,'s',$methodStr);
+            $addP($payStatusCol,'s',$initialStatus);
+            if($receiptCol && $receiptRelPath){ $addP($receiptCol,'s',$receiptRelPath); }
+            $sqlPay = 'INSERT INTO payments (' . implode(',', $cols) . ') VALUES (' . implode(',', $ph) . ')';
+            if($pst = $conn->prepare($sqlPay)){
+                $pst->bind_param($types, ...$vals);
+                if($pst->execute()){ $createdPaymentId = $pst->insert_id; }
+                $pst->close();
+            }
         }
+    } catch (Throwable $e) {
+        // Do not fail the whole order if payments insert fails; log and continue
+        qlog('payments error: '.$e->getMessage());
     }
 }
 respond([

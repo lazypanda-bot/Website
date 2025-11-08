@@ -86,6 +86,17 @@ if ($designColName) {
     }
 }
 
+// Even if there's no designoption_id on the cart table, try to surface any direct
+// design path stored on the cart row (common in flexible schemas). Map it to
+// a unified alias 'designfilepath' so the client can render a preview.
+$directDesignExpr = '';
+foreach (['designfilepath','design_file','designpath','design'] as $cand) {
+    if (isset($cartTableCols[$cand])) {
+        $directDesignExpr = ', c.' . $cartTableCols[$cand] . ' AS designfilepath';
+        break;
+    }
+}
+
 // Build SELECT expressions with safe fallbacks
 // Only reference p.* when we actually join products with a valid PK
 $joinPart = ($productsTableExists && $productPk) ? (' LEFT JOIN products p ON p.'.$productPk.' = c.'.CART_PRODUCT_FK_COL.' ') : ' ';
@@ -156,7 +167,7 @@ if ($resTbl = $conn->query("SHOW TABLES LIKE 'products_sub'")) {
     $resTbl->free();
 }
 
-$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . ", $nameExpr AS name, $calcPriceExpr AS price
+$sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . $designSelect . $directDesignExpr . ", $nameExpr AS name, $calcPriceExpr AS price
     FROM ".CART_TABLE." c" . $joinPart . $subJoins . $joinSql . " WHERE c.".CART_USER_FK_COL."=? ORDER BY c.".CART_PK_COL." DESC LIMIT 200";
 
 $stmt = $conn->prepare($sql);

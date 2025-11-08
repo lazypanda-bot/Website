@@ -33,15 +33,27 @@ $createSql = "CREATE TABLE IF NOT EXISTS services (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 $conn->query($createSql);
 
-// Ensure image column exists (safe on older MySQL by checking information_schema)
-$colRes = $conn->query("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='services' AND COLUMN_NAME='image'");
-if($colRes instanceof mysqli_result){ $colRow = $colRes->fetch_assoc(); if((int)$colRow['cnt'] === 0){ @mysqli_query($conn, "ALTER TABLE services ADD COLUMN image VARCHAR(255) NULL"); } }
+// Ensure image and description columns exist (safe on older MySQL by checking information_schema)
+$colsMap = [];
+if($cr = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='services'")){
+    while($rw = $cr->fetch_assoc()){ $colsMap[strtolower($rw['COLUMN_NAME'])] = $rw['COLUMN_NAME']; }
+    $cr->close();
+}
+if(!isset($colsMap['image'])){ @mysqli_query($conn, "ALTER TABLE services ADD COLUMN image VARCHAR(255) NULL"); $colsMap['image']='image'; }
+if(!isset($colsMap['description'])){ @mysqli_query($conn, "ALTER TABLE services ADD COLUMN description TEXT NULL"); $colsMap['description']='description'; }
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 
 if ($action === 'list') {
     $services = [];
-    $res = $conn->query("SELECT service_id, name, description, image, created_at FROM services ORDER BY name ASC");
+    // Build a tolerant SELECT that works even if some columns are missing
+    $hasDesc = isset($colsMap['description']);
+    $hasImg  = isset($colsMap['image']);
+    $hasCreated = isset($colsMap['created_at']);
+    $descExpr = $hasDesc ? 'description' : "'' AS description";
+    $imgExpr  = $hasImg  ? 'image'       : "'' AS image";
+    $createdExpr = $hasCreated ? 'created_at' : 'NULL AS created_at';
+    $res = $conn->query("SELECT service_id, name, $descExpr, $imgExpr, $createdExpr FROM services ORDER BY name ASC");
     if ($res instanceof mysqli_result) {
         while($r=$res->fetch_assoc()) {
             // compute dependency count
@@ -112,16 +124,19 @@ if ($action === 'add') {
         }
     }
 
-    // Insert with or without image
-    if ($imagePath !== null) {
-        $stmt = $conn->prepare("INSERT INTO services (name, description, image) VALUES (?,?,?)");
-        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
-        $stmt->bind_param('sss',$name,$desc,$imagePath);
-    } else {
-        $stmt = $conn->prepare("INSERT INTO services (name, description) VALUES (?,?)");
-        if(!$stmt) fail('Prepare failed: '.$conn->error,500);
-        $stmt->bind_param('ss',$name,$desc);
-    }
+    // Insert with dynamic columns depending on schema
+    $hasDesc = isset($colsMap['description']);
+    $hasImg  = isset($colsMap['image']);
+    $cols = ['name'];
+    $ph   = ['?'];
+    $types= 's';
+    $vals = [$name];
+    if ($hasDesc) { $cols[]='description'; $ph[]='?'; $types.='s'; $vals[]=$desc; }
+    if ($hasImg && $imagePath !== null) { $cols[]='image'; $ph[]='?'; $types.='s'; $vals[]=$imagePath; }
+    $sql = 'INSERT INTO services (' . implode(',', $cols) . ') VALUES (' . implode(',', $ph) . ')';
+    $stmt = $conn->prepare($sql);
+    if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+    $stmt->bind_param($types, ...$vals);
     try {
         $stmt->execute();
     } catch (mysqli_sql_exception $e) {

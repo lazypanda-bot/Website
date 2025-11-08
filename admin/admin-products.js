@@ -1140,6 +1140,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // collect variants table rows into an array of objects and append as JSON under 'variants'
         try{
             const rows = [];
+            let wherePriceArr = [];
             // only collect when visible (user opted in)
             if(variantsRows && !variantsSection.classList.contains('hidden')){
                 const trNodes = Array.from(variantsRows.querySelectorAll('.variant-card'));
@@ -1155,7 +1156,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 // collect rows now and mark invalid inputs if validation fails
                 let invalid = false;
-                const wherePriceArr = [];
+                // wherePriceArr declared above so it's always in scope
                 trNodes.forEach(tr => {
                     const nameInputs = Array.from(tr.querySelectorAll('.variant-name'));
                     const typeInputs = Array.from(tr.querySelectorAll('.variant-type'));
@@ -1209,7 +1210,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 if(invalid){ alert('Please fill a name for each variant row.'); return; }
             }
             if(rows.length) fd.append('variants', JSON.stringify(rows));
-            if(wherePriceArr.length) fd.append('wherepricedepends', JSON.stringify(wherePriceArr));
+            if(wherePriceArr && wherePriceArr.length) fd.append('wherepricedepends', JSON.stringify(wherePriceArr));
         } catch(e){ console.warn('Failed to collect variants table rows', e); }
         // Collect existing images still present in previews.
         // Important: only include server-side image paths (data-src) here.
@@ -1227,16 +1228,16 @@ window.addEventListener('DOMContentLoaded', () => {
         fetch('products-api.php', {method:'POST', body:fd})
             .then(async r => {
                 const text = await r.text();
-                try {
-                    const d = JSON.parse(text);
-                            if (d.status === 'ok') { closeModal(productModal); fetchProducts(); }
-                    else alert(d.message || 'Save failed');
-                } catch (e) {
-                    console.error('Save returned non-JSON', r.status, text);
-                    alert('Save failed; server returned unexpected response. See console.');
+                let data = null;
+                try { data = JSON.parse(text); } catch(parseErr){
+                    console.error('[product save] non-JSON response status '+r.status+':', text);
+                    alert('Save failed (HTTP '+r.status+'). Raw response logged to console.');
+                    return;
                 }
+                if(data.status==='ok') { closeModal(productModal); fetchProducts(); }
+                else alert(data.message || 'Save failed');
             })
-            .catch(err=>alert('Save error '+err));
+            .catch(err=>{ console.error('Save fetch error', err); alert('Save error '+err); });
     });
 
     // Preview uploaded image

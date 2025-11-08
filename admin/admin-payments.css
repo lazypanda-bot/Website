@@ -112,8 +112,6 @@ body {
 .delete-btn:hover {
     color: #d9534f;
 }
-
-/* Payment status as a styled select (extracted from admin-payments.php) */
 .payment-cell { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
 .payment-select-wrap { position:relative; display:inline-block; }
 .payment-select-wrap:after { content:'\25BE'; /* down arrow */ position:absolute; top:50%; right:10px; transform:translateY(-52%); font-size:.7rem; color:rgba(0,0,0,.55); pointer-events:none; transition:.25s color; }

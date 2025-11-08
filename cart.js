@@ -164,21 +164,28 @@ document.addEventListener('DOMContentLoaded', () => {
         let designHtml = '';
         try {
             function resolveDesignSrc(item) {
+                // If server supplied unified preview path use it first
+                if (item.preview_path && typeof item.preview_path === 'string' && item.preview_path.trim() !== '') {
+                    return normalizePath(item.preview_path);
+                }
+                // Prefer explicit dataURL preview if present (local saved design)
                 if (item.design_png && String(item.design_png).startsWith('data:')) return item.design_png;
-                const candidates = [item.designfilepath, item.design_file, item.designpath, item.design];
+                // Candidate order: thumbnail path from DB (designfilepath) or any legacy fields
+                const candidates = [item.designfilepath, item.design_file, item.designpath, item.design, item.design_png];
                 for (let c of candidates) {
                     if (!c) continue;
                     let s = String(c).trim();
                     if (!s) continue;
-                    if (s.startsWith('data:') || /^https?:\/\//i.test(s) || s.startsWith('/')) return s;
-                    s = s.replace(/\\/g, '/');
-                    const m = s.match(/(uploads\/.*)/i);
-                    if (m && m[1]) return m[1].replace(/\\/g, '/');
-                    const i = s.toLowerCase().indexOf('uploads/');
-                    if (i !== -1) return s.slice(i).replace(/\\/g, '/');
-                    return s;
+                    return normalizePath(s);
                 }
                 return null;
+            }
+            function normalizePath(s){
+                if (s.startsWith('data:') || /^https?:\/\//i.test(s) || s.startsWith('/')) return s;
+                s = s.replace(/\\/g,'/');
+                const m = s.match(/(uploads\/.*)/i); if(m&&m[1]) return m[1].replace(/\\/g,'/');
+                const i = s.toLowerCase().indexOf('uploads/'); if(i!==-1) return s.slice(i).replace(/\\/g,'/');
+                return s;
             }
             const src = resolveDesignSrc(p);
             if (src) {
@@ -458,6 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(checkoutForm){
       checkoutForm.addEventListener('submit', async e=> {
           e.preventDefault();
+          if (window.__placingOrder) { return; }
           const address = (deliveryAddressInput?.value||'').trim();
           const phone   = (deliveryPhoneInput?.value||'').trim();
           const dm = checkoutForm.querySelector('input[name="delivery_method"]:checked');
@@ -497,6 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
           fd.append('delivery_address', address);
           fd.append('delivery_phone', phone);
           fd.append('isPartialPayment', partial ? partial.value : '0');
+          // Explicitly send chosen payment_method (server falls back to cash if missing)
+          if (pm && pm.value) fd.append('payment_method', pm.value);
           if (partialAmount !== null) fd.append('partial', partialAmount.toFixed(2));
           // Attach GCash receipt and paid amount if provided (server may ignore if not implemented yet)
           if (gcashFile) { try { fd.append('gcash_receipt', gcashFile); } catch(e){} }
@@ -507,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
               const btn = checkoutForm.querySelector('.place-order-btn');
               if(btn){ btn.disabled=true; btn.textContent='Placing'; }
+              window.__placingOrder = true;
               const res = await fetch('quick-order.php',{method:'POST',body:fd});
               const text = await res.text(); let data; try{ data=JSON.parse(text);}catch(parseErr){ console.error(parseErr,text); alert('Order failed: Unexpected response'); if(btn){ btn.disabled=false; btn.textContent='Place Order'; } return; }
               if(data.status==='ok') {
@@ -523,11 +534,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   console.error('Order error', data);
             }
             if(btn){ btn.disabled=false; btn.textContent='Place Order'; }
+            window.__placingOrder = false;
           } catch(err) {
                 console.error(err);
                 alert('Order failed due to network or server error.');
                 const btn = checkoutForm.querySelector('.place-order-btn');
                 if(btn){ btn.disabled=false; btn.textContent='Place Order'; }
+                window.__placingOrder = false;
             }
         });
     }

@@ -80,8 +80,52 @@ else {
                 tbody.innerHTML='<tr><td colspan="10" class="table-msg">No orders found</td></tr>'; 
                 return; 
               }
-            rows.forEach(o=> tbody.appendChild(buildRow(o)) );
+            const filtered = applyFilters(rows);
+            if(!filtered.length){
+                tbody.innerHTML='<tr><td colspan="10" class="table-msg">No orders match your filters</td></tr>';
+                return;
+            }
+            filtered.forEach(o=> tbody.appendChild(buildRow(o)) );
             console.log('[admin-orders] rendered rows:', rows.length);
+        }
+
+        // UI: filter toggle and application
+        const filterBtn = document.getElementById('ordersFilterBtn');
+        const filterPanel = document.getElementById('ordersFilterPanel');
+        const filterForm = document.getElementById('ordersFilterForm');
+        if(filterBtn && filterPanel){
+            filterBtn.addEventListener('click', e=>{
+                e.preventDefault();
+                const isHidden = filterPanel.hasAttribute('hidden');
+                if(isHidden) filterPanel.removeAttribute('hidden');
+                else filterPanel.setAttribute('hidden','');
+            });
+        }
+        if(filterForm){
+            filterForm.addEventListener('submit', e=>{ e.preventDefault(); fetchOrders(true); });
+            filterForm.addEventListener('reset', e=>{ setTimeout(()=>fetchOrders(true), 0); });
+        }
+
+        function applyFilters(rows){
+            if(!filterForm) return rows;
+            const fd = new FormData(filterForm);
+            const os = (fd.get('order_status')||'').toString();
+            const ds = (fd.get('delivery_status')||'').toString();
+            const minPaid = parseFloat(fd.get('min_paid')); const minOk = !isNaN(minPaid);
+            const maxPaid = parseFloat(fd.get('max_paid')); const maxOk = !isNaN(maxPaid);
+            const customer = (fd.get('customer')||'').toString().trim().toLowerCase();
+            return rows.filter(o=>{
+                if(os && (o.OrderStatus||'') !== os) return false;
+                if(ds && (o.DeliveryStatus||'') !== ds) return false;
+                const paid = Number(o.AmountPaid||0);
+                if(minOk && paid < minPaid) return false;
+                if(maxOk && paid > maxPaid) return false;
+                if(customer){
+                    const name = (o.customer_name||'').toString().toLowerCase();
+                    if(!name.includes(customer)) return false;
+                }
+                return true;
+            });
         }
 
         function buildRow(o){
