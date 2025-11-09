@@ -65,14 +65,24 @@ require_once '../database.php';
                 </div>
 
                 <table class="report-table">
+                    <colgroup>
+                        <col style="width:16%" />
+                        <col style="width:14%" />
+                        <col style="width:14%" />
+                        <col style="width:14%" />
+                        <col style="width:14%" />
+                        <col style="width:14%" />
+                        <col style="width:14%" />
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th>Week</th>
+                            <th>Date</th>
                             <th>Total Orders</th>
-                            <th>Paid</th>
-                            <th>Partial</th>
-                            <th>Pending</th>
-                            <th>Revenue</th>
+                            <th>Completed Orders</th>
+                            <th>Pending Orders</th>
+                            <th>Cancelled Orders</th>
+                            <th>Pending Payments</th>
+                            <th>Profit</th>
                         </tr>
                     </thead>
                     <tbody id="reportsTbody"></tbody>

@@ -66,10 +66,11 @@ body {
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 15px;
+    table-layout: fixed; /* even column distribution to avoid large gaps */
 }
 .report-table th,
 .report-table td {
-    padding: 10px 16px;
+    padding: 10px 14px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     vertical-align: middle;
@@ -79,9 +80,15 @@ body {
     color: #752525;
     font-weight: 600;
 }
-.report-table td {
-    color: #555;
-}
+.report-table td { color: #555; }
+.report-table th, .report-table td { word-wrap: break-word; }
+.report-table td:nth-last-child(2),
+.report-table td:last-child { text-align:right; }
+.report-table th:nth-last-child(2),
+.report-table th:last-child { text-align:right; }
+.report-table td.rev-positive { font-weight:600; }
+.pending-payments-cell { font-weight:600; color:#a06500; }
+.pending-payments-zero { color:#1b6e2a; }
 .table-msg { text-align:center; padding:25px; color:#555; }
 .rev-positive { 
     color:#1b6e2a; 

@@ -11,25 +11,28 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
     function fetchWeekly(){
-    fetch('reports-api.php?action=weekly').then(r=>r.json()).then(d=>{
-            if(d.status==='ok') renderWeekly(d.weekly); else console.error(d);
+        tbody.innerHTML = '<tr><td colspan="7" class="table-msg">Loading…</td></tr>';
+        fetch('reports-api.php?action=weekly').then(r=>r.json()).then(d=>{
+            if(d.status==='ok') renderWeekly(d.weekly); else { console.error(d); tbody.innerHTML='<tr><td colspan="7" class="table-msg">Failed to load</td></tr>'; }
         })
-        .catch(e=>console.error(e));
+        .catch(e=>{ console.error(e); tbody.innerHTML='<tr><td colspan="7" class="table-msg">Network error</td></tr>'; });
     }
     function renderWeekly(list){
         tbody.innerHTML='';
-    if(!list || list.length===0){ tbody.innerHTML='<tr><td colspan="6" class="table-msg">No data</td></tr>'; return; }
+        if(!list || list.length===0){ tbody.innerHTML='<tr><td colspan="7" class="table-msg">No data</td></tr>'; return; }
         list.forEach(w=>{
-            const rev = Number(w.revenue||0);
-            const revCls = rev>0 ? 'rev-positive' : 'rev-zero';
+            const profit = Number(w.profit||0);
+            const revCls = profit>0 ? 'rev-positive' : 'rev-zero';
+            const dateLabel = w.date_label || w.yw || '';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-            <td>${w.yw}</td>
-            <td>${w.total_orders}</td>
-            <td>${w.paid}</td>
-            <td>${w.partial}</td>
-            <td>${w.pending}</td>
-            <td class="${revCls}">₱${rev.toFixed(2)}</td>`;
+            <td>${dateLabel}</td>
+            <td>${w.total_orders||0}</td>
+            <td>${w.completed_orders||0}</td>
+            <td>${w.pending_orders||0}</td>
+            <td>${w.cancelled_orders||0}</td>
+            <td>${w.pending_payments||0}</td>
+            <td class="${revCls}">₱${profit.toFixed(2)}</td>`;
             tbody.appendChild(tr);
         });
     }
