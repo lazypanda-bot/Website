@@ -3,7 +3,13 @@
 // Target (ideal) columns: customer_id, name, address, email, facebook_account, cust_password, profile_pic, registration__date, phone_number
 // Falls back automatically if some legacy columns differ (e.g., username instead of name, id instead of customer_id, password instead of cust_password, etc.).
 
-if (!isset($conn) || !($conn instanceof mysqli)) {
+// Establish connection
+if (isset($conn) && ($conn instanceof mysqli)) {
+    // Existing connection: ensure desired charset (avoid resetting if error state)
+    if (!$conn->connect_error) {
+        $conn->set_charset('utf8mb4');
+    }
+} else {
     $conn = new mysqli('localhost', 'root', '', 'website');
     if ($conn->connect_error) {
         die('Database connection failed: ' . $conn->connect_error);
@@ -12,7 +18,7 @@ if (!isset($conn) || !($conn instanceof mysqli)) {
     // Optional quick connectivity banner: append ?db_ping=1 to see status (for people pasting the file URL directly)
     if (isset($_GET['db_ping'])) {
         header('Content-Type: text/plain');
-        echo 'Successfully connected --- MySQL host=' . $conn->host_info . "\n";
+        echo 'Successfully connected --- ' . $conn->host_info . "\n";
         exit; // stop further processing
     }
 }

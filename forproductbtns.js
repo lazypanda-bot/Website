@@ -35,6 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let quantity = parseInt(document.getElementById('quantity')?.value || '1');
         // Get design
         let design = document.getElementById('design-option')?.value || '';
+        // If URL contains a saved designoption_id, prefer that over the generic design option label
+        try {
+            const url = new URL(window.location.href);
+            const did = url.searchParams.get('designoption_id');
+            if (did && /^\d+$/.test(did)) {
+                design = did; // a numeric id that the server can store as designoption_id
+            }
+        } catch(_) { /* ignore URL parse issues */ }
         // Get price from the price box (prefer data-price attribute)
         let pb = document.querySelector('.price-box');
         let priceText = (pb && pb.getAttribute('data-price')) || (pb && pb.textContent) || '';
@@ -148,6 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prodIdInput && prodIdInput.value) product.id = parseInt(prodIdInput.value,10);
             await addToCart(product, { serverPreferred:true });
             if (cartIcon) cartIcon.classList.add('active');
+            // Always show consistent toast
+            try{ if(typeof showAddCartToast==='function'){ showAddCartToast('Added to cart'); } }catch(_){ /* ignore */ }
             showCartNotification();
             if (!window.isAuthenticated) {
                 showLoginModal();
@@ -220,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('Buy Now addToCart failed, falling back to local:', err);
                 await addToCart(product, { serverPreferred: false });
             }
+            try{ if(typeof showAddCartToast==='function'){ showAddCartToast('Added to cart'); } }catch(_){ }
             // If user isn't authenticated, open the login modal and redirect to checkout after auth.
             if (!window.isAuthenticated) {
                 if (typeof window.openLoginModal === 'function') {

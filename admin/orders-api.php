@@ -128,7 +128,7 @@ if ($action === 'update_delivery_status') {
     if(!in_array($status,$allowed,true)) fail('Invalid delivery status');
     // If picked up, set DeliveryStatus='Picked up' and also mark OrderStatus='Completed'
     if (strcasecmp($status,'Picked up')===0) {
-        $stmt = $conn->prepare("UPDATE orders SET delivery_status=?, order_status='Completed' WHERE order_id=?");
+        $stmt = $conn->prepare("UPDATE orders SET delivery_status=?, order_status='Picked up' WHERE order_id=?");
         if(!$stmt) fail('Prepare failed: '.$conn->error,500);
         $stmt->bind_param('si',$status,$id);
     } else {

@@ -2,7 +2,8 @@ window.addEventListener('DOMContentLoaded', () => {
     highlightNav();
     const tbody = document.getElementById('paymentsTbody');
 
-    const PAYMENT_OPTIONS = ['Unpaid','Partial','Paid'];
+    // Remove 'Unpaid' from selectable options; status now driven by partial or paid amounts
+    const PAYMENT_OPTIONS = ['Partial','Paid'];
 
     function highlightNav(){
         const currentPage = window.location.pathname.split('/').pop();
@@ -77,11 +78,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function derivePaymentStatus(p){
-        // Placeholder logic; refine when dedicated payment status column exists
-        if(p.isPartialPayment && Number(p.isPartialPayment) == 1) return 'Partial';
-        // If OrderStatus is Completed assume Paid else Unpaid
-        if(p.OrderStatus === 'Completed') return 'Paid';
-        return 'Unpaid';
+        // Derive from payment data: if any AmountPaid > 0 but less than total => Partial, if >= total => Paid, else default Pending/processing mapping
+        const total = Number(p.TotalAmount)||0;
+        const paid = Number(p.AmountPaid)||0;
+        if(paid >= total && total > 0) return 'Paid';
+        if(paid > 0 && paid < total) return 'Partial';
+        // no payment yet -> treat as Partial placeholder until downpayment is recorded; but not selectable 'Unpaid'
+        return 'Partial';
     }
 
     tbody.addEventListener('change', e => {
@@ -90,26 +93,44 @@ window.addEventListener('DOMContentLoaded', () => {
         const cell = sel.closest('.payment-cell');
         const id = cell.getAttribute('data-id');
         const newStatus = sel.value;
-        updatePaymentStatus(id, newStatus, cell);
+        const row = sel.closest('tr');
+        const methodText = row && row.children[3] ? row.children[3].textContent.trim().toLowerCase() : '';
+        // Permit manual changes for both Cash and GCash
+        if(methodText !== 'cash' && methodText !== 'gcash'){
+            const prev = sel.getAttribute('data-prev') || sel.value;
+            sel.value = prev;
+            alert('Only Cash or GCash payments can be manually changed.');
+            return;
+        }
+        sel.setAttribute('data-prev', newStatus);
+        updatePaymentStatus(id, newStatus, cell, row);
     });
 
-    function updatePaymentStatus(id, status, cell){
+    function updatePaymentStatus(id, status, cell, row){
         const saving = cell.querySelector('.saving-text');
         saving.style.display='block';
-        const fd = new FormData(); fd.append('action','update_status'); fd.append('order_id', id); fd.append('OrderStatus', status==='Paid' ? 'Completed' : (status==='Partial' ? 'Processing' : 'Pending'));
-        fetch('orders-api.php',{method:'POST',body:fd})
-            .then(r=>r.json())
-            .then(d=>{
-                saving.style.display='none';
-                if(d.status==='ok'){
-                    const sel = cell.querySelector('.payment-status-select');
-                    sel.className = 'payment-status-select ' + statusClass(status);
-                    sel.value = status;
-                } else {
-                    alert('Update failed: '+(d.message||'Unknown error'));
-                }
-            })
-            .catch(e=>{ saving.style.display='none'; console.error(e); alert('Network error updating status'); });
+        const fd = new FormData(); fd.append('action','update_payment_status'); fd.append('order_id', id); fd.append('PaymentStatus', status);
+        fetch('payments-api.php',{method:'POST',body:fd})
+                    .then(async r=>{
+                        const raw = await r.text();
+                        try { return JSON.parse(raw); } catch(e){ console.error('Bad JSON from payments-api:', raw); throw new Error('Bad JSON'); }
+                    })
+          .then(d=>{
+            saving.style.display='none';
+            if(d.status==='ok'){
+                const sel = cell.querySelector('.payment-status-select');
+                sel.className = 'payment-status-select ' + statusClass(status);
+                sel.value = status;
+                // Update Amount Paid & Balance cells (indexes: Total=6, AmountPaid=7, Balance=8)
+                const amountPaidCell = row.children[7];
+                const balanceCell = row.children[8];
+                if(amountPaidCell && typeof d.AmountPaid!=='undefined') amountPaidCell.textContent = '₱'+ Number(d.AmountPaid).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+                if(balanceCell && typeof d.Balance!=='undefined') balanceCell.textContent = '₱'+ Number(d.Balance).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+            } else {
+                alert('Update failed: '+(d.message||'Unknown error'));
+            }
+          })
+          .catch(e=>{ saving.style.display='none'; console.error(e); alert('Network error updating status'); });
     }
     fetchPayments();
 });

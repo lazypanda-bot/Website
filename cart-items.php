@@ -94,10 +94,10 @@ if ($designColName) {
 }
 
 // Even if there's no designoption_id on the cart table, try to surface any direct
-// design path stored on the cart row (common in flexible schemas). Map it to
+// design/preview path stored on the cart row (common in flexible schemas). Map it to
 // a unified alias 'designfilepath' so the client can render a preview.
 $directDesignExpr = '';
-foreach (['designfilepath','design_file','designpath','design'] as $cand) {
+foreach (['designfilepath','design_file','designpath','design','preview_path','preview','thumb','thumbnail','image','img'] as $cand) {
     if (isset($cartTableCols[$cand])) {
         $directDesignExpr = ', c.' . $cartTableCols[$cand] . ' AS designfilepath';
         break;
@@ -204,6 +204,33 @@ while ($row = $res->fetch_assoc()) {
     ];
     foreach ($designDefaults as $k => $v) {
         if (!array_key_exists($k, $row)) $row[$k] = $v;
+    }
+    // If designfilepath is a bare numeric id (legacy rows stored id in a path column),
+    // attempt to resolve it to an actual path.
+    if (!empty($row['designfilepath']) && ctype_digit((string)$row['designfilepath'])) {
+        $did = (int)$row['designfilepath'];
+        if ($did > 0) {
+            try {
+                if ($chk = $conn->query("SHOW TABLES LIKE 'designoption'")) {
+                    if ($chk->num_rows > 0) {
+                        $chk->close();
+                        $stmtFix = $conn->prepare("SELECT designfilepath FROM designoption WHERE designoption_id=? LIMIT 1");
+                        if ($stmtFix) {
+                            $stmtFix->bind_param('i',$did);
+                            if ($stmtFix->execute()) {
+                                $rf = $stmtFix->get_result();
+                                if ($frow = $rf->fetch_assoc()) {
+                                    if (!empty($frow['designfilepath'])) {
+                                        $row['designfilepath'] = $frow['designfilepath'];
+                                    }
+                                }
+                            }
+                            $stmtFix->close();
+                        }
+                    } else { $chk->close(); }
+                }
+            } catch(Throwable $e){ /* ignore resolution errors */ }
+        }
     }
     $items[] = $row;
 }

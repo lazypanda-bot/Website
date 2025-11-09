@@ -349,8 +349,14 @@ if ($isAuthenticated) {
                             elseif (in_array($norm, ['ready to ship','ready-to-ship','readytoship'])) { $displayStatus = 'Ready to Ship'; }
                             elseif (in_array($norm,['shipped','dispatched','in-transit','out-for-delivery'])) { $displayStatus='Shipped'; }
                             elseif ($norm==='delivered') { $displayStatus='Delivered'; }
+                            // New terminal state reflected in admin and API
+                            elseif (in_array($norm,['picked up','picked-up','pickedup'])) { $displayStatus='Picked up'; }
                             elseif (in_array($norm,['cancelled','canceled'])) { $displayStatus='Cancelled'; }
                             elseif ($norm==='completed') { $displayStatus='Completed'; }
+                            // If delivery is already Picked up, prefer showing Picked up for order too (back-compat)
+                            if (strcasecmp($o['DeliveryStatus'] ?? '', 'Picked up')===0 && strcasecmp($displayStatus,'Cancelled')!==0) {
+                                $displayStatus = 'Picked up';
+                            }
                             $displayStatusClass = strtolower(str_replace(' ','-',$displayStatus));
                         ?>
                         <div class="order-card" data-order-id="<?= htmlspecialchars($o['order_id']) ?>" data-order-status="<?= htmlspecialchars($displayStatusClass) ?>">

@@ -446,6 +446,11 @@ body {
     background:#ffd4d4; 
     color:#7d0e0e; 
 }
+.order-status-select.os-Picked-up {
+    /* Pastel variant matching the badge.status-picked-up deep purple */
+    background:#f2dcff;
+    color:#5e0d83;
+}
 .order-status-select::-ms-expand { 
     display:none; 
 }

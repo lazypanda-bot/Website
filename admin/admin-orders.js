@@ -6,7 +6,7 @@ else {
     window.addEventListener('DOMContentLoaded', () => {
         console.log('[admin-orders] script version 12 (thumb-only + src resolver) loaded');
 
-        const tbody = document.getElementById('ordersTbody');
+    const tbody = document.getElementById('ordersTbody');
         if(!tbody){ console.warn('No ordersTbody found'); return; }
 
         // Keep 'Pending' as a visible-but-not-selectable default: omit it from the selectable
@@ -83,6 +83,9 @@ else {
             pollTimer = setTimeout(()=> fetchOrders(false), POLL_INTERVAL);
         }
 
+        // track orders we auto-synced to Picked up to avoid duplicate calls
+        const pickupFixes = new Set();
+
         function render(rows){
             tbody.innerHTML='';
             if(!rows.length){ 
@@ -139,10 +142,17 @@ else {
 
         function buildRow(o){
             const tr = document.createElement('tr');
-            const orderStatus = o.OrderStatus || 'Pending';
+            const rawOrderStatus = o.OrderStatus || 'Pending';
             const deliveryStatus = o.DeliveryStatus || 'Pending';
-            const isCompleted = orderStatus === 'Completed';
-            const isCancelled = orderStatus === 'Cancelled';
+            const isCancelled = rawOrderStatus === 'Cancelled';
+            // If delivery is Picked up but order isn't, render as Picked up and queue a background fix
+            let orderStatus = rawOrderStatus;
+            if (deliveryStatus === 'Picked up' && orderStatus !== 'Picked up') {
+                orderStatus = 'Picked up';
+                queueOrderPickupFix(o.order_id);
+            }
+            // Treat 'Picked up' as a terminal/locked state like Completed and Cancelled
+            const isLockedOrder = (orderStatus === 'Completed' || orderStatus === 'Picked up' || isCancelled);
 
             const cellsPre = [
                 o.order_id,
@@ -175,18 +185,18 @@ else {
             tr.appendChild(totalTd);
 
             const orderTd = document.createElement('td');
-            orderTd.className='status-cell' + (isCompleted||isCancelled? ' completed-readonly':'');
+            orderTd.className='status-cell' + (isLockedOrder? ' completed-readonly':'');
             orderTd.dataset.type='order';
             orderTd.dataset.id=o.order_id;
-            if(isCompleted||isCancelled){
+            if(isLockedOrder){
                 orderTd.innerHTML = `<div class='status-badge-wrapper'>${badge(orderStatus)}</div>`;
             } 
             else {
                 orderTd.appendChild(buildSelect(orderStatus,'order'));
             }
-            if(isCompleted||isCancelled){
+            if(isLockedOrder){
                 // removed inline 'Saving...' helper text to avoid visual clutter
-                if(isCompleted && o.CompletedAt){
+                if(orderStatus === 'Completed' && o.CompletedAt){
                     const at = document.createElement('div');
                     at.className='completed-at';
                     at.textContent='Completed '+o.CompletedAt;
@@ -203,15 +213,28 @@ else {
             delTd.className='status-cell';
             delTd.dataset.type='delivery';
             delTd.dataset.id=o.order_id;
-            if(isCompleted){
+            const isLockedDelivery = (deliveryStatus === 'Picked up' || isLockedOrder);
+            if(isLockedDelivery){
                 delTd.innerHTML = `<div class='status-badge-wrapper'>${badge(deliveryStatus)}</div>`;
                 delTd.classList.add('completed-readonly');
-            } 
-            else {
+            } else {
                 delTd.appendChild(buildSelect(deliveryStatus,'delivery'));
             }
             tr.appendChild(delTd);
             return tr;
+        }
+
+        function queueOrderPickupFix(orderId){
+            if(!orderId) return;
+            if(pickupFixes.has(orderId)) return;
+            pickupFixes.add(orderId);
+            const fd = new FormData();
+            fd.append('action','update_status');
+            fd.append('order_id', orderId);
+            fd.append('OrderStatus','Picked up');
+            fetch('orders-api.php',{ method:'POST', body: fd })
+               .then(()=>{})
+               .catch(()=>{});
         }
 
         function buildSelect(current, kind){
@@ -343,7 +366,7 @@ else {
                 try{ const _s2 = cell && cell.querySelector && cell.querySelector('select[data-status-select]'); if(_s2) _s2.disabled = false; }catch(e){}
                 if(d.status==='ok'){
                     sel.className='order-status-select '+statusClass(status);
-                    // If delivery was picked up, server will have completed the order as well — reflect that in the UI
+                    // If delivery was picked up, reflect in the UI and set order status to 'Picked up'
                     if(status === 'Picked up'){
                         const row = cell.parentElement;
                         // replace delivery select with a 'Picked up' badge
@@ -354,7 +377,7 @@ else {
                         if(row){
                             const orderCell = row.querySelector('td.status-cell[data-type="order"]');
                             if(orderCell){
-                                lockCompleted(orderCell,'Completed');
+                                lockCompleted(orderCell,'Picked up');
                             }
                         }
                     }

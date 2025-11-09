@@ -380,6 +380,12 @@ if (addCartBtn && cartForm) {
 
         // Build form data
         const fd = new FormData(cartForm);
+        // Ensure saved design id is sent when available (so preview persists in cart)
+        try {
+            const url = new URL(window.location.href);
+            const did = url.searchParams.get('designoption_id');
+            if (did && /^\d+$/.test(did)) { fd.append('designoption_id', did); }
+        } catch(_) { /* ignore */ }
         try {
             const res = await fetch('add-to-cart.php', { method: 'POST', body: fd });
             const text = await res.text();
@@ -389,10 +395,8 @@ if (addCartBtn && cartForm) {
                 const msg = (data && data.message) ? data.message : ('Failed to add to cart' + (text && !data ? ' (non-JSON response)' : ''));
                 throw new Error(msg);
             }
-            let msg = 'Added to cart';
-            if (data.action === 'updated') msg = 'Cart updated';
-            if (data.action === 'replaced') msg = 'Quantity set';
-            showAddCartToast(msg);
+            // Always show uniform success wording regardless of action
+            showAddCartToast('Added to cart');
         } catch (err) {
             console.error(err);
             showAddCartToast(err.message || 'Error adding to cart', true);

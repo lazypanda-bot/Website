@@ -25,9 +25,25 @@ if (!defined('CART_TABLE')) {
     $colorCol = 'color'; foreach(['color','colour','variant'] as $c){ if(isset($cartCols[$c])) { $colorCol=$cartCols[$c]; break; } }
     define('CART_COLOR_COL', $colorCol);
     // detect design-related column on cart table so we can persist a design preview/path
-    $cartDesignCol = null;
-    foreach (['designoption_id','design_option_id','design_id','designfilepath','design_file','designpath','design','design_png'] as $c) {
-        if (isset($cartCols[$c])) { $cartDesignCol = $cartCols[$c]; break; }
+    $cartDesignCol = null; $cartDesignColType = null; // 'id' or 'path'
+    foreach ([
+        'designoption_id'=>'id',
+        'design_option_id'=>'id',
+        'design_id'=>'id',
+        'designfilepath'=>'path',
+        'design_file'=>'path',
+        'designpath'=>'path',
+        'design'=>'path',
+        'design_png'=>'path',
+        // additional common schema variants for preview columns
+        'preview_path'=>'path',
+        'preview'=>'path',
+        'thumb'=>'path',
+        'thumbnail'=>'path',
+        'image'=>'path',
+        'img'=>'path'
+    ] as $c=>$t) {
+        if (isset($cartCols[$c])) { $cartDesignCol = $cartCols[$c]; $cartDesignColType = $t; break; }
     }
 }
 session_start();
@@ -177,7 +193,17 @@ try {
         if ($cartDesignCol) {
             $upd = $conn->prepare("UPDATE " . CART_TABLE . " SET " . CART_QTY_COL . "=? , " . CART_SIZE_COL . "=?, " . CART_COLOR_COL . "=?, " . $cartDesignCol . "=? WHERE " . CART_PK_COL . "=?");
             if (!$upd) json_error('Failed to prepare update: ' . $conn->error, 500);
-            $designBindVal = $designOptionId ? (string)$designOptionId : $design;
+            // Resolve design binding value: if column stores path and we got an option id, fetch its filepath
+            $designBindVal = '';
+            if ($designOptionId > 0) {
+                if ($cartDesignColType === 'id') {
+                    $designBindVal = (string)$designOptionId;
+                } else {
+                    $designBindVal = fetch_design_filepath($conn, $designOptionId) ?: '';
+                }
+            } else {
+                $designBindVal = $design; // may be raw path or data URL
+            }
             $upd->bind_param("isssi", $newQty, $size, $color, $designBindVal, $keeper);
         } else {
             $upd = $conn->prepare("UPDATE " . CART_TABLE . " SET " . CART_QTY_COL . "=? , " . CART_SIZE_COL . "=?, " . CART_COLOR_COL . "=? WHERE " . CART_PK_COL . "=?");
@@ -189,7 +215,16 @@ try {
             // user+product that currently lack a design value. This prevents the
             // UX issue where one row holds the preview and deleting it removes the
             // preview from other rows that logically should show it.
-            $designBindVal = $designOptionId ? (string)$designOptionId : $design;
+            // For propagation we use the same resolved value as earlier
+            if ($designOptionId > 0) {
+                if ($cartDesignColType === 'id') {
+                    $designBindVal = (string)$designOptionId;
+                } else {
+                    $designBindVal = fetch_design_filepath($conn, $designOptionId) ?: '';
+                }
+            } else {
+                $designBindVal = $design;
+            }
             if ($cartDesignCol && $designBindVal !== '') {
                 $propSql = "UPDATE " . CART_TABLE . " SET " . $cartDesignCol . "=? WHERE " . CART_USER_FK_COL . "=? AND " . CART_PRODUCT_FK_COL . "=? AND (" . $cartDesignCol . " IS NULL OR " . $cartDesignCol . "='')";
                 $prop = $conn->prepare($propSql);
@@ -223,8 +258,16 @@ try {
         $stmt = $conn->prepare($sql);
         if (!$stmt) json_error('Failed to prepare insert: ' . $conn->error, 500);
         if ($cartDesignCol) {
-            $designBindVal = $designOptionId ? (string)$designOptionId : $design;
-            // types: user_id (i), product_id (i), size (s), color (s), quantity (i), design (s)
+            // Resolve design value for insertion
+            if ($designOptionId > 0) {
+                if ($cartDesignColType === 'id') {
+                    $designBindVal = (string)$designOptionId;
+                } else {
+                    $designBindVal = fetch_design_filepath($conn, $designOptionId) ?: '';
+                }
+            } else {
+                $designBindVal = $design;
+            }
             $stmt->bind_param("iissis", $user_id, $product_id, $size, $color, $quantity, $designBindVal);
         } else {
             $stmt->bind_param("iissi", $user_id, $product_id, $size, $color, $quantity);
@@ -232,7 +275,15 @@ try {
         if ($stmt->execute()) {
             // propagate design to other rows without design, same as above
             $insertId = $stmt->insert_id;
-            $designBindVal = $designOptionId ? (string)$designOptionId : $design;
+            if ($designOptionId > 0) {
+                if ($cartDesignColType === 'id') {
+                    $designBindVal = (string)$designOptionId;
+                } else {
+                    $designBindVal = fetch_design_filepath($conn, $designOptionId) ?: '';
+                }
+            } else {
+                $designBindVal = $design;
+            }
             if ($cartDesignCol) {
                 if ($designBindVal !== '') {
                     $propSql = "UPDATE " . CART_TABLE . " SET " . $cartDesignCol . "=? WHERE " . CART_USER_FK_COL . "=? AND " . CART_PRODUCT_FK_COL . "=? AND (" . $cartDesignCol . " IS NULL OR " . $cartDesignCol . "='')";
@@ -288,4 +339,23 @@ try {
     json_error('Unexpected server error: ' . $e->getMessage(), 500);
 }
 $conn->close();
+?>
+<?php
+// Helper function appended (placed after main script end intentionally for minimal intrusion if included twice)
+if (!function_exists('fetch_design_filepath')) {
+    function fetch_design_filepath($conn, $designOptionId) {
+        if ($designOptionId <= 0) return null;
+        try {
+            if ($chk = $conn->query("SHOW TABLES LIKE 'designoption'")) { if ($chk->num_rows===0) { $chk->close(); return null; } $chk->close(); }
+            $stmt = $conn->prepare("SELECT designfilepath FROM designoption WHERE designoption_id=? LIMIT 1");
+            if(!$stmt) return null;
+            $stmt->bind_param('i',$designOptionId);
+            if(!$stmt->execute()) { $stmt->close(); return null; }
+            $res = $stmt->get_result(); $path = null;
+            if($row=$res->fetch_assoc()) { $path = $row['designfilepath']; }
+            $stmt->close();
+            return $path ?: null;
+        } catch(Throwable $e){ return null; }
+    }
+}
 ?>

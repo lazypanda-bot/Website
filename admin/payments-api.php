@@ -119,5 +119,97 @@ if ($action === 'list') {
     exit;
 }
 
+// Allow updating payment status for Cash or GCash payments (admin action)
+if ($action === 'update_payment_status') {
+    $orderId = (int)($_POST['order_id'] ?? 0);
+    $newStatus = trim($_POST['PaymentStatus'] ?? '');
+    if ($orderId<=0) fail('Invalid order id');
+    if ($newStatus==='') fail('Status required');
+    // Verify latest payment method is cash
+    $payCols=[]; if($pc=$conn->query('SHOW COLUMNS FROM payments')){ while($r=$pc->fetch_assoc()){ $payCols[strtolower($r['Field'])]=$r['Field']; } $pc->free(); }
+    $payOrderFk = $payCols['order_id'] ?? 'order_id';
+    $payDateCol = $payCols['payment_date'] ?? ($payCols['date'] ?? ($payCols['created_at'] ?? 'payment_date'));
+    $payStatCol = $payCols['payment_status'] ?? 'payment_status';
+    $payMethCol = $payCols['payment_method'] ?? 'payment_method';
+    $payAmtCol  = $payCols['payment_amount'] ?? ($payCols['amount'] ?? ($payCols['paid_amount'] ?? 'payment_amount'));
+    $payCustCol = $payCols['customer_id'] ?? ($payCols['user_id'] ?? ($payCols['account_id'] ?? null));
+    // Get latest payment row for this order
+    $sql = "SELECT $payMethCol AS method FROM payments WHERE $payOrderFk=? ORDER BY $payDateCol DESC LIMIT 1";
+    $stmt = $conn->prepare($sql); if(!$stmt) fail('Prepare failed: '.$conn->error,500);
+    $stmt->bind_param('i',$orderId); if(!$stmt->execute()) fail('Query failed: '.$stmt->error,500);
+    $res = $stmt->get_result(); $row = $res? $res->fetch_assoc():null; $stmt->close();
+    $method = strtolower($row['method'] ?? '');
+    if($method !== 'cash' && $method !== 'gcash') fail('Only Cash or GCash payments can be updated manually');
+    $allowed = ['Partial','Paid']; if(!in_array($newStatus,$allowed,true)) fail('Invalid payment status');
+    // Discover order totals
+    $ordCols=[]; if($oc=$conn->query('SHOW COLUMNS FROM orders')){ while($r=$oc->fetch_assoc()){ $ordCols[strtolower($r['Field'])]=$r['Field']; } $oc->free(); }
+    $oTotalCol  = $ordCols['total_amount'] ?? ($ordCols['totalamount'] ?? ($ordCols['amount'] ?? ($ordCols['total'] ?? 'total_amount')));
+    $oIdCol     = $ordCols['order_id'] ?? ($ordCols['id'] ?? 'order_id');
+    $oCustFkCol = $ordCols['customer_id'] ?? ($ordCols['user_id'] ?? ($ordCols['account_id'] ?? 'customer_id'));
+    $sqlTotal = "SELECT CASE WHEN o.$oTotalCol IS NULL OR o.$oTotalCol=0 THEN (SELECT COALESCE(SUM(oi.line_price),0) FROM order_items oi WHERE oi.order_id=o.$oIdCol) ELSE o.$oTotalCol END AS total FROM orders o WHERE o.$oIdCol=?";
+    $stmtT = $conn->prepare($sqlTotal); if(!$stmtT) fail('Prepare failed: '.$conn->error,500);
+    $stmtT->bind_param('i',$orderId); if(!$stmtT->execute()) fail('Query failed: '.$stmtT->error,500);
+    $resT = $stmtT->get_result(); $rowT = $resT? $resT->fetch_assoc():['total'=>0]; $stmtT->close();
+    $total = (float)($rowT['total'] ?? 0);
+    // Get order customer id for FK inserts
+    $stmtC = $conn->prepare("SELECT $oCustFkCol AS cid FROM orders WHERE $oIdCol=?");
+    if(!$stmtC) fail('Prepare failed: '.$conn->error,500);
+    $stmtC->bind_param('i',$orderId); if(!$stmtC->execute()) fail('Query failed: '.$stmtC->error,500);
+    $resC = $stmtC->get_result(); $rowC = $resC? $resC->fetch_assoc():['cid'=>null]; $stmtC->close();
+    $customerId = isset($rowC['cid']) ? (int)$rowC['cid'] : null;
+
+    // Sum already paid (Paid or Partial rows)
+    $sqlPaid = "SELECT COALESCE(SUM(p.$payAmtCol),0) AS paid FROM payments p WHERE p.$payOrderFk=? AND UPPER(p.$payStatCol) IN ('PAID','PARTIAL')";
+    $stmtP = $conn->prepare($sqlPaid); if(!$stmtP) fail('Prepare failed: '.$conn->error,500);
+    $stmtP->bind_param('i',$orderId); if(!$stmtP->execute()) fail('Query failed: '.$stmtP->error,500);
+    $resP = $stmtP->get_result(); $rowP = $resP? $resP->fetch_assoc():['paid'=>0]; $stmtP->close();
+    $paidSoFar = (float)($rowP['paid'] ?? 0);
+
+    if($newStatus === 'Paid'){
+        $outstanding = max($total - $paidSoFar, 0);
+        if($outstanding > 0){
+            if($payCustCol){
+                $ins = $conn->prepare("INSERT INTO payments ($payOrderFk,$payCustCol,$payAmtCol,$payStatCol,$payMethCol,$payDateCol) VALUES (?,?,?,?,?,NOW())");
+                if(!$ins) fail('Prepare failed: '.$conn->error,500);
+                $methodCap = ($method==='gcash'?'GCash':'Cash'); $status='Paid';
+                $ins->bind_param('iidss',$orderId,$customerId,$outstanding,$status,$methodCap);
+            } else {
+                $ins = $conn->prepare("INSERT INTO payments ($payOrderFk,$payAmtCol,$payStatCol,$payMethCol,$payDateCol) VALUES (?,?,?,?,NOW())");
+                if(!$ins) fail('Prepare failed: '.$conn->error,500);
+                $methodCap = ($method==='gcash'?'GCash':'Cash'); $status='Paid';
+                $ins->bind_param('idss',$orderId,$outstanding,$status,$methodCap);
+            }
+            if(!$ins->execute()) fail('Insert failed: '.$ins->error,500);
+            $ins->close();
+            $paidSoFar += $outstanding;
+        } else {
+            // No outstanding: still add a zero-amount Paid marker if no previous Paid row
+            if($paidSoFar >= $total && $total>0){
+                // do nothing extra
+            }
+        }
+    } else { // Partial
+        // If no partial/paid yet, insert a zero-amount partial placeholder
+        if($paidSoFar === 0){
+            if($payCustCol){
+                $ins = $conn->prepare("INSERT INTO payments ($payOrderFk,$payCustCol,$payAmtCol,$payStatCol,$payMethCol,$payDateCol) VALUES (?,?,?,?,?,NOW())");
+                if(!$ins) fail('Prepare failed: '.$conn->error,500);
+                $zero=0.0; $methodCap = ($method==='gcash'?'GCash':'Cash'); $status='Partial';
+                $ins->bind_param('iidss',$orderId,$customerId,$zero,$status,$methodCap);
+            } else {
+                $ins = $conn->prepare("INSERT INTO payments ($payOrderFk,$payAmtCol,$payStatCol,$payMethCol,$payDateCol) VALUES (?,?,?,?,NOW())");
+                if(!$ins) fail('Prepare failed: '.$conn->error,500);
+                $zero=0.0; $methodCap = ($method==='gcash'?'GCash':'Cash'); $status='Partial';
+                $ins->bind_param('idss',$orderId,$zero,$status,$methodCap);
+            }
+            if(!$ins->execute()) fail('Insert failed: '.$ins->error,500);
+            $ins->close();
+        }
+    }
+    $balance = max($total - $paidSoFar,0);
+    echo json_encode(['status'=>'ok','AmountPaid'=>$paidSoFar,'Balance'=>$balance,'PaymentStatus'=>$newStatus]);
+    exit;
+}
+
 fail('Unsupported action');
 ?>

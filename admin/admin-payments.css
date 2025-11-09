@@ -82,11 +82,12 @@ body {
 }
 .payments-table th,
 .payments-table td {
-    padding: 5px;
+    padding: 10px 10px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
     vertical-align: middle;
 }
+/* Single continuous underline per row */
+.payments-table tr { border-bottom:1px solid #ddd; }
 .payments-table th {
     background-color: #f2f2f2;
     color: #752525;
