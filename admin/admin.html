@@ -43,32 +43,85 @@
             </header>
 
             <main class="dashboard-content">
-                <div class="dashboard-grid">
-                    <section class="status-boxes">
-                        <div class="status-box" id="boxPending"><h3>Pending Orders<br><span class="status-count" id="countPending">0</span></h3></div>
-                    </section>
-                    <section class="calendar">
-                        <div class="calendar-header">
-                            <button id="prev">❮</button>
-                            <h2 id="monthYear"></h2>
-                            <button id="next">❯</button>
+                <main class="dashboard-content">
+                    <div class="cards-row">
+                        <div class="dash-card" id="cardToday">
+                            <div class="dc-label">Today's Orders</div>
+                            <div class="dc-value" id="countToday">0</div>
                         </div>
-                        <div class="calendar-body">
-                            <div class="weekdays">
-                                <div>Sun</div>
-                                <div>Mon</div>
-                                <div>Tue</div>
-                                <div>Wed</div>
-                                <div>Thu</div>
-                                <div>Fri</div>
-                                <div>Sat</div>
+                        <div class="dash-card" id="cardPending">
+                            <div class="dc-label">Pending Orders</div>
+                            <div class="dc-value" id="countPending">0</div>
+                        </div>
+                        <div class="dash-card" id="cardCompleted">
+                            <div class="dc-label">Completed Orders</div>
+                            <div class="dc-value" id="countCompleted">0</div>
+                        </div>
+                        <div class="dash-card" id="cardCancelled">
+                            <div class="dc-label">Cancelled Orders</div>
+                            <div class="dc-value" id="countCancelled">0</div>
+                        </div>
+                    </div>
+                    <div class="middle-row">
+                        <section class="calendar">
+                            <div class="calendar-header">
+                                <button id="prev" type="button">❮</button>
+                                <h2 id="monthYear"></h2>
+                                <button id="next" type="button">❯</button>
                             </div>
-                            <div class="days" id="calendarDays"></div>
+                            <div class="calendar-body">
+                                <div class="weekdays">
+                                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                                </div>
+                                <div class="days" id="calendarDays"></div>
+                            </div>
+                        </section>
+                        <div class="middle-right">
+                            <section class="recent-orders">
+                                <div class="panel-head">
+                                    <h3>Recent Orders</h3>
+                                    <a href="admin-orders.php" class="panel-link">Show All Orders »</a>
+                                </div>
+                                <div class="table-scroll">
+                                    <table class="mini-table mini-orders" id="recentOrdersTable">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Customer</th>
+                                                <th>Total Amount</th>
+                                                <th>Order Status</th>
+                                                <th>Delivery Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentOrdersTbody"><tr><td colspan="5" class="table-msg">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </section>
+                            <section class="outstanding-payments">
+                                <div class="panel-head">
+                                    <h3>Outstanding Payments</h3>
+                                    <a href="admin-payments.php" class="panel-link">View Payments »</a>
+                                </div>
+                                <div class="table-scroll">
+                                    <table class="mini-table mini-payments" id="outstandingPaymentsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Order</th>
+                                                <th>Customer</th>
+                                                <th>Date</th>
+                                                <th>Total Amount</th>
+                                                <th>Amount Paid</th>
+                                                <th>Balance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="outstandingPaymentsTbody"><tr><td colspan="6" class="table-msg">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </section>
                         </div>
-                    </section>
-                </div>
-            </main>
-
+                    </div>
+                
+                </main>
     <script src="admin.js"></script>
 </body>
 </html>
