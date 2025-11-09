@@ -61,11 +61,11 @@ if ($action === 'list') {
     $balanceExpr = "CASE WHEN (CASE WHEN o.".$oTotalCol." IS NULL OR o.".$oTotalCol."=0 THEN (SELECT COALESCE(SUM(oi3.line_price),0) FROM order_items oi3 WHERE oi3.order_id = o.".$oIdCol.") ELSE o.".$oTotalCol." END) - " . $paidSumSubquery . " < 0 THEN 0 ELSE (CASE WHEN o.".$oTotalCol." IS NULL OR o.".$oTotalCol."=0 THEN (SELECT COALESCE(SUM(oi4.line_price),0) FROM order_items oi4 WHERE oi4.order_id = o.".$oIdCol.") ELSE o.".$oTotalCol." END) - " . $paidSumSubquery . " END AS Balance";
 
     // Build final query; orders table is canonical with snake_case per schema; alias to camelCase keys expected by client
-        // Try to include receipt/proof column when it exists; discover again here (safe)
+    // Try to include receipt/proof column when it exists; discover again here (safe)
         $receiptColDetect = '';
         if ($hasPayments) {
                 $payCols2=[]; if($pc3=$conn->query('SHOW COLUMNS FROM payments')){ while($r=$pc3->fetch_assoc()){ $payCols2[strtolower($r['Field'])]=$r['Field']; } $pc3->free(); }
-                $receiptColName = $payCols2['receipt_url'] ?? ($payCols2['receipt'] ?? ($payCols2['proof_image'] ?? ($payCols2['payment_proof'] ?? null)));
+        $receiptColName = $payCols2['receipt_url'] ?? ($payCols2['receipt'] ?? ($payCols2['proof_image'] ?? ($payCols2['payment_proof'] ?? ($payCols2['img_proof'] ?? null))));
                 if($receiptColName){ $receiptColDetect = ", COALESCE(py.$receiptColName,'') AS receipt_url "; }
         }
         $selectPaymentFields = $hasPayments
@@ -95,6 +95,8 @@ if ($action === 'list') {
     if($res){ while($r=$res->fetch_assoc()){ $rows[]=$r; } $res->free(); }
     // Fallback: if no receipt_url from DB and uploads/payments/order_* image exists, attach first one
     $baseDir = realpath(__DIR__ . '/../uploads/payments');
+    // Compute site base path like '/Website' so URLs work from admin pages
+    $siteBase = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
     if($baseDir){
         foreach($rows as &$row){
             if(!isset($row['receipt_url']) || $row['receipt_url']===''){
@@ -106,10 +108,16 @@ if ($action === 'list') {
                         $matches = glob($baseDir . DIRECTORY_SEPARATOR . $pat);
                         if($matches && count($matches)>0){
                             $fileName = basename($matches[0]);
-                            $row['receipt_url'] = 'uploads/payments/' . $fileName;
+                            $row['receipt_url'] = ($siteBase ? $siteBase.'/' : '/') . 'uploads/payments/' . $fileName;
                             break;
                         }
                     }
+                }
+            } else {
+                // Normalize to absolute site path if stored as relative (e.g., 'uploads/payments/...')
+                $url = (string)$row['receipt_url'];
+                if($url !== '' && strpos($url,'http://')!==0 && strpos($url,'https://')!==0 && strpos($url,'/')!==0){
+                    $row['receipt_url'] = ($siteBase ? $siteBase.'/' : '/') . ltrim($url,'/');
                 }
             }
         }

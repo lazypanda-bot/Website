@@ -43,7 +43,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const paid = Number(p.AmountPaid)||0;
             const balance = total - paid;
             const methodCell = buildMethodCell(p);
-            const receiptImg = (p.payment_method||'').toLowerCase()==='gcash' && p.receipt_url ? `<a href="${escapeHtml(p.receipt_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(p.receipt_url)}" alt="Receipt" class="receipt-thumb" /></a>` : '';
+            // Show receipt thumbnail whenever a receipt_url exists (even if method wasn't recorded yet)
+            const receiptImg = p.receipt_url ? `<a href="${escapeHtml(p.receipt_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(p.receipt_url)}" alt="Receipt" class="receipt-thumb" /></a>` : '';
             tr.innerHTML=`
                 <td>${p.order_id}</td>
                 <td>${escapeHtml(p.customer_name||'')}</td>

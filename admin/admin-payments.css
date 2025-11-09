@@ -130,3 +130,13 @@ body {
 .payment-status-select.ps-Partial { background:#fff7c2; color:#7a5a00; }
 .payment-status-select::-ms-expand { display:none; }
 .saving-text { font-size:.55rem; color:#666; font-weight:500; }
+/* Thumbnail for GCash receipt image */
+.receipt-thumb { 
+    width:58px; 
+    height:auto; 
+    display:block; 
+    border-radius:4px; 
+    box-shadow:0 1px 3px rgba(0,0,0,0.25); 
+    object-fit:cover; 
+    background:#fafafa; 
+}

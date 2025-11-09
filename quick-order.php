@@ -418,8 +418,8 @@ if($hasPaymentsTable){
         $payMethodCol= $payCols['payment_method'] ?? ($payCols['method'] ?? 'payment_method');
         $payStatusCol= $payCols['payment_status'] ?? ($payCols['status'] ?? 'payment_status');
         $payDateCol  = $payCols['payment_date'] ?? ($payCols['date'] ?? 'payment_date');
-        // Optional receipt column discovery
-        $receiptCol  = $payCols['receipt_url'] ?? ($payCols['receipt'] ?? ($payCols['proof_image'] ?? null));
+    // Optional receipt column discovery (support multiple common names including img_proof)
+    $receiptCol  = $payCols['receipt_url'] ?? ($payCols['receipt'] ?? ($payCols['proof_image'] ?? ($payCols['payment_proof'] ?? ($payCols['img_proof'] ?? null))));
         $insertPayment = false;
         $initialStatus = 'Pending';
         $initialAmount = 0.00;
@@ -470,13 +470,34 @@ if($hasPaymentsTable){
             $methodStr = ($paymentMethod==='gcash' ? 'GCash' : 'Cash');
             $addP($payMethodCol,'s',$methodStr);
             $addP($payStatusCol,'s',$initialStatus);
-            if($receiptCol && $receiptRelPath){ $addP($receiptCol,'s',$receiptRelPath); }
+            if($receiptCol && $receiptRelPath){
+                // Store relative path (uploads/payments/...) for DB; API will normalize to absolute
+                $addP($receiptCol,'s',$receiptRelPath);
+            }
             $sqlPay = 'INSERT INTO payments (' . implode(',', $cols) . ') VALUES (' . implode(',', $ph) . ')';
             if($pst = $conn->prepare($sqlPay)){
                 $pst->bind_param($types, ...$vals);
                 if($pst->execute()){ $createdPaymentId = $pst->insert_id; }
                 $pst->close();
             }
+        } elseif ($paymentMethod==='gcash' && $receiptRelPath) {
+            // If a GCash receipt was uploaded but no amount provided, persist a zero-amount Partial row to attach the receipt
+            try {
+                $cols=[]; $ph=[]; $types=''; $vals=[];
+                $addP = function($col,$type,&$var) use (&$cols,&$ph,&$types,&$vals){ $cols[]=$col; $ph[]='?'; $types.=$type; $vals[]=&$var; };
+                $addP($payCustCol,'i',$userId);
+                $addP($payOrderCol,'i',$orderId);
+                $zeroStr = number_format(0,2,'.',''); $addP($payAmtCol,'s',$zeroStr);
+                $methodStr = 'GCash'; $addP($payMethodCol,'s',$methodStr);
+                $statusStr = 'Partial'; $addP($payStatusCol,'s',$statusStr);
+                if($receiptCol){ $addP($receiptCol,'s',$receiptRelPath); }
+                $sqlPay = 'INSERT INTO payments (' . implode(',', $cols) . ') VALUES (' . implode(',', $ph) . ')';
+                if($pst = $conn->prepare($sqlPay)){
+                    $pst->bind_param($types, ...$vals);
+                    if($pst->execute()){ $createdPaymentId = $pst->insert_id; }
+                    $pst->close();
+                }
+            } catch (Throwable $e) { qlog('payments placeholder error: '.$e->getMessage()); }
         }
     } catch (Throwable $e) {
         // Do not fail the whole order if payments insert fails; log and continue
