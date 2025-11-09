@@ -50,8 +50,6 @@ if ($res = $conn->query('SHOW COLUMNS FROM products')) {
 foreach(['name','product_name','title'] as $c){ if(isset($productCols[$c])) { $productNameCol=$productCols[$c]; break; } }
 foreach(['price','unit_price','amount','cost'] as $c){ if(isset($productCols[$c])) { $productPriceCol=$productCols[$c]; break; } }
 
-// NOTE: A previous version built an invalid $sql here. We now construct it below after resolving columns safely.
-
 // Detect product PK for join (only if products table exists)
 $productPk = null;
 if ($productsTableExists) {
@@ -59,7 +57,7 @@ if ($productsTableExists) {
 }
 
 $designColSelect = '';
-// If cart table has a designoption_id (or similar) column, include it and try to pull design metadata
+// If cart table has a designoption_id column, include it and try to pull design metadata
 $cartTableCols = [];
 if ($resCols = $conn->query('SHOW COLUMNS FROM ' . CART_TABLE)) { while ($r = $resCols->fetch_assoc()) { $cartTableCols[strtolower($r['Field'])] = $r['Field']; } $resCols->free(); }
 $designColName = null;
@@ -79,8 +77,17 @@ if ($designColName) {
     if ($hasDesign) {
         $joinSql .= ' LEFT JOIN designoption d ON d.designoption_id = c.' . $designColName . ' ';
         if ($hasCust) {
+            // Check customization table columns and only select columns that exist
+            $custCols = [];
+            if ($cRes = $conn->query('SHOW COLUMNS FROM customization')) {
+                while ($cr = $cRes->fetch_assoc()) { $custCols[strtolower($cr['Field'])] = $cr['Field']; }
+                $cRes->free();
+            }
+            $hasColorCol = isset($custCols['color']);
+            $hasNoteCol  = isset($custCols['note']);
             $joinSql .= ' LEFT JOIN customization cu ON cu.customization_id = d.customization_id ';
-            $designSelect .= ', cu.color AS design_color, cu.note AS design_meta';
+            if ($hasColorCol) $designSelect .= ', cu.color AS design_color';
+            if ($hasNoteCol)  $designSelect .= ', cu.note AS design_meta';
         }
         $designSelect .= ', d.request_design AS design_request, d.designfilepath AS designfilepath';
     }
@@ -171,7 +178,16 @@ $sql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id,
     FROM ".CART_TABLE." c" . $joinPart . $subJoins . $joinSql . " WHERE c.".CART_USER_FK_COL."=? ORDER BY c.".CART_PK_COL." DESC LIMIT 200";
 
 $stmt = $conn->prepare($sql);
-if(!$stmt){ error_log('cart-items prepare failed: '.$conn->error.' SQL='.$sql); echo json_encode(['items'=>[]]); exit; }
+if(!$stmt){
+    // Log the original failure then fall back to a minimal select that avoids
+    // joins and complex expressions which may fail on varied schemas/collations.
+    error_log('cart-items prepare failed: '.$conn->error.' SQL='.$sql);
+    // Build a safe fallback SQL that returns core cart columns plus any direct design column
+    $fallbackSql = "SELECT c.".CART_PK_COL." AS id, c.".CART_PRODUCT_FK_COL." AS product_id, c.".CART_SIZE_COL." AS size, c.".CART_COLOR_COL." AS color, c.".CART_QTY_COL." AS quantity" . (isset(
+        $directDesignExpr) ? $directDesignExpr : '') . " FROM ".CART_TABLE." c WHERE c.".CART_USER_FK_COL."=? ORDER BY c.".CART_PK_COL." DESC LIMIT 200";
+    $stmt = $conn->prepare($fallbackSql);
+    if (!$stmt) { error_log('cart-items fallback prepare also failed: '.$conn->error.' SQL='.$fallbackSql); echo json_encode(['items'=>[]]); exit; }
+}
 $stmt->bind_param('i', $userId);
 if(!$stmt->execute()){ error_log('cart-items exec failed: '.$stmt->error); $stmt->close(); echo json_encode(['items'=>[]]); exit; }
 $res = $stmt->get_result();
@@ -192,5 +208,41 @@ while ($row = $res->fetch_assoc()) {
     $items[] = $row;
 }
 $stmt->close();
+// If items include designoption_id but missing designfilepath (fallback case),
+// perform a small, safe lookup to resolve designoption_id -> designfilepath.
+$needLookup = [];
+foreach ($items as $it) {
+    if (!empty($it['designoption_id']) && empty($it['designfilepath'])) {
+        $needLookup[] = (int)$it['designoption_id'];
+    }
+}
+if (count($needLookup) > 0) {
+    $needLookup = array_values(array_unique($needLookup));
+    // Build placeholders
+    $placeholders = implode(',', array_fill(0, count($needLookup), '?'));
+    $sql2 = "SELECT designoption_id, designfilepath FROM designoption WHERE designoption_id IN ($placeholders)";
+    $stmt2 = $conn->prepare($sql2);
+    if ($stmt2) {
+        // bind params dynamically as integers
+        $types = str_repeat('i', count($needLookup));
+        $stmt2->bind_param($types, ...$needLookup);
+        if ($stmt2->execute()) {
+            $res2 = $stmt2->get_result();
+            $map = [];
+            while ($r2 = $res2->fetch_assoc()) {
+                $map[(int)$r2['designoption_id']] = $r2['designfilepath'];
+            }
+            // apply to items
+            foreach ($items as &$it) {
+                if (!empty($it['designoption_id']) && empty($it['designfilepath'])) {
+                    $did = (int)$it['designoption_id'];
+                    if (isset($map[$did])) $it['designfilepath'] = $map[$did];
+                }
+            }
+            unset($it);
+        }
+        $stmt2->close();
+    }
+}
 echo json_encode(['items'=>$items]);
 ?>

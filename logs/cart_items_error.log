@@ -128,3 +128,83 @@ Stack trace:
 #0 C:\xampp\htdocs\Website\cart-items.php(125): mysqli->prepare('SELECT c.cart_i...')
 #1 {main}
   thrown in C:\xampp\htdocs\Website\cart-items.php on line 125
+[09-Nov-2025 01:55:54 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:56:02 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:56:17 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:56:58 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:57:24 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:57:44 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:58:24 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:58:34 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:58:38 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:58:55 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 01:59:26 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 02:01:16 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 02:01:37 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 02:02:01 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 02:17:39 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173
+[09-Nov-2025 02:17:50 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cu.note' in 'field list' in C:\xampp\htdocs\Website\cart-items.php:173
+Stack trace:
+#0 C:\xampp\htdocs\Website\cart-items.php(173): mysqli->prepare('SELECT c.cart_i...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Website\cart-items.php on line 173

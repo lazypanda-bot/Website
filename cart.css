@@ -146,20 +146,20 @@
     background-color: #6e6e6e;
     color: #fff;
 }
-/* Polished cart container with glass effect */
 .cart-container {
     max-width:1600px; /* widened */
     width:94%;
     margin:90px auto 100px;
-    padding:30px 50px; /* leaner padding */
+    padding:30px 50px; 
     font-family:'Poppins',sans-serif;
-    background:transparent; /* flatten */
+    background:transparent; 
     border-radius:0;
     box-shadow:none;
     position:relative;
     overflow:visible;
 }
-.cart-container:before,.cart-container:after { 
+.cart-container:before,
+.cart-container:after { 
     display:none; 
 }
 .cart-container h2 {
@@ -256,18 +256,14 @@
     flex-direction:column;
     gap:4px;position:relative;
     overflow:hidden;
-    transition:box-shadow .35s ease,transform .35s ease;
+    transition:box-shadow .35s ease; 
 }
-.cart-item:before {
-    content:"";
-    position:absolute;
-    inset:0;
-    background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,0));
-    pointer-events:none;
+.cart-item:before { 
+    display:none; 
 }
 .cart-item:hover {
     box-shadow:0 16px 34px -12px rgba(117,37,37,.35),0 6px 16px -6px rgba(0,0,0,.18);
-    transform:translateY(-4px);
+    transform:none; 
 }
 .cart-item h4 {
     font-size:1.05rem;
@@ -733,6 +729,88 @@ body.loaded .cart-progress-bar {
     display:flex; 
     gap:6px; 
     margin-top:8px; 
+}
+
+/* Two-column layout for cart items: preview (left) and details (right).
+   Use grid on larger screens and keep the stacked/flex behavior on small viewports. */
+@media (min-width: 720px) {
+    .cart-item {
+        display: grid;
+        grid-template-columns: 180px 1fr; /* widened preview column */
+        gap: 18px 22px;
+        align-items: start;
+        padding: 20px 20px 22px;
+    }
+    /* Column wrapper for preview and its header label */
+    .cart-item-preview-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    /* Make sure the label sits above the preview box with a clear gap */
+    .cart-item-preview-col .design-label {
+        align-self: flex-start;
+        margin: 0 0 8px 0; /* gap below the text */
+        font-size: .72rem;
+        color: #7c1b1b;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+    }
+    .cart-item-preview { 
+        display:flex; 
+        align-items:center; 
+        justify-content:center; 
+        min-height:160px; /* taller */
+        position: relative; /* allow absolute label */
+    }
+    /* Design label sits at the top-left of the preview area, outside the image */
+    .cart-item-preview .design-label {
+        position:absolute;
+        top:0;
+        left:0;
+        transform: translateY(-6px); /* visually outside the preview */
+        font-size: .72rem;
+        color:#7c1b1b;
+        font-weight:600;
+        background: transparent;
+        padding: 0 2px;
+        pointer-events: none;
+    }
+    .cart-item-preview .design-label span{
+        font-weight:600;
+        color:#3a0d0d;
+    }
+    .cart-item-preview .cart-thumb img {
+        width:160px; /* enlarged */
+        height:160px; /* enlarged */
+        object-fit:contain; /* preserve original design proportions */
+        border-radius:16px;
+        margin:0;
+        background:#fff; /* ensure no blending */
+        box-shadow:0 6px 14px -6px rgba(0,0,0,.18);
+    }
+    .cart-item-preview .cart-thumb.placeholder { 
+        width:160px; 
+        height:160px; 
+        background:linear-gradient(180deg,#fbfbfb,#f3eded);
+        border-radius:16px;
+        display:flex;align-items:center;justify-content:center;
+        border:1px dashed rgba(117,37,37,0.08);
+        overflow:hidden;
+    }
+    .cart-item-preview .cart-thumb.placeholder img {
+        width:160px;
+        height:160px;
+        object-fit:contain;
+        border-radius:16px;
+        display:block;
+    }
+    .cart-item-body { 
+        display:flex; 
+        flex-direction:column; 
+        gap:8px; 
+    }
 }
 .order-summary-line { 
     margin-bottom:8px; 

@@ -336,16 +336,66 @@ function pd_first_image($imagesField) {
                     if (totalHidden) totalHidden.value = p.toFixed(2);
                 }
 
+                // Persistent selection storage (survives navigation to sim.php and back)
+                var pidInput = document.querySelector('input[name="product_id"]');
+                var pid = pidInput && pidInput.value ? pidInput.value : null;
+                var storageKey = pid ? 'pd_opts_' + pid : null;
+                var keepKey = pid ? 'pd_keep_' + pid : null;
+
+                function selectOptionValue(sel, value){
+                    if(!sel || !value) return;
+                    for(var i=0;i<sel.options.length;i++){
+                        if(sel.options[i].value === value){ sel.selectedIndex = i; break; }
+                    }
+                }
+
+                function restoreSelections(){
+                    if(!storageKey) return;
+                    try{
+                        var saved = JSON.parse(localStorage.getItem(storageKey)||'{}');
+                        if(saved.type) selectOptionValue(typeSel, saved.type);
+                        if(saved.size) selectOptionValue(sizeSel, saved.size);
+                        if(saved.attribute) selectOptionValue(attrSel, saved.attribute);
+                        // variant restored in variant wiring script; here we only handle core dropdowns
+                    }catch(e){ /* ignore */ }
+                }
+
+                function persistSelections(){
+                    if(!storageKey) return;
+                    try{
+                        var data = JSON.parse(localStorage.getItem(storageKey)||'{}');
+                        data.type = val(typeSel);
+                        data.size = val(sizeSel);
+                        data.attribute = val(attrSel);
+                        localStorage.setItem(storageKey, JSON.stringify(data));
+                    }catch(e){ /* ignore */ }
+                }
+
                 function initDefaults(){
-                    // If selects exist but no option selected, select first
-                    [typeSel,sizeSel,attrSel].forEach(function(sel){ if (sel && sel.selectedIndex<0 && sel.options.length>0) sel.selectedIndex = 0; });
+                    // If nothing restored/selected, auto-select the first option for convenience.
+                    restoreSelections();
+                    [typeSel,sizeSel,attrSel].forEach(function(sel){ if (sel && sel.selectedIndex < 0 && sel.options.length > 0) sel.selectedIndex = 0; });
                     syncHidden();
                     renderPrice();
                 }
 
-                if (typeSel) typeSel.addEventListener('change', function(){ syncHidden(); renderPrice(); });
-                if (sizeSel) sizeSel.addEventListener('change', function(){ syncHidden(); renderPrice(); });
-                if (attrSel) attrSel.addEventListener('change', function(){ syncHidden(); renderPrice(); });
+                if (typeSel) typeSel.addEventListener('change', function(){ syncHidden(); renderPrice(); persistSelections(); });
+                if (sizeSel) sizeSel.addEventListener('change', function(){ syncHidden(); renderPrice(); persistSelections(); });
+                if (attrSel) attrSel.addEventListener('change', function(){ syncHidden(); renderPrice(); persistSelections(); });
+
+                // Single-use persistence: keep selections only when navigating via design actions.
+                // If page is being left normally, clear saved selections.
+                window.__pd_persistNextNavigation = false;
+                window.addEventListener('beforeunload', function(){
+                    try{
+                        if (!window.__pd_persistNextNavigation && storageKey) {
+                            localStorage.removeItem(storageKey);
+                        }
+                    }catch(e){}
+                });
+                // If we were instructed to keep across the previous navigation (from sim/upload/request),
+                // clear the keep flag now so future navigations reset unless explicitly set again.
+                try{ if (keepKey && sessionStorage.getItem(keepKey)==='1') { sessionStorage.removeItem(keepKey); } }catch(e){}
                 initDefaults();
             }catch(e){ console.error('Option wiring failed', e); }
         });
@@ -627,6 +677,7 @@ function pd_first_image($imagesField) {
                                     <div class="product-static-box price-box">
                                         <label for="variantSelect" style="display:block;font-weight:600;margin-bottom:6px;color:#752525;">Choose option</label>
                                         <select id="variantSelect" name="variant" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+                                            <option value="" selected disabled>Select option</option>
                                             <?php foreach($variants as $vi => $vv):
                                                 // Support both simple string variants and structured entries with nested colors
                                                 if (is_array($vv)) {
@@ -683,7 +734,7 @@ function pd_first_image($imagesField) {
                         $simHref = 'sim.php';
                         if (!empty($productId)) $simHref .= '?product_id=' . intval($productId);
                     ?>
-                    <a href="<?= htmlspecialchars($simHref) ?>" class="design-btn">Customize Design</a>
+                    <a href="<?= htmlspecialchars($simHref) ?>" class="design-btn" id="customizeDesignLink">Customize Design</a>
                     <button type="button" class="design-btn" id="requestDesignBtn">
                         Request Design
                     </button>
@@ -692,7 +743,28 @@ function pd_first_image($imagesField) {
                 <?php
                     // If page was opened with a saved designoption id, render a small preview area
                     $queriedDesignOption = isset($_GET['designoption_id']) ? (int)$_GET['designoption_id'] : null;
+                    // Show saved design preview only if the designoption is still referenced
+                    // in the user's cart (ensures deleting the cart item removes preview on product page).
                     if ($queriedDesignOption && isset($conn) && !$conn->connect_error) {
+                        $stillInCart = false;
+                        try {
+                            // Detect cart table & design column
+                            $ctCols = [];
+                            if ($ctRes = $conn->query('SHOW COLUMNS FROM cart')) { while($cr=$ctRes->fetch_assoc()){ $ctCols[strtolower($cr['Field'])]=$cr['Field']; } $ctRes->free(); }
+                            $designCartCol = null; foreach(['designoption_id','design_option_id','design_id'] as $c){ if(isset($ctCols[$c])) { $designCartCol=$ctCols[$c]; break; } }
+                            $cartUserCol = isset($ctCols['user_id']) ? $ctCols['user_id'] : (isset($ctCols['customer_id']) ? $ctCols['customer_id'] : 'user_id');
+                            $cartProdCol = isset($ctCols['product_id']) ? $ctCols['product_id'] : (isset($ctCols['prod_id'])?$ctCols['prod_id']:'product_id');
+                            if ($designCartCol) {
+                                $chkSql = "SELECT 1 FROM cart WHERE $designCartCol = ? AND $cartProdCol = ? AND $cartUserCol = ? LIMIT 1";
+                                if ($chk = $conn->prepare($chkSql)) {
+                                    $uid = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+                                    $chk->bind_param('iii', $queriedDesignOption, $productId, $uid);
+                                    if ($chk->execute()) { $chk->store_result(); $stillInCart = $chk->num_rows > 0; }
+                                    $chk->close();
+                                }
+                            }
+                        } catch(Exception $e) { /* ignore */ }
+                        if (!$stillInCart) { $queriedDesignOption = null; }
                         // Detect optional columns on customization to avoid Unknown column errors (e.g., 'note')
                         $cCols = [];
                         if ($cRes = $conn->query('SHOW COLUMNS FROM customization')) {
@@ -911,6 +983,36 @@ function pd_first_image($imagesField) {
     <script src="sim.js"></script>
     
     <script>
+        // Before leaving for Customize Design, persist current selections explicitly
+        document.addEventListener('DOMContentLoaded', function(){
+            try{
+                var link = document.getElementById('customizeDesignLink');
+                var uploadBtn = document.getElementById('uploadDesignBtn');
+                var requestBtn = document.getElementById('requestDesignBtn');
+                if(!link) return;
+                function persistForDesignAction(){
+                    var pidInput = document.querySelector('input[name="product_id"]');
+                    var pid = pidInput && pidInput.value ? pidInput.value : null;
+                    if(!pid) return;
+                    var key = 'pd_opts_' + pid;
+                    var keepKey = 'pd_keep_' + pid;
+                    function val(id){ var el=document.getElementById(id); return el && el.value ? el.value : ''; }
+                    var data = {
+                        type: val('typeSelect'),
+                        size: val('sizeSelect'),
+                        attribute: val('attrSelect'),
+                        variant: (function(){ var v=document.getElementById('variantSelect'); return v && v.value ? v.value : ''; })()
+                    };
+                    try{ localStorage.setItem(key, JSON.stringify(data)); }catch(e){}
+                    try{ sessionStorage.setItem(keepKey,'1'); }catch(e){}
+                    window.__pd_persistNextNavigation = true; // prevent beforeunload cleanup
+                }
+                link.addEventListener('click', persistForDesignAction);
+                if(uploadBtn) uploadBtn.addEventListener('click', persistForDesignAction);
+                if(requestBtn) requestBtn.addEventListener('click', persistForDesignAction);
+                });
+            }catch(e){ console.warn('persist-on-customize failed', e); }
+        });
         // Wire variant selection to update hidden total and visible price display
         document.addEventListener('DOMContentLoaded', function(){
             try{
@@ -962,6 +1064,33 @@ function pd_first_image($imagesField) {
                 if(variantSelect){
                     updatePriceFromSelect();
                     variantSelect.addEventListener('change', function(){ updatePriceFromSelect(); });
+                    // Restore previously chosen variant (after returning from customization)
+                    try{
+                        var pidInput2 = document.querySelector('input[name="product_id"]');
+                        var pid2 = pidInput2 && pidInput2.value ? pidInput2.value : null;
+                        var key2 = pid2 ? 'pd_opts_' + pid2 : null;
+                        if(key2){
+                            var saved2 = JSON.parse(localStorage.getItem(key2)||'{}');
+                            if(saved2.variant){
+                                for(var i=0;i<variantSelect.options.length;i++){
+                                    if(variantSelect.options[i].value === saved2.variant){ variantSelect.selectedIndex = i; break; }
+                                }
+                                updatePriceFromSelect();
+                            }
+                        }
+                    }catch(e){ /* ignore */ }
+                    // Persist variant on change
+                    variantSelect.addEventListener('change', function(){
+                        try{
+                            var pidInput3 = document.querySelector('input[name="product_id"]');
+                            var pid3 = pidInput3 && pidInput3.value ? pidInput3.value : null;
+                            if(!pid3) return;
+                            var key3 = 'pd_opts_' + pid3;
+                            var data3 = JSON.parse(localStorage.getItem(key3)||'{}');
+                            data3.variant = variantSelect.value;
+                            localStorage.setItem(key3, JSON.stringify(data3));
+                        }catch(e){ /* ignore */ }
+                    });
                 }
             }catch(e){ console.error('Variant wiring failed', e); }
         });

@@ -154,6 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let subtotal=0;
     const rows = [];
+    // Build a map of product_id -> first available design filepath so we can
+    // show a preview for items that lack their own preview but another size has one.
+    const productDesignMap = {};
+    grouped.forEach(p => { if (p.product_id && p.designfilepath) productDesignMap[p.product_id] = p.designfilepath; });
     grouped.forEach((p,idx)=>{
         const price = parseFloat(p.price||0);
         const line  = price * p.quantity;
@@ -187,31 +191,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 const i = s.toLowerCase().indexOf('uploads/'); if(i!==-1) return s.slice(i).replace(/\\/g,'/');
                 return s;
             }
-            const src = resolveDesignSrc(p);
+            // Prefer the item's own preview; if missing and there's a preview for the
+            // same product (different size), use that as a helpful fallback.
+            let src = resolveDesignSrc(p);
+            if (!src && p.product_id && productDesignMap[p.product_id]) {
+                src = productDesignMap[p.product_id];
+            }
             if (src) {
                 const safe = escapeHtml(src);
-                designHtml = `<div class="cart-thumb"><img src="${safe}" alt="design" loading="lazy" decoding="async" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-right:8px;"/></div>`;
+                designHtml = `<div class="cart-thumb"><img src="${safe}" alt="design" loading="lazy" decoding="async" class="cart-design-img"/></div>`;
+            } else {
+                // Use site logo as placeholder when no preview is available
+                designHtml = `<div class="cart-thumb placeholder"><img src="img/logo.png" alt="No preview" loading="lazy" decoding="async"/></div>`;
             }
         } catch(e){ console.warn('Failed to build design preview', e); designHtml = ''; }
 
+        const sizeDisplay = (p.size && p.size.toLowerCase() !== 'default') ? `Size: ${p.size}` : '';
         rows.push(`
             <div class="cart-item cart-item-card" data-line-index="${idx}">
-                <label class="cart-item-label">
-                    <input type="checkbox" class="select-cart-item" checked data-key="${getKey(p)}" ${idAttr} />
-                    ${designHtml}<strong>${p.name}</strong>
-                </label>
-                <p>Size: ${p.size||''}</p>
-                <p>Design: ${p.design||''}</p>
-                <div class="qty-row">
-                    <label for="qty_${idx}" class="qty-label">QTY</label>
-                    <input id="qty_${idx}" type="number" class="qty-input" min="1" value="${p.quantity}" data-key="${getKey(p)}" ${idAttr} />
+                <div class="cart-item-preview-col">
+                    <div class='design-label'>Design</div>
+                    <div class="cart-item-preview">${designHtml || ''}</div>
                 </div>
-                <p>Price: ₱${price.toFixed(2)} each</p>
-                <p><strong>Subtotal: ₱${line.toFixed(2)}</strong></p>
-                <div class="cart-item-actions">
-                    <button class="delete-cart-item" data-key="${getKey(p)}" ${idAttr}><i class="fa fa-trash"></i> Delete</button>
-              </div>
-          </div>`);
+                <div class="cart-item-body">
+                    <label class="cart-item-label">
+                        <input type="checkbox" class="select-cart-item" checked data-key="${getKey(p)}" ${idAttr} />
+                        <strong>${p.name}</strong>
+                    </label>
+                    ${sizeDisplay ? `<p>${sizeDisplay}</p>` : ''}
+                    <div class="qty-row">
+                        <label for="qty_${idx}" class="qty-label">QTY</label>
+                        <input id="qty_${idx}" type="number" class="qty-input" min="1" value="${p.quantity}" data-key="${getKey(p)}" ${idAttr} />
+                    </div>
+                    <p>Price: ₱${price.toFixed(2)} each</p>
+                    <p><strong>Subtotal: ₱${line.toFixed(2)}</strong></p>
+                    <div class="cart-item-actions">
+                        <button class="delete-cart-item" data-key="${getKey(p)}" ${idAttr}><i class="fa fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            </div>`);
     });
 
     if(cartItemsContainer) cartItemsContainer.innerHTML = rows.join('');
@@ -364,6 +382,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // initial rendering
   renderCart();
+
+  // Ensure the cart refreshes when navigating back/forward (BFCache) or when tab becomes visible again
+  try {
+      window.addEventListener('pageshow', function(e){
+          const nav = (performance && performance.getEntriesByType) ? performance.getEntriesByType('navigation')[0] : null;
+          const isBack = (e && e.persisted) || (nav && nav.type === 'back_forward');
+          if (isBack) {
+              renderCart();
+          }
+      });
+      document.addEventListener('visibilitychange', function(){
+          if (document.visibilityState === 'visible') {
+              // Re-fetch to get latest previews/prices after returning from other pages
+              renderCart();
+          }
+      });
+  } catch(_) { /* ignore */ }
 
   if(checkoutForm) {
       // Delivery method changes (already handled) + new listeners for payment method and payment type

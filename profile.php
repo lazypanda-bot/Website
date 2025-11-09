@@ -463,8 +463,8 @@ if ($isAuthenticated) {
                 </form>
             </div>
             <div class="modal-actions">
-                <button type="button" class="design-btn alt-btn" id="cancelAddressBtn">Cancel</button>
-                <button type="button" class="design-btn primary-btn" id="saveAddressBtn">Save Address</button>
+                <button type="button" class="secondary-btn design-btn alt-btn" id="cancelAddressBtn">Cancel</button>
+                <button type="button" class="primary-btn design-btn primary-btn" id="saveAddressBtn">Save Address</button>
             </div>
         </div>
     </div>

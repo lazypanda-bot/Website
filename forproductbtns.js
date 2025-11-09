@@ -23,13 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
                    (document.querySelector('.product-text h2') && document.querySelector('.product-text h2').textContent) ||
                    (document.querySelector('h2') && document.querySelector('h2').textContent) || '';
         // Get size
-        let size = (document.getElementById('sizeSelect') && document.getElementById('sizeSelect').value) ||
+    let size = (document.getElementById('sizeSelect') && document.getElementById('sizeSelect').value) ||
                    (document.getElementById('size') && document.getElementById('size').value) ||
                    (document.getElementById('form_size') && document.getElementById('form_size').value) || '';
         // Get type/attribute (optional; used for price and server color)
-        let type = (document.getElementById('typeSelect') && document.getElementById('typeSelect').value) ||
+    let type = (document.getElementById('typeSelect') && document.getElementById('typeSelect').value) ||
                    (document.getElementById('form_type') && document.getElementById('form_type').value) || '';
-        let attribute = (document.getElementById('attrSelect') && document.getElementById('attrSelect').value) ||
+    let attribute = (document.getElementById('attrSelect') && document.getElementById('attrSelect').value) ||
                         (document.getElementById('form_attribute') && document.getElementById('form_attribute').value) || '';
         // Get quantity
         let quantity = parseInt(document.getElementById('quantity')?.value || '1');
@@ -70,6 +70,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('size', product.size || 'Default');
                 formData.append('color', product.color || 'Standard');
                 formData.append('quantity', product.quantity || 1);
+                // If a saved design option/id is present, send it so server can persist preview
+                try {
+                    if (product.design) {
+                        // prefer numeric designoption_id when available
+                        const asNum = parseInt(product.design, 10);
+                        if (!isNaN(asNum) && String(asNum) === String(product.design)) {
+                            formData.append('designoption_id', asNum);
+                        } else {
+                            formData.append('design', product.design);
+                        }
+                    }
+                } catch (e) { /* ignore if product.design is not serializable */ }
                 const res = await fetch('add-to-cart.php', { method: 'POST', body: formData });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
@@ -125,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cartQtyInput.value = qtyInput.value;
             }
             const product = getSelectedProduct();
+            // Relaxed validation: allow missing type/size/attribute for products that do not have all dropdowns.
             if (!product.quantity || product.quantity < 1) {
                 alert('Quantity must be at least 1 to add to cart.');
                 addToCartBtn.dataset.busy = '0';
@@ -164,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
             buyNowBtn.dataset.busy = '1';
             const product = getSelectedProduct();
             pendingProduct = product;
+            // Relaxed: no mandatory dropdown enforcement; only quantity check below.
             const errors = [];
             if (!product.quantity || product.quantity < 1) errors.push('Quantity must be at least 1.');
             if (!product.size || /select/i.test(product.size)) errors.push('Please choose a size.');
@@ -237,6 +251,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 fd.append('product_name', product.name || '');
                 fd.append('size', product.size || 'Default');
                 fd.append('quantity', product.quantity);
+                // include design/designoption_id when present so server can persist preview
+                try {
+                    if (product.design) {
+                        const asNum = parseInt(product.design, 10);
+                        if (!isNaN(asNum) && String(asNum) === String(product.design)) {
+                            fd.append('designoption_id', asNum);
+                        } else {
+                            fd.append('design', product.design);
+                        }
+                    }
+                } catch (e) { /* ignore */ }
                 // include payment selection and partial amount when present
                 try {
                     const of = document.getElementById('orderForm');

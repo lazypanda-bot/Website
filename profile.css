@@ -502,11 +502,16 @@ section {
 .modal-actions .design-btn { min-width:100px; }
 /* Accent color for this site's theme */
 :root { --site-accent: #a02b2b; }
-/* Style the modal action buttons to match site color */
-#addressModal .design-btn.primary-btn { background: var(--site-accent); color: #fff; border: 0; }
-#addressModal .design-btn.primary-btn:hover { filter:brightness(0.95); }
-#addressModal .design-btn.alt-btn { background:#fff; color: var(--site-accent); border:1px solid var(--site-accent); }
-#addressModal .design-btn.alt-btn:hover { background: rgba(160,43,43,0.06); }
+/* Shared button styles to match global site theme (mirrors cart.css) */
+.primary-btn { background:#7c1b1b; color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
+.primary-btn:hover { background:#c90606; }
+.secondary-btn { background:#fff; color:#7c1b1b; border:1px solid #e7d2d2; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
+.secondary-btn:hover { background:#f9eded; }
+/* Map modal-specific classes to the shared button styles */
+#addressModal .design-btn.primary-btn, #addressModal .primary-btn { background:#7c1b1b; color:#fff; border:none; }
+#addressModal .design-btn.alt-btn, #addressModal .secondary-btn { background:#fff; color:#7c1b1b; border:1px solid #e7d2d2; }
+#addressModal .design-btn.primary-btn:hover, #addressModal .primary-btn:hover { background:#c90606; }
+#addressModal .design-btn.alt-btn:hover, #addressModal .secondary-btn:hover { background:#f9eded; }
 /* Style the close X to match accent */
 #addressModal .modal-close-btn { background:transparent; border:0; color:var(--site-accent); font-size:22px; line-height:1; padding:6px 10px; cursor:pointer; }
 #addressModal .modal-close-btn:hover { color:#7f2222; }
