@@ -192,16 +192,28 @@ body {
 }
 .product-table {
     width: 100%;
+    min-width: 1100px; /* ensure reasonable base width so overflow can occur */
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 15px;
 }
+.table-scroll{position:relative;overflow-x:auto;overflow-y:hidden;margin-top:20px;padding-bottom:4px;width:100%;-webkit-overflow-scrolling:touch}
+/* Avoid clipping inside main panel if any ancestor sets overflow */
+.main-panel{overflow-x:hidden}
+.table-scroll::-webkit-scrollbar{height:10px}
+.table-scroll::-webkit-scrollbar-track{background:#f1f1f1;border-radius:6px}
+.table-scroll::-webkit-scrollbar-thumb{background:#c7b7b7;border-radius:6px}
+.table-scroll::-webkit-scrollbar-thumb:hover{background:#b09e9e}
 .product-table th,
 .product-table td {
     padding: 12px 10px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
     vertical-align: middle;
+}
+/* One continuous bottom border per row */
+.product-table tr { 
+    height: 64px; 
+    border-bottom: 1px solid #ddd; 
 }
 .product-table th {
     background-color: #f2f2f2;
@@ -215,7 +227,7 @@ body {
 .product-table td.status-cell { 
     display:flex; 
     align-items:center; 
-    gap:6px; height:54px; 
+    gap:6px; 
 }
 .product-table td.status-cell.completed-readonly { 
     justify-content:flex-start; 
@@ -267,7 +279,7 @@ body {
     width:140px; 
 }
 .col.col-design { 
-    width:170px; 
+    width:90px; 
 }
 .col.col-size { 
     width:70px; 
@@ -291,10 +303,10 @@ body {
     width:125px; 
 }
 /* Admin orders: design thumbnail and swatch */
-.admin-design-thumb { width:48px; height:48px; border-radius:6px; object-fit:cover; display:inline-block; vertical-align:middle; }
-.admin-design-swatch { width:48px; height:48px; border-radius:6px; display:inline-block; vertical-align:middle; }
-.admin-design-meta { display:inline-block; vertical-align:top; margin-left:8px; }
-.admin-design-note { font-size:12px; color:#666; }
+.admin-design-thumb { width:64px; height:64px; border-radius:8px; object-fit:cover; display:block; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+.admin-design-swatch { width:64px; height:64px; border-radius:8px; display:block; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+.admin-design-meta, .admin-design-note { display:none !important; }
+.design-cell-empty{color:#999;font-size:.65rem}
 /* Badge/status styles */
 .badge-status { 
     padding:2px 8px; 

@@ -2,9 +2,9 @@ if(window.__ADMIN_ORDERS_ACTIVE){
     console.warn('[admin-orders] abort: another orders script already active');
 } 
 else {
-    window.__ADMIN_ORDERS_ACTIVE = 'v9';
+    window.__ADMIN_ORDERS_ACTIVE = 'v12';
     window.addEventListener('DOMContentLoaded', () => {
-        console.log('[admin-orders] script version 9 (merged) loaded');
+        console.log('[admin-orders] script version 12 (thumb-only + src resolver) loaded');
 
         const tbody = document.getElementById('ordersTbody');
         if(!tbody){ console.warn('No ordersTbody found'); return; }
@@ -37,6 +37,15 @@ else {
         function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
         function normalizeClass(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,''); }
         function badge(status){ const cls = 'status-' + normalizeClass(status); return `<span class="badge ${cls}">${escapeHtml(status)}</span>`; }
+        function resolveDesignSrc(p){
+            if(!p) return '';
+            // absolute or data/blob URLs
+            if(/^(?:https?:)?\/\//i.test(p) || /^(?:data:|blob:)/i.test(p)) return p;
+            // root-relative
+            if(p.startsWith('/')) return p;
+            // relative to site root from /admin/
+            return '../' + p.replace(/^\.\//,'');
+        }
 
         function fetchOrders(manual=false){
             fetch('orders-api.php?action=list', {cache:'no-store'})
@@ -140,12 +149,16 @@ else {
                 escapeHtml(o.customer_name||''),
                 // design cell: show thumbnail/swatch or product name fallback
                 (function(){
-            if(o.designoption_id){
-                const thumb = o.designfilepath ? '<img class="admin-design-thumb" src="'+escapeHtml(o.designfilepath)+'" alt="design" />' : '';
-                const sw = o.design_color ? '<div class="admin-design-swatch" style="background:'+escapeHtml(o.design_color)+'"></div>' : '';
-                return (thumb || sw) + '<div class="admin-design-meta">' + escapeHtml(o.product_name||'') + '<div class="admin-design-note">' + escapeHtml(o.design_note||o.request_design||'') + '</div></div>';
+                    // Show ONLY the visual preview (image or color swatch). No name or note.
+                    const hasImg = !!o.designfilepath;
+                    if(hasImg){
+                        const src = resolveDesignSrc(o.designfilepath);
+                        return '<img class="admin-design-thumb" src="'+escapeHtml(src)+'" alt="design" />';
                     }
-                    return escapeHtml(o.product_name||'');
+                    if(o.design_color){
+                        return '<div class="admin-design-swatch" style="background:'+escapeHtml(o.design_color)+'"></div>';
+                    }
+                    return '<span class="design-cell-empty">None</span>';
                 })(),
                 escapeHtml(o.size||''),
                 o.quantity||''

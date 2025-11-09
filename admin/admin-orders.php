@@ -105,6 +105,7 @@ require_once '../database.php';
                         </div>
                     </form>
                 </div>
+                <div class="table-scroll">
                 <table class="product-table" id="ordersTable">
                     <colgroup>
                         <col class="col-id"> 
@@ -134,7 +135,8 @@ require_once '../database.php';
                     </thead>
                     <tbody id="ordersTbody"></tbody>
                 </table>
+                </div>
 
-    <script src="admin-orders.js?v=9"></script>
+    <script src="admin-orders.js?v=12"></script>
 </body>
 </html>

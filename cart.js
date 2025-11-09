@@ -72,10 +72,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const useDb = cartItemsContainer.getAttribute('data-source') === 'db' && window.isAuthenticated;
     // Track where the currently displayed items came from. Values: 'db' | 'local'
-    let currentSource = useDb ? 'db' : 'local';
-  let items = [];
+        let currentSource = useDb ? 'db' : 'local';
+    let items = [];
 
-  function getKey(p){ return [p.name,p.size,p.design,p.price].join('|'); }
+    // Delivery fee logic: free for specific postal codes when Standard Delivery is selected
+    const FREE_ZONES = ['7200']; // Ozamiz City
+    function extractPostalCode(address){
+            if (!address || typeof address !== 'string') return null;
+            // Find a 4-digit postal code (PH format), pick the first match
+            const m = address.match(/\b(\d{4})\b/);
+            return m ? m[1] : null;
+    }
+    function getDeliveryFee(zip){
+            return (zip && FREE_ZONES.includes(zip)) ? 0 : 100;
+    }
+  
+    function getKey(p){ return [p.name,p.size,p.design,p.price].join('|'); }
 
   async function fetchDbCart(){
     try {
@@ -328,7 +340,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const {count, subtotal, html} = getSelectedSummaryData();
       if(count===0) {return; }
       const dm = checkoutForm.querySelector('input[name="delivery_method"]:checked');
-      let fee = 0; if(dm && dm.value==='standard') fee=25; // adjust if more methods later
+      let fee = 0;
+      if(dm && dm.value==='standard') {
+          const addr = (deliveryAddressInput?.value||'').trim();
+          const zip = extractPostalCode(addr);
+          fee = getDeliveryFee(zip);
+      }
       if(orderSummaryDiv) {
           const info = buildUserMetaBlock();
           const meta = buildChoiceMetaLines();
@@ -442,6 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { /* ignore */ }
       // Update header info if user edits address/phone
       [deliveryAddressInput, deliveryPhoneInput].forEach(inp=>{ if(inp){ inp.addEventListener('blur', ()=>{ updateShippingFee(); }); } });
+      // Recalculate fees as the user types the address (captures postal code entry)
+      if (deliveryAddressInput) {
+          deliveryAddressInput.addEventListener('input', ()=>{ updateShippingFee(); });
+      }
   }
 
   // GCash modal wiring
@@ -514,7 +535,12 @@ document.addEventListener('DOMContentLoaded', () => {
               if (isNaN(partialAmount) || partialAmount <= 0) { alert('Please enter a valid partial amount greater than 0.'); if (partialAmountEl) partialAmountEl.focus(); return; }
               // Ensure partial does not exceed subtotal + fee
               const selData = getSelectedSummaryData();
-              let fee = 0; if (dm && dm.value === 'standard') fee = 25;
+              let fee = 0;
+              if (dm && dm.value === 'standard') {
+                  const addrNow = (deliveryAddressInput?.value||'').trim();
+                  const zipNow = extractPostalCode(addrNow);
+                  fee = getDeliveryFee(zipNow);
+              }
               const allowedTotal = (selData && typeof selData.subtotal === 'number') ? (selData.subtotal + fee) : Infinity;
               if (partialAmount > allowedTotal) { alert('Partial amount cannot exceed the order total (including shipping): ₱' + allowedTotal.toFixed(2)); if (partialAmountEl) partialAmountEl.focus(); return; }
           }

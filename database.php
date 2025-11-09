@@ -9,6 +9,12 @@ if (!isset($conn) || !($conn instanceof mysqli)) {
         die('Database connection failed: ' . $conn->connect_error);
     }
     $conn->set_charset('utf8mb4');
+    // Optional quick connectivity banner: append ?db_ping=1 to see status (for people pasting the file URL directly)
+    if (isset($_GET['db_ping'])) {
+        header('Content-Type: text/plain');
+        echo 'Successfully connected --- MySQL host=' . $conn->host_info . "\n";
+        exit; // stop further processing
+    }
 }
 
 // Detect actual table name (customers vs customer) once

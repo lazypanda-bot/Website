@@ -449,6 +449,10 @@ if ($isAuthenticated) {
             <div class="modal-body">
                 <form id="addressModalForm" class="address-modal-form">
                     <div class="form-group">
+                        <label for="addr_postalcode">Postal Code</label>
+                        <input id="addr_postalcode" name="addr_postalcode" type="text" class="modal-input" placeholder="12345" />
+                    </div>
+                    <div class="form-group">
                         <label for="addr_street">Street Address</label>
                         <input id="addr_street" name="addr_street" type="text" class="modal-input" placeholder="123 Main St" />
                     </div>
@@ -464,7 +468,7 @@ if ($isAuthenticated) {
             </div>
             <div class="modal-actions">
                 <button type="button" class="secondary-btn design-btn alt-btn" id="cancelAddressBtn">Cancel</button>
-                <button type="button" class="primary-btn design-btn primary-btn" id="saveAddressBtn">Save Address</button>
+                <button type="button" class="primary-btn design-btn primary-btn" id="saveAddressBtn">OK</button>
             </div>
         </div>
     </div>
@@ -567,20 +571,32 @@ if ($isAuthenticated) {
                 const addrStreet = document.getElementById('addr_street');
                 const addrCity = document.getElementById('addr_city');
                 const addrProvince = document.getElementById('addr_province');
+                const addrPostal = document.getElementById('addr_postalcode');
                 if (!addrStreet || !addrCity || !addrProvince) return;
 
                 // prefill modal fields from existing address if possible
                 const cur = (addressField && addressField.value) ? addressField.value.trim() : '';
                 if (cur) {
-                    const parts = cur.split(',').map(p=>p.trim()).filter(p=>p!=='');
+                    // Attempt to detect postal code (4 consecutive digits) anywhere
+                    let postal = '';
+                    const postalMatch = cur.match(/\b(\d{4})\b/);
+                    if (postalMatch) postal = postalMatch[1];
+                    // Remove postal code from the working string for splitting city/province
+                    const cleaned = postal ? cur.replace(postal,'').replace(/\s+,/g,',').replace(/,+/g,',') : cur;
+                    const parts = cleaned.split(',').map(p=>p.trim()).filter(p=>p!=='');
+                    // Street = first part (heuristic)
                     addrStreet.value = parts[0] || '';
+                    // City = next part if present
                     addrCity.value = parts[1] || '';
+                    // Province/state = remaining joined, strip any trailing postal remnants (already removed)
                     const rest = parts.slice(2).join(', ');
                     addrProvince.value = rest || '';
+                    if (addrPostal) addrPostal.value = postal;
                 } else {
                     addrStreet.value = '';
                     addrCity.value = '';
                     addrProvince.value = '';
+                    if (addrPostal) addrPostal.value = '';
                 }
 
                 addressModal.hidden = false;
@@ -600,14 +616,17 @@ if ($isAuthenticated) {
                     const addrStreet = document.getElementById('addr_street');
                     const addrCity = document.getElementById('addr_city');
                     const addrProvince = document.getElementById('addr_province');
+                    const addrPostal = document.getElementById('addr_postalcode');
                     if (!addrStreet || !addrCity || !addrProvince) return;
                     const s = (addrStreet.value||'').trim();
                     const c = (addrCity.value||'').trim();
                     const p = (addrProvince.value||'').trim();
+                    const z = (addrPostal && addrPostal.value||'').trim();
                     let out = '';
                     if (s) out += s;
                     if (c) out += (out? ', ' : '') + c;
                     if (p) out += (out? ', ' : '') + p;
+                    if (z) out += (out? ', ' : '') + z;
                     if (addressField) addressField.value = out;
                     try { if (saveProfileBtn) { saveProfileBtn.disabled = false; saveProfileBtn.focus(); } } catch(e){}
                     closeModal();
