@@ -48,7 +48,13 @@ require_once '../database.php';
                         </div>
                     </div>
                     <div class="user-profile">
-                        <a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
+                        <button class="auth-link1 user-avatar" id="userMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown" title="Account">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" role="menu" aria-hidden="true">
+                            <a href="../logout.php" role="menuitem"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                            <a href="settings.html" role="menuitem"><i class="fa-solid fa-gear"></i> Settings</a>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -64,7 +70,7 @@ require_once '../database.php';
                         <span class="last-updated" id="lastUpdated" aria-live="polite"></span>
                     </div>
                 </div>
-                <div id="ordersFilterPanel" class="filter-panel" hidden>
+                <!-- <div id="ordersFilterPanel" class="filter-panel" hidden>
                     <form id="ordersFilterForm" autocomplete="off">
                         <div class="fp-row">
                             <label>Status
@@ -103,7 +109,7 @@ require_once '../database.php';
                             <button type="reset" class="fp-reset"><i class="fas fa-undo"></i> Reset</button>
                         </div>
                     </form>
-                </div>
+                </div> -->
                 <div class="table-scroll">
                 <table class="product-table" id="ordersTable">
                     <colgroup>
@@ -136,6 +142,7 @@ require_once '../database.php';
                 </table>
                 </div>
 
+    <script src="admin.js"></script>
     <script src="admin-orders.js?v=12"></script>
 </body>
 </html>

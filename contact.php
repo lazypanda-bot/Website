@@ -109,7 +109,7 @@
 
                 <div class="option">
                     <!-- <h2>Option 2:</h2>
-                    <p>Message us on Facebook, explore all links via Linktree, or email us directly, whichever gets your request answered quickest.</p> -->
+                    <p>Message us on Facebook,  or email us directly, whichever gets your request answered quickest.</p> -->
                     <div class="contact-methods">
                         <div class="method">
                             <div class="icon facebook-icon">

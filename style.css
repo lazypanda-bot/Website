@@ -17,8 +17,6 @@
     --grad-brand: linear-gradient(135deg,var(--brand-dark),var(--brand-mid),var(--brand-accent),var(--brand-mid),var(--brand-dark));
     --transition: .35s cubic-bezier(.4,0,.2,1);
 }
-
-
 .section4 {
     padding: clamp(12px,2vw,22px) clamp(40px,8vw,140px);
     background-color: #e7e0e0;
@@ -30,7 +28,11 @@
     overflow: hidden;
 }
 .section4::before {
-    content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 75% 20%, rgba(255,255,255,.35), transparent 55%);
+    content:""; 
+    position:absolute; 
+    inset:0; 
+    pointer-events:none; 
+    background:radial-gradient(circle at 75% 20%, rgba(255,255,255,.35), transparent 55%);
 }
 .fe-prod-row {
     display: flex;
@@ -38,7 +40,6 @@
     align-items: center;
     flex-wrap: wrap;
 }
-/* Headings (use these classes or keep semantic h1/h2/etc.) */
 .h1, h1 { 
     font-size: clamp(2rem, 3.2vw, 3.1rem); 
     line-height:1.1; 
@@ -166,7 +167,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 260px));
     gap: clamp(12px,1.5vw,28px);
-    /* align grid horizontally with the Services header (.section4) */
     padding: clamp(1.2rem,3vw,3.2rem) clamp(40px,8vw,140px);
     padding-top: clamp(.6rem,1.2vw,1.2rem);
     background: var(--surface);
@@ -197,7 +197,7 @@
     inset: 0;
     border-radius: inherit;
     background: conic-gradient(from var(--angle), transparent 68%, var(--brand-punch));
-    z-index: 2; /* sit above content so border is visible over the image */
+    z-index: 2;
     padding: 4px;
     box-sizing: border-box;
     animation: spin 3.2s linear infinite;
@@ -208,7 +208,7 @@
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     -webkit-mask-composite: destination-out;
-    pointer-events: none; /* allow clicks through the pseudo-element */
+    pointer-events: none; 
 }
 .serv:hover::before {
     opacity: 1;
@@ -226,7 +226,6 @@
         --angle: 360deg;
     }
 }
-
 /* ensure serv children render above the pseudo-element */
 .serv > * {
     position: relative;
@@ -274,7 +273,7 @@
     line-height:1.25; 
 }
 .serv img { 
-    padding: 0; /* ensure service images have no internal padding */
+    padding: 0; 
     box-sizing: border-box;
     display: block;
 }

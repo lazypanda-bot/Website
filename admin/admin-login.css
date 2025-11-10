@@ -70,6 +70,10 @@ form {
     flex-direction: column;
     gap: 8px; 
 }
+/* Registration form shares the same layout */
+#registerForm { max-width: 520px; }
+.auth-toggle a{ color:#8b0e0e; text-decoration:none; }
+.auth-toggle a:hover{ text-decoration:underline; }
 input[type="email"], input[type="password"] {
     padding: 10px;
     border-radius: 8px;

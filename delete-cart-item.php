@@ -20,7 +20,7 @@ if (!defined('CART_TABLE')) {
 }
 // If a design column exists on cart rows, attempt to keep one design-bearing row when deleting
 // a non-design row (so remaining rows retain preview) — but deletion here already targets a specific id.
-// We only delete that id; design persistence handled in add-to-cart.php propagation logic.
+// We only delete that id; design persistence handled in add-to-cart.php logic.
 $sql = 'DELETE FROM '.CART_TABLE.' WHERE '.CART_PK_COL.'=? AND '.CART_USER_FK_COL.'=?';
 
 if(!$stmt=$conn->prepare($sql)) { echo json_encode(['status'=>'error','message'=>'Prepare failed']); exit; }

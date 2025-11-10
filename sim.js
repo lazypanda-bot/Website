@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     // If there is no #viewerCanvas on this page, quietly skip initialization.
     const viewerCanvas = document.getElementById('viewerCanvas');
@@ -212,8 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     } catch(e) { console.warn('template upload wiring failed', e); }
 
-    // Left swatches removed — color selection is handled by the full color picker in the editor.
-
     // Dragging setup
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -294,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // helper extracted to keep the original success handler readable
+    // helper to keep the original success handler readable
     function onModelLoaded(gltf, src) {
         console.log("Model loaded:", gltf.scene);
 
@@ -644,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
             try { initPickrIfNeeded(); } catch (e) { console.warn('initPickrIfNeeded failed after model load', e); }
         }, 300);
 
-        // Save design button logic removed from here and attached globally below
         // hide spinner once model successfully loaded and added
         try { hideViewerSpinner(); } catch(e){}
     }
@@ -781,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     })();
 
-    // Close button logic (moved from inline script)
+    // Close button logic 
     var closeBtn = document.getElementById('simCloseBtn');
     if (closeBtn) {
         closeBtn.onclick = function() {
@@ -789,9 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // Do not auto-initialize the 3D viewer here. The 2D editor is the default; the
-    // 3D viewer will be initialized when the user clicks "View in 3D".
-
+    //2d (removed)
     // Expose function to apply a PNG dataURL as texture to the shirt meshes
     window.applyDesignTextureFromDataURL = function(dataURL) {
         if (!dataURL) return;
@@ -1052,6 +1046,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch(e){ console.warn('applyLogoDecalFromDataURL failed', e); }
     };
 
+    //REMOVED
     // View in 3D button: read design data from hidden input or editor canvas and apply
     const view3DBtn = document.getElementById('view3DBtn');
     if (view3DBtn) {
@@ -1196,6 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) { console.warn('movePickerOutOfViewer failed', e); }
     }
 
+    //REMOVED
     // Back to 2D button: show inline editor and hide 3D viewer
     const backTo2DBtn = document.getElementById('backTo2DBtn');
     if (backTo2DBtn) {

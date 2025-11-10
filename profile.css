@@ -36,7 +36,6 @@ body {
 body.profile-page { 
     overflow-x:hidden; 
 }
-
 /* Ensure header right-side items align same as other pages */
 .profile-page .right-nav > li {
     list-style: none;
@@ -44,8 +43,9 @@ body.profile-page {
     align-items: center;
     margin-left: 12px;
 }
-
-.profile-page .right-nav .cart-icon { font-size: 20px; }
+.profile-page .right-nav .cart-icon { 
+    font-size: 20px; 
+}
 .settings-container:before {
     content: "";
     position: absolute;
@@ -490,13 +490,40 @@ section {
         gap: 2.8rem; 
     }
 }
-/* Address modal styles extracted from profile.php */
-.custom-modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); z-index:1200; }
-.custom-modal[hidden] { display:none; }
-.modal-content { background:#fff; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.2); width:100%; max-width:640px; overflow:hidden; }
-.modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid #f2f2f2; }
-.modal-title { font-size:20px; font-weight:700; }
-.modal-body { padding:16px 20px; }
+.custom-modal { 
+    position:fixed; 
+    inset:0; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    background:rgba(0,0,0,0.45); 
+    z-index:1200; 
+}
+.custom-modal[hidden] { 
+    display:none; 
+}
+.modal-content { 
+    background:#fff; 
+    border-radius:10px; 
+    box-shadow:0 8px 30px rgba(0,0,0,0.2); 
+    width:100%; 
+    max-width:640px; 
+    overflow:hidden; 
+}
+.modal-header { 
+    display:flex; 
+    align-items:center; 
+    justify-content:space-between; 
+    padding:18px 20px; 
+    border-bottom:1px solid #f2f2f2; 
+}
+.modal-title { 
+    font-size:20px; 
+    font-weight:700; 
+}
+.modal-body { 
+    padding:16px 20px; 
+}
 .modal-content {
     /* limit modal height to viewport and allow internal scrolling when content is tall */
     max-height: calc(100vh - 120px);
@@ -508,24 +535,82 @@ section {
     /* ensure modal body takes remaining space inside modal-content so it can scroll */
     flex: 1 1 auto;
 }
-.modal-input { width:100%; padding:10px 12px; border:1px solid #e6e6e6; border-radius:8px; font-size:14px; }
-.modal-actions { display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; }
-.modal-actions .design-btn { min-width:100px; }
-/* Accent color for this site's theme */
-:root { --site-accent: #a02b2b; }
-/* Shared button styles to match global site theme (mirrors cart.css) */
-.primary-btn { background:#7c1b1b; color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
-.primary-btn:hover { background:#c90606; }
-.secondary-btn { background:#fff; color:#7c1b1b; border:1px solid #e7d2d2; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
-.secondary-btn:hover { background:#f9eded; }
+.modal-input { 
+    width:100%; 
+    padding:10px 12px; 
+    border:1px solid #e6e6e6; 
+    border-radius:8px; 
+    font-size:14px; 
+}
+.modal-actions { 
+    display:flex; 
+    justify-content:flex-end; 
+    gap:8px; 
+    padding:12px 18px; 
+}
+.modal-actions .design-btn { 
+    min-width:100px; 
+}
+:root { 
+    --site-accent: #a02b2b; 
+}
+.primary-btn { 
+    background:#7c1b1b; 
+    color:#fff; 
+    border:none; 
+    padding:10px 16px; 
+    border-radius:10px; 
+    cursor:pointer; 
+    font-weight:600; 
+}
+.primary-btn:hover { 
+    background:#c90606; 
+}
+.secondary-btn { 
+    background:#fff; 
+    color:#7c1b1b; 
+    border:1px solid #e7d2d2; 
+    padding:10px 16px; 
+    border-radius:10px; 
+    cursor:pointer; 
+    font-weight:600; 
+}
+.secondary-btn:hover { 
+    background:#f9eded; 
+}
 /* Map modal-specific classes to the shared button styles */
-#addressModal .design-btn.primary-btn, #addressModal .primary-btn { background:#7c1b1b; color:#fff; border:none; }
-#addressModal .design-btn.alt-btn, #addressModal .secondary-btn { background:#fff; color:#7c1b1b; border:1px solid #e7d2d2; }
-#addressModal .design-btn.primary-btn:hover, #addressModal .primary-btn:hover { background:#c90606; }
-#addressModal .design-btn.alt-btn:hover, #addressModal .secondary-btn:hover { background:#f9eded; }
-/* Style the close X to match accent */
-#addressModal .modal-close-btn { background:transparent; border:0; color:var(--site-accent); font-size:22px; line-height:1; padding:6px 10px; cursor:pointer; }
-#addressModal .modal-close-btn:hover { color:#7f2222; }
+#addressModal .design-btn.primary-btn, 
+#addressModal .primary-btn { 
+    background:#7c1b1b; 
+    color:#fff; 
+    border:none; 
+}
+#addressModal .design-btn.alt-btn, 
+#addressModal .secondary-btn { 
+    background:#fff; 
+    color:#7c1b1b; 
+    border:1px solid #e7d2d2; 
+}
+#addressModal .design-btn.primary-btn:hover, 
+#addressModal .primary-btn:hover { 
+    background:#c90606; 
+}
+#addressModal .design-btn.alt-btn:hover, 
+#addressModal .secondary-btn:hover { 
+    background:#f9eded; 
+}
+#addressModal .modal-close-btn { 
+    background:transparent; 
+    border:0; 
+    color:var(--site-accent); 
+    font-size:22px; 
+    line-height:1; 
+    padding:6px 10px; 
+    cursor:pointer; 
+}
+#addressModal .modal-close-btn:hover { 
+    color:#7f2222; 
+}
 @media (max-width: 1050px) {
     .account-flex { 
         gap: 2.2rem; 
@@ -843,10 +928,13 @@ section {
     line-height:1.25; 
     min-width:140px; 
 }
-.order-item-row .oi-size, .order-item-row .oi-qty, .order-item-row .oi-line { 
+.order-item-row .oi-size, 
+.order-item-row .oi-qty, 
+.order-item-row .oi-line { 
     flex:0 0 auto; 
 }
-.order-item-row .oi-line, .order-item-row .oi-total { 
+.order-item-row .oi-line, 
+.order-item-row .oi-total { 
     text-align:right; 
 }
 .order-item-row .oi-total { 
@@ -990,7 +1078,6 @@ section {
 .delivery-delivered { 
     background:#2e7d32; 
 }
-/* Treat legacy 'Completed' delivery state as green (same as 'Delivered') */
 .badge.delivery-completed, .delivery-completed {
     background: #2e7d32;
     color: #fff;

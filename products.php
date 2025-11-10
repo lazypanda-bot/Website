@@ -317,8 +317,7 @@ function firstImage($imagesField) {
                         foreach ($productsByCategory[$cat] as $p) {
                             $img = htmlspecialchars(firstImage($p['images'] ?? ''));
                             $nameEsc = htmlspecialchars($p['product_name']);
-                            // No highlighting while searching per request
-                            // Price hidden per request; keep code path but do not render price
+                            // keep code path but do not render price
                             $id = (int)$p['product_id'];
                             echo '<div class="service-card">';
                             echo '<a href="product-details.php?id=' . $id . '">';

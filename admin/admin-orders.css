@@ -1,8 +1,31 @@
 /* Thumbnail and swatch styles for design preview in orders */
-.admin-design-thumb{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #eee;margin-right:8px;vertical-align:middle}
-.admin-design-swatch{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #ddd;margin-right:6px;vertical-align:middle}
-.admin-design-meta{display:inline-block;vertical-align:middle;max-width:320px}
-.admin-design-note{font-size:12px;color:#666}
+.admin-design-thumb{
+    width:64px;
+    height:64px;
+    object-fit:cover;
+    border-radius:6px;
+    border:1px solid #eee;
+    margin-right:8px;
+    vertical-align:middle
+}
+.admin-design-swatch{
+    display:inline-block;
+    width:14px;
+    height:14px;
+    border-radius:3px;
+    border:1px solid #ddd;
+    margin-right:6px;
+    vertical-align:middle
+}
+.admin-design-meta{
+    display:inline-block;
+    vertical-align:middle;
+    max-width:320px
+}
+.admin-design-note{
+    font-size:12px;
+    color:#666
+}
 .badge, .badge-status, .status-badge-wrapper span {
     background: #efefef;
     color: #222;
@@ -140,8 +163,12 @@ body {
 .filter-panel .fp-reset { 
     background:#555; 
 }
-.filter-panel .fp-apply:hover { background:#a03b3b; }
-.filter-panel .fp-reset:hover { background:#777; }
+.filter-panel .fp-apply:hover { 
+    background:#a03b3b; 
+}
+.filter-panel .fp-reset:hover { 
+    background:#777; 
+}
 .controls {
     display: flex;
     gap: 10px;
@@ -192,18 +219,38 @@ body {
 }
 .product-table {
     width: 100%;
-    min-width: 1100px; /* ensure reasonable base width so overflow can occur */
+    min-width: 1100px; 
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 15px;
 }
-.table-scroll{position:relative;overflow-x:auto;overflow-y:hidden;margin-top:20px;padding-bottom:4px;width:100%;-webkit-overflow-scrolling:touch}
+.table-scroll{
+    position:relative;
+    overflow-x:auto;
+    overflow-y:hidden;
+    margin-top:20px;
+    padding-bottom:4px;
+    width:100%;
+    -webkit-overflow-scrolling:touch;
+}
 /* Avoid clipping inside main panel if any ancestor sets overflow */
-.main-panel{overflow-x:hidden}
-.table-scroll::-webkit-scrollbar{height:10px}
-.table-scroll::-webkit-scrollbar-track{background:#f1f1f1;border-radius:6px}
-.table-scroll::-webkit-scrollbar-thumb{background:#c7b7b7;border-radius:6px}
-.table-scroll::-webkit-scrollbar-thumb:hover{background:#b09e9e}
+.main-panel{
+    overflow-x:hidden;
+}
+.table-scroll::-webkit-scrollbar{
+    height:10px;
+}
+.table-scroll::-webkit-scrollbar-track{
+    background:#f1f1f1;
+    border-radius:6px;
+}
+.table-scroll::-webkit-scrollbar-thumb{
+    background:#c7b7b7;
+    border-radius:6px;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover{
+    background:#b09e9e;
+}
 .product-table th,
 .product-table td {
     padding: 12px 10px;
@@ -303,10 +350,28 @@ body {
     width:125px; 
 }
 /* Admin orders: design thumbnail and swatch */
-.admin-design-thumb { width:64px; height:64px; border-radius:8px; object-fit:cover; display:block; box-shadow:0 2px 6px rgba(0,0,0,.12); }
-.admin-design-swatch { width:64px; height:64px; border-radius:8px; display:block; box-shadow:0 2px 6px rgba(0,0,0,.12); }
-.admin-design-meta, .admin-design-note { display:none !important; }
-.design-cell-empty{color:#999;font-size:.65rem}
+.admin-design-thumb { 
+    width:64px; 
+    height:64px; 
+    border-radius:8px; 
+    object-fit:cover; 
+    display:block; 
+    box-shadow:0 2px 6px rgba(0,0,0,.12); 
+}
+.admin-design-swatch { 
+    width:64px; 
+    height:64px; 
+    border-radius:8px; 
+    display:block; 
+    box-shadow:0 2px 6px rgba(0,0,0,.12); 
+}
+.admin-design-meta, .admin-design-note { 
+    display:none !important; 
+}
+.design-cell-empty{
+    color:#999;
+    font-size:.65rem
+}
 /* Badge/status styles */
 .badge-status { 
     padding:2px 8px; 
@@ -447,7 +512,6 @@ body {
     color:#7d0e0e; 
 }
 .order-status-select.os-Picked-up {
-    /* Pastel variant matching the badge.status-picked-up deep purple */
     background:#f2dcff;
     color:#5e0d83;
 }
@@ -460,7 +524,6 @@ body {
 .completed-readonly .status-select-wrap { 
     display:none !important; 
 }
-
 /* Controls */
 .controls { 
     display:flex; 

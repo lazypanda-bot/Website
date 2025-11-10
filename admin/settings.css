@@ -57,7 +57,6 @@
     align-items: flex-start;
     gap: 12px;
 }
-/* Bigger circular avatar ring, matching customer profile styling */
 .profile-avatar-ring.admin-avatar-ring {
     --ring-size: 240px;
     width: var(--ring-size);

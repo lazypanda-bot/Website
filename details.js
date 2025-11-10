@@ -219,8 +219,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error handling flash dismiss:', err);
         }
     }); 
-
-    // Product-level payment UI removed. Payment/partial amount is handled on the checkout page.
 });
 
   // Thumbnails - only admin can add/delete thumbnails
@@ -293,7 +291,7 @@ if (closeUploadModalBtn) closeUploadModalBtn.addEventListener('click', closeUplo
 const submitUploadBtn = document.getElementById('submitUploadBtn');
 if (submitUploadBtn) submitUploadBtn.addEventListener('click', submitUpload);
 
-// Cart notification (no inline style)
+// Cart notification 
 const cartNotif = document.getElementById('cart-notification');
 if (cartNotif) cartNotif.style.display = 'none';
 
@@ -395,7 +393,7 @@ if (addCartBtn && cartForm) {
                 const msg = (data && data.message) ? data.message : ('Failed to add to cart' + (text && !data ? ' (non-JSON response)' : ''));
                 throw new Error(msg);
             }
-            // Always show uniform success wording regardless of action
+            // Always show uniform success wording 
             showAddCartToast('Added to cart');
         } catch (err) {
             console.error(err);

@@ -573,27 +573,7 @@ function pd_first_image($imagesField) {
                 <h4 class="review-title">Reviews</h4>
                 <div class="no-reviews">No reviews yet</div>
             </div>
-            <?php if (!$productNotFound && count($relatedProducts) > 0): ?>
-            <div class="related-products">
-                <h4>More in this Service</h4>
-                <div class="related-grid">
-                <?php foreach($relatedProducts as $rp): 
-                    $rImg = htmlspecialchars(pd_first_image($rp['images'] ?? ''));
-                    $rName = htmlspecialchars($rp['product_name']);
-                    $rPrice = htmlspecialchars(number_format($rp['price'],2));
-                    $rId = (int)$rp['product_id'];
-                ?>
-                  <a class="related-card" href="product-details.php?id=<?=$rId?>" title="<?=$rName?>">
-                    <div class="rel-img-wrap"><img src="<?=$rImg?>" alt="<?=$rName?>"></div>
-                    <div class="rel-info">
-                        <span class="rel-name"><?=$rName?></span>
-                        <span class="rel-price">₱<?=$rPrice?></span>
-                    </div>
-                  </a>
-                <?php endforeach; ?>
-                </div>
-            </div>
-            <?php endif; ?>
+                        <?php /* Related products section removed per request */ ?>
         </div>
     <div class="tab-content" id="order"<?= $forceOrderTab ? '' : ' hidden' ?>>
             <section class="product-detail-section">

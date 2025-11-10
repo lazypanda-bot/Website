@@ -45,7 +45,13 @@ require_once '../database.php';
                         </div>
                     </div>
                     <div class="user-profile">
-                        <a href="" class="auth-link1"><i class="fa-solid fa-user"></i></a>
+                        <button class="auth-link1 user-avatar" id="userMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown" title="Account">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" role="menu" aria-hidden="true">
+                            <a href="../logout.php" role="menuitem"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                            <a href="settings.html" role="menuitem"><i class="fa-solid fa-gear"></i> Settings</a>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -77,7 +83,7 @@ require_once '../database.php';
                     <tbody id="paymentsTbody"></tbody>
                 </table>
 
-        <!-- Styles for payment status select moved to admin-payments.css -->
+        <script src="admin.js"></script>
         <script src="admin-payments.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

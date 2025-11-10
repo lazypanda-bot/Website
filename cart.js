@@ -6,12 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.assign(window, window.cartBootstrap);
   }
 
-  // Back button action (previously inline onclick)
+  // Back button action 
   document.querySelectorAll('[data-action="go-back"]').forEach(btn=>{
       btn.addEventListener('click', e=>{ e.preventDefault(); history.back(); });
   });
 
-  // Show checkout form when clicking checkout button (removing inline onclick / style)
+  // Show checkout form when clicking checkout button 
   const checkoutBtnEl = document.querySelector('.checkout-btn');
   const checkoutFormEl = document.getElementById('checkout-form');
   if(checkoutBtnEl && checkoutFormEl){
@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e){ items = []; }
         }
-        // preview merge intentionally omitted
     } catch(err){ 
         console.error(err);
         // On fetch error, fallback to local cart instead of showing empty

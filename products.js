@@ -38,8 +38,6 @@ window.addEventListener('DOMContentLoaded', () => {
         navLinks[0].classList.add('active');
         contentBoxes[0].classList.add('active');
     }
-
-    // Inline JS logic from products-inline-cleanup.js
     // Back button
     var backBtn = document.getElementById('backBtn');
     if (backBtn) {

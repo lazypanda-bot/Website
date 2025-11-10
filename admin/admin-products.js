@@ -61,12 +61,12 @@ window.addEventListener('DOMContentLoaded', () => {
             tbody.innerHTML = '<tr><td colspan="9" class="empty-row">No products yet</td></tr>';
             return;
         }
-                // Collect service types for datalist and filter select
-                const serviceTypes = new Set();
-                list.forEach(p=>{ if(p.service_type) serviceTypes.add(p.service_type); });
-                serviceTypeList.innerHTML = Array.from(serviceTypes).map(s=>`<option value="${escapeHtml(s)}"></option>`).join('');
-                // populate service filter select as well (if present)
-                if(typeof populateServiceFilter === 'function') populateServiceFilter(Array.from(serviceTypes));
+        // Collect service types for datalist and filter select
+        const serviceTypes = new Set();
+        list.forEach(p=>{ if(p.service_type) serviceTypes.add(p.service_type); });
+        serviceTypeList.innerHTML = Array.from(serviceTypes).map(s=>`<option value="${escapeHtml(s)}"></option>`).join('');
+        // populate service filter select as well (if present)
+        if(typeof populateServiceFilter === 'function') populateServiceFilter(Array.from(serviceTypes));
 
     list.forEach(p=>{
     const tr = document.createElement('tr');
@@ -386,13 +386,10 @@ window.addEventListener('DOMContentLoaded', () => {
         seedTypes.forEach(v=> typeList.appendChild(createSimpleRow(v, 'variant-type', 'Type')));
         seedSizes.forEach(v=> sizeList.appendChild(createSimpleRow(v, 'variant-size', 'Size')));
 
-        // colors removed per request; keep attributes only
-
-    // Optional separate attribute inputs (custom attributes list only)
+        // Optional separate attribute inputs (custom attributes list only)
         const attrWrap = document.createElement('div'); attrWrap.className = 'variant-attrs-wrap';
-    // Box/Pockets removed
-    // Custom attributes list (stacked rows)
-    const othersList = document.createElement('div'); othersList.className = 'others-list';
+        // Custom attributes list (stacked rows)
+        const othersList = document.createElement('div'); othersList.className = 'others-list';
 
         function createOtherRow(key, pr){
             const r = document.createElement('div'); r.className = 'other-row';
@@ -418,8 +415,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // header buttons will handle add actions (attributes only)
 
-        // remove button appended to actions box below
-
     // assemble boxes into card; add headers with small action buttons
     const nameHeader = document.createElement('div'); nameHeader.className='box-header';
     const nameTitle = document.createElement('div'); nameTitle.className='title'; nameTitle.textContent='Variant Name';
@@ -436,19 +431,17 @@ window.addEventListener('DOMContentLoaded', () => {
     sizeHeader.appendChild(sizeTitle);
     sizeBox.appendChild(sizeHeader); sizeBox.appendChild(sizeList);
 
-    // removed attribute add button in header per request
-
         // attributes container (others only)
     const attrsContainer = document.createElement('div'); attrsContainer.className = 'variant-attrs-container';
     attrsContainer.appendChild(othersList);
-        colorsBox.appendChild(attrsContainer);
+    colorsBox.appendChild(attrsContainer);
 
-        card.appendChild(nameBox);
-        // Type box is distinct from Variant Name
-        card.appendChild(typeBox);
-        card.appendChild(sizeBox);
+    card.appendChild(nameBox);
+    // Type box is distinct from Variant Name
+    card.appendChild(typeBox);
+    card.appendChild(sizeBox);
     card.appendChild(colorsBox);
-        return card;
+    return card;
     }
 
     // show/hide variants section

@@ -27,7 +27,7 @@ if (isset($_FILES['design_png']) && $_FILES['design_png']['error'] === UPLOAD_ER
     $fname = 'design_' . intval($designoption_id) . '_' . time() . '.' . $ext;
     $destPath = $uploadDir . '/' . $fname;
     if (@move_uploaded_file($tmp, $destPath)) {
-        // store web-accessible path (relative to site root)
+        // store web-accessible path 
         $webPath = 'uploads/designs/' . $fname;
 
         // Create a visible thumbnail (240x240) with a neutral background so mostly-transparent
@@ -192,11 +192,3 @@ $resp = [
 echo json_encode($resp);
 $conn->close();
 exit;
-
-// Attempt to retroactively attach the created designoption to an existing cart row
-// when a cart row exists for this user and product but earlier logic didn't set it.
-// This helps cases where the client saved the design after already adding the
-// product to cart (so the cart row exists but has no designoption_id yet).
-// Note: This block executes after the response was already echoed. If you prefer
-// the update to run before the response, move the block earlier and include
-// updated flags in $resp.

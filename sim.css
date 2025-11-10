@@ -1,6 +1,5 @@
 /* Ensure Pickr inside the left column renders above the 3D viewer.
-   Use a high z-index and keep the picker positioned so it can float.
-*/
+   Use a high z-index and keep the picker positioned so it can float.*/
 #colorPickerContainer .pickr,
 #colorPickerContainer .pickr .pcr-app {
     display: block !important;
@@ -148,8 +147,12 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 /* cursor affordance for dragging */
-#viewerCanvas { cursor: grab; }
-#viewerCanvas.dragging { cursor: grabbing; }
+#viewerCanvas { 
+    cursor: grab; 
+}
+#viewerCanvas.dragging { 
+    cursor: grabbing; 
+}
 /* Make sure the color picker is always visible and styled */
 #colorPickerContainer {
     min-height: 320px;
@@ -165,7 +168,6 @@
     display: block !important;
     overflow: visible;
 }
-
 /* When moved into the viewer, position the picker as an overlay inside the shirt wrapper */
 #colorPickerContainer.in-viewer {
     position: absolute !important;
@@ -180,14 +182,20 @@
     box-shadow: 0 6px 24px rgba(0,0,0,0.12) !important;
     border-radius: 8px !important;
 }
-
 /* Stack ordering: left controls should appear above the right-side viewer when needed */
-.sim-left { position: relative; z-index: 20; }
-.sim-right { position: relative; z-index: 10; }
-
+.sim-left { 
+    position: relative; 
+    z-index: 20; 
+}
+.sim-right { 
+    position: relative; 
+    z-index: 10; 
+}
 /* Make sure the viewer canvas itself doesn't create a higher stacking context */
-#viewerCanvas, .viewer-canvas { position: relative; z-index: 5; }
-
+#viewerCanvas, .viewer-canvas { 
+    position: relative; 
+    z-index: 5; 
+}
 /* Keep Pickr popup constrained inside the left column.
    Position the popup absolutely within the pickr root and
    prevent it from overflowing the left panel width.
@@ -197,7 +205,6 @@
     box-sizing: border-box !important;
     max-width: 100% !important;
 }
-
 #colorPickerContainer .pickr .pcr-app {
     /* Render inline inside the pickr root so it flows with the left column.
        Remove transforms and absolute positioning that allow it to escape the container. */
@@ -212,14 +219,12 @@
     max-width: 100% !important;
     box-sizing: border-box !important;
 }
-
 /* Ensure the hue slider and controls wrap properly inside the constrained width */
 #colorPickerContainer .pcr-color,
 #colorPickerContainer .pcr-preview,
 #colorPickerContainer .pcr-border {
     box-sizing: border-box !important;
 }
-
 /* Ensure internal pickr controls don't force an overflow width */
 #colorPickerContainer .pcr-app * {
     max-width: 100% !important;
@@ -311,8 +316,6 @@
 .pcr-app {
     z-index: 3000 !important;
 }
-/* flip button removed */
-
 .rotate-hint {
     position: absolute;
     top: 14px;
@@ -325,15 +328,18 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     z-index: 20;
 }
-.rotate-hint { pointer-events: none; }
-.rotate-hint.hidden { display: none !important; }
-
+.rotate-hint { 
+    pointer-events: none; 
+}
+.rotate-hint.hidden { 
+    display: none !important; 
+}
 /* Ensure the back button in the sim viewer sits above the viewer content */
 .sim-viewer-container .back-container {
     position: absolute;
     top: 18px;
     left: 18px;
-    z-index: 3100; /* above viewer and other overlays */
+    z-index: 3100; 
 }
 .sim-viewer-container .back-btn {
     background-color: #9a4141;
@@ -345,8 +351,9 @@
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
-.sim-viewer-container .back-btn:hover { background-color:#7c1b1b; }
-
+.sim-viewer-container .back-btn:hover { 
+    background-color:#7c1b1b; 
+}
 .save-design-btn {
     background: #a02b2b;
     color: #fff;
@@ -356,15 +363,44 @@
     cursor: pointer;
     font-weight: 600;
 }
-.design-preview-card { background:#fff; border:1px solid #eee; padding:8px; border-radius:8px; margin-bottom:8px; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
-.design-preview-thumb { width:72px; height:72px; background:#f3f3f3; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:8px; }
-.design-preview-meta { display:inline-block; vertical-align:middle; max-width:220px; }
-.mt-12 { margin-top: 12px; }
-.mt-14 { margin-top: 14px; }
-/* Extracted from inline styles in sim.php */
-.sim-header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; position:relative; }
-.sim-title { margin: 0; }
-/* New bottom-right positioning inside viewer wrapper */
+.design-preview-card { 
+    background:#fff; 
+    border:1px solid #eee; 
+    padding:8px; 
+    border-radius:8px; 
+    margin-bottom:8px; 
+    box-shadow:0 2px 6px rgba(0,0,0,0.04); 
+}
+.design-preview-thumb { 
+    width:72px; 
+    height:72px; 
+    background:#f3f3f3; 
+    border-radius:6px; 
+    display:inline-block; 
+    vertical-align:middle; 
+    margin-right:8px; 
+}
+.design-preview-meta { 
+    display:inline-block; 
+    vertical-align:middle; 
+    max-width:220px; 
+}
+.mt-12 { 
+    margin-top: 12px; 
+}
+.mt-14 { 
+    margin-top: 14px; 
+}
+.sim-header-row { 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    margin-bottom:8px; 
+    position:relative; 
+}
+.sim-title { 
+    margin: 0; 
+}
 .save-design-btn.save-bottom {
     position: absolute;
     bottom: 18px;
@@ -373,37 +409,169 @@
     box-shadow: 0 4px 14px rgba(0,0,0,0.12);
     transition: background .2s, transform .2s;
 }
-.save-design-btn.save-bottom:hover { background:#7c1b1b; transform:translateY(-2px); }
-.save-design-btn.save-bottom:active { transform:translateY(0); }
-
-/* New row layout for save button when placed outside viewer */
-.save-design-row { display:flex; justify-content:flex-end; margin-top:14px; }
+.save-design-btn.save-bottom:hover { 
+    background:#7c1b1b; 
+    transform:translateY(-2px); 
+}
+.save-design-btn.save-bottom:active { 
+    transform:translateY(0); 
+}
+.save-design-row { 
+    display:flex; 
+    justify-content:flex-end; 
+    margin-top:14px; 
+}
 
 /* Toast notifications */
-.toast-container { position: fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:4000; }
-.toast-msg { background:#a02b2b; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.14); font-size:14px; font-weight:500; opacity:0; animation:toastFadeIn .25s forwards; }
-.toast-msg.toast-hide { opacity:0 !important; transition:opacity .3s; }
-@keyframes toastFadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
-.sim-twocol { display:flex; gap:18px; align-items:flex-start; }
-.sim-left { width:460px; background:#fbf8ff; border-radius:12px; padding:18px; box-shadow:0 2px 6px rgba(0,0,0,0.04); box-sizing:border-box; }
-.control-heading { font-weight:700; margin-top:6px; margin-bottom:8px; }
-#colorPickerContainer { margin-bottom:6px; }
-.sim-control-block.vstack { display:flex; flex-direction:column; gap:8px; }
-#fontText { padding:8px; border-radius:6px; border:1px solid #ddd; }
-.hstack { display:flex; gap:8px; align-items:center; }
-.control-label { font-size:13px; color:#444; }
-#fontColor { width:46px; height:34px; border:0; padding:0; background:transparent; }
-.ml-8 { margin-left:8px; }
-#fontSize { width:80px; padding:8px; border-radius:6px; border:1px solid #ddd; }
-.mt-4 { margin-top:4px; }
-.muted-note { font-size:12px; color:#666; }
-.select-wrap { background:#fff; border-radius:8px; padding:10px; border:1px solid #eee; margin-top:6px; }
-#fontFamily { width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; background:transparent; }
-.sim-right { flex:1; display:flex; flex-direction:column; gap:12px; }
-.section-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-.section-title { font-weight:700; font-size:16px; }
-.editor-area { background:#fff; border-radius:10px; padding:14px; border:1px solid #f0f0f0; min-height:520px; display:flex; flex-direction:column; box-sizing:border-box; }
-.rotate-hint { display:block; }
-.control-label.bold { font-weight:600; margin-bottom:6px; }
-.control-label.subtle { margin-top:10px; color:#666; }
-.editor-note { margin-top:10px; color:#666; font-size:13px; text-align:center; }
+.toast-container { 
+    position: fixed; 
+    bottom:20px; 
+    right:20px; 
+    display:flex; 
+    flex-direction:column; 
+    gap:8px; 
+    z-index:4000; 
+}
+.toast-msg { 
+    background:#a02b2b; 
+    color:#fff; 
+    padding:10px 14px; 
+    border-radius:8px; 
+    box-shadow:0 4px 14px rgba(0,0,0,0.14); 
+    font-size:14px; 
+    -weight:500; 
+    opacity:0; 
+    animation:toastFadeIn .25s forwards; 
+}
+.toast-msg.toast-hide { 
+    opacity:0 !important; 
+    transition:opacity .3s; 
+}
+@keyframes toastFadeIn { 
+    from { 
+        opacity:0; 
+        transform:translateY(6px);
+    } to { 
+        opacity:1; 
+        transform:translateY(0);
+    } 
+}
+.sim-twocol { 
+    display:flex; 
+    gap:18px; 
+    align-items:flex-start; 
+}
+.sim-left { 
+    width:460px; 
+    background:#fbf8ff; 
+    border-radius:12px; 
+    padding:18px; 
+    box-shadow:0 2px 6px rgba(0,0,0,0.04); 
+    box-sizing:border-box; 
+}
+.control-heading { 
+    font-weight:700; 
+    margin-top:6px; 
+    margin-bottom:8px; 
+}
+#colorPickerContainer { 
+    margin-bottom:6px; 
+}
+.sim-control-block.vstack { 
+    display:flex; 
+    flex-direction:column; 
+    gap:8px; 
+}
+#fontText { 
+    padding:8px; 
+    border-radius:6px; 
+    border:1px solid #ddd; 
+}
+.hstack { 
+    display:flex; 
+    gap:8px; 
+    align-items:center; 
+}
+.control-label { 
+    font-size:13px; 
+    color:#444; 
+}
+#fontColor { 
+    width:46px; 
+    height:34px; 
+    border:0; 
+    padding:0; 
+    background:transparent; 
+}
+.ml-8 { 
+    margin-left:8px; }
+#fontSize { 
+    width:80px; 
+    padding:8px; 
+    border-radius:6px; 
+    border:1px solid #ddd; 
+}
+.mt-4 { 
+    margin-top:4px; 
+}
+.muted-note { 
+    font-size:12px; 
+    color:#666; 
+}
+.select-wrap { 
+    background:#fff; 
+    border-radius:8px; 
+    padding:10px; 
+    border:1px solid #eee; 
+    margin-top:6px; 
+}
+#fontFamily { 
+    width:100%; 
+    padding:8px; 
+    border-radius:6px; 
+    border:1px solid #ddd; 
+    background:transparent; 
+}
+.sim-right { 
+    flex:1; 
+    display:flex; 
+    flex-direction:column; 
+    gap:12px; 
+}
+.section-header { 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    gap:12px; 
+}
+.section-title { 
+    font-weight:700; 
+    font-size:16px; 
+}
+.editor-area { 
+    background:#fff; 
+    border-radius:10px; 
+    padding:14px; 
+    border:1px solid #f0f0f0; 
+    min-height:520px; 
+    display:flex; 
+    flex-direction:column; 
+    box-sizing:border-box; 
+}
+.rotate-hint { 
+    display:block; 
+}
+.control-label.bold { 
+    font-weight:600; 
+    margin-bottom:6px; 
+}
+.control-label.subtle { 
+    margin-top:10px; 
+    color:#666; 
+}
+.editor-note { 
+    margin-top:10px; 
+    color:#666; 
+    font-size:13px; 
+    text-align:center; 
+}

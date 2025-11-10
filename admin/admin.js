@@ -147,3 +147,33 @@ links.forEach(link => {
         link.classList.add('active');
     }
 });
+
+// Profile dropdown toggle
+const userBtn = document.getElementById('userMenuBtn');
+const userProfile = userBtn ? userBtn.closest('.user-profile') : null;
+if(userBtn && userProfile){
+    userBtn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const isOpen = userProfile.classList.toggle('open');
+        userBtn.setAttribute('aria-expanded', isOpen ? 'true':'false');
+        const dd = document.getElementById('userDropdown');
+        if(dd) dd.setAttribute('aria-hidden', isOpen ? 'false':'true');
+    });
+    document.addEventListener('click', (e)=>{
+        if(!userProfile.contains(e.target)){
+            if(userProfile.classList.contains('open')){
+                userProfile.classList.remove('open');
+                userBtn.setAttribute('aria-expanded','false');
+                const dd = document.getElementById('userDropdown'); if(dd) dd.setAttribute('aria-hidden','true');
+            }
+        }
+    });
+    document.addEventListener('keydown', (e)=>{
+        if(e.key==='Escape' && userProfile.classList.contains('open')){
+            userProfile.classList.remove('open');
+            userBtn.setAttribute('aria-expanded','false');
+            const dd = document.getElementById('userDropdown'); if(dd) dd.setAttribute('aria-hidden','true');
+            userBtn.focus();
+        }
+    });
+}
